@@ -1,24 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowRight, BrainCircuit, Check, Moon, Sparkles, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ArrowRight,
+  BarChart3,
+  BookMarked,
+  BookOpen,
+  FolderOpen,
+  Quote,
+  Sparkles,
+} from "lucide-react";
 
-import darkLogo from "@/assets/wisen-logo-dark.png.asset.json";
-import lightLogo from "@/assets/wisen-logo-light.png.asset.json";
+import { Footer } from "@/components/site/Footer";
+import { Navbar } from "@/components/site/Navbar";
+import { QuestionCard } from "@/components/site/QuestionCard";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Wisen — Study smarter. Remember longer." },
+      { title: "Wisen — Study smarter. Score higher. Pass." },
       {
         name: "description",
         content:
-          "Focused medical practice, clear AI explanations, and lasting knowledge for medical students.",
+          "Wisen turns your medical courses into questions, explanations, and focused study — so every session takes you closer to mastery.",
       },
-      { property: "og:title", content: "Wisen — Study smarter. Remember longer." },
+      { property: "og:title", content: "Wisen — Study smarter. Score higher. Pass." },
       {
         property: "og:description",
-        content: "Turn your medical study time into focused practice and lasting knowledge.",
+        content:
+          "Medical question bank, AI explanations, and page-cited answers built for medical students.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,173 +36,289 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const specialties = [
+const subjects = [
+  "Anatomy",
+  "Physiology",
+  "Microbiology",
+  "Histology",
+  "Pathology",
   "Cardiology",
   "Pharmacology",
-  "Pathology",
-  "Microbiology",
-  "Surgery",
-  "Anatomy",
 ];
 
-const answers = [
-  "Anterior STEMI",
-  "Inferior STEMI",
-  "Posterior STEMI",
-  "Unstable angina",
+const steps = [
+  {
+    number: "01",
+    title: "Choose your topic",
+    body: "Pick the subject or topic you want to study and focus your session around what matters most.",
+  },
+  {
+    number: "02",
+    title: "Practice with questions",
+    body: "Test yourself with focused medical questions and turn passive reading into active recall.",
+  },
+  {
+    number: "03",
+    title: "Ask Wisen",
+    body: "Stuck on a concept? Ask Wisen for a clear explanation grounded in the material you're studying.",
+  },
+  {
+    number: "04",
+    title: "Review and remember",
+    body: "Review your weak areas, revisit the source, and reinforce what you've learned.",
+  },
+];
+
+const features = [
+  {
+    id: "qbank",
+    eyebrow: "Smart QBank",
+    icon: BookMarked,
+    title: "Practice what matters.",
+    body: "Challenge yourself with medical questions organized by subject and topic. See your answers, understand the explanations, and identify what you need to review.",
+    tags: ["Medical questions", "Subject-based", "Progress tracking"],
+  },
+  {
+    id: "wisen-ai",
+    eyebrow: "Wisen AI",
+    icon: Sparkles,
+    title: "Your medical study companion.",
+    body: "Ask questions about your courses, clarify difficult concepts, and get explanations based on the material you're studying.",
+    tags: ["Ask anything", "Course-aware", "Instant explanations"],
+  },
+  {
+    id: "citations",
+    eyebrow: "Page-Cited Answers",
+    icon: BookOpen,
+    title: "Know where the answer came from.",
+    body: "Wisen doesn't just give you an answer. It points you back to the exact page in your study material.",
+    tags: ["Exact source", "Page citation", "Open the page"],
+  },
+  {
+    id: "materials",
+    eyebrow: "Study Materials",
+    icon: FolderOpen,
+    title: "Your courses. One place.",
+    body: "Keep your medical study materials organized and connected to the questions and explanations you use to learn.",
+    tags: ["PDFs", "Courses", "Organized material"],
+  },
+  {
+    id: "progress",
+    eyebrow: "Progress",
+    icon: BarChart3,
+    title: "See what you know. Find what you don't.",
+    body: "Track your questions, accuracy, subjects, and weak areas so you always know where to focus next.",
+    tags: ["Accuracy", "Weak areas", "Study history"],
+  },
 ];
 
 function Index() {
-  const [dark, setDark] = useState(false);
-  const [answer, setAnswer] = useState(1);
-  const [showExplanation, setShowExplanation] = useState(false);
-
-  useEffect(() => {
-    const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setDark(preferred);
-    document.documentElement.classList.toggle("dark", preferred);
-  }, []);
-
-  const toggleTheme = () => {
-    setDark((current) => {
-      document.documentElement.classList.toggle("dark", !current);
-      return !current;
-    });
-  };
-
   return (
-    <div className="min-h-screen overflow-hidden bg-background text-foreground">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="wisen-ambient" aria-hidden="true" />
-
-      <header className="relative z-20 border-b border-border/70">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <a href="#top" aria-label="Wisen home" className="shrink-0">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcSet={dark ? darkLogo.url : lightLogo.url} />
-              <img src={dark ? darkLogo.url : lightLogo.url} alt="Wisen" className="h-10 w-auto sm:h-12" />
-            </picture>
-          </a>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-              title={dark ? "Light mode" : "Dark mode"}
-              className="rounded-full border border-border bg-background/70 shadow-sm backdrop-blur"
-            >
-              {dark ? <Sun /> : <Moon />}
-            </Button>
-            <Button asChild className="hidden h-10 rounded-md px-5 sm:inline-flex">
-              <a href="#question">Get started <ArrowRight /></a>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main id="top" className="relative z-10">
-        <section className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16 lg:py-20">
+        {/* HERO */}
+        <section className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:py-24">
           <div className="max-w-2xl animate-fade-in">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground shadow-sm backdrop-blur">
               <Sparkles className="size-3.5 text-primary" /> Built for medical students
             </div>
-            <h1 className="font-display text-[clamp(4rem,8vw,7.6rem)] leading-[0.82] tracking-[0] text-foreground">
+            <h1 className="font-display text-[clamp(3.4rem,7vw,6.6rem)] leading-[0.86] text-foreground">
               Study <em className="text-primary">smarter.</em>
-              <br />Remember <em className="text-primary">longer.</em>
+              <br />
+              Score <em className="text-primary">higher.</em>
+              <br />
+              <em className="text-primary">Pass.</em>
             </h1>
             <p className="mt-8 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Turn your medical study time into focused practice, clearer understanding, and lasting knowledge.
+              Wisen turns your medical courses into questions, explanations, and focused study — so
+              every study session takes you one step closer to mastery.
             </p>
-            <Button asChild size="lg" className="mt-8 h-12 rounded-md px-7 shadow-lg shadow-primary/15">
-              <a href="#question">Get started <ArrowRight /></a>
-            </Button>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Button asChild size="lg" className="h-12 rounded-md px-7 shadow-lg shadow-primary/15">
+                <a href="#final-cta">
+                  Get started <ArrowRight />
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-12 rounded-md px-7">
+                <a href="#how-it-works">See how it works</a>
+              </Button>
+            </div>
           </div>
 
-          <div id="question" className="relative mx-auto w-full max-w-2xl animate-fade-in lg:rotate-[1.2deg]">
-            <div className="absolute -left-5 -top-5 z-10 hidden items-center gap-3 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:flex">
-              <span className="grid size-8 place-items-center rounded-md bg-accent text-primary"><BrainCircuit className="size-4" /></span>
-              <span><strong className="block text-xs">AI explanation ready</strong><small className="text-[10px] text-muted-foreground">Evidence-based review</small></span>
-            </div>
-            <div className="question-shell rounded-md border border-question-border bg-question p-5 text-question-foreground shadow-2xl sm:p-8">
-              <div className="mb-6 flex items-center justify-between border-b border-question-border pb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-question-muted">
-                <span>USMLE · Cardiology</span><span className="text-question-accent">Question 18 / 40</span>
-              </div>
-              <p className="mb-3 font-mono text-[11px] text-question-accent">Adaptive practice · 01:42</p>
-              <p className="font-mono text-xs leading-6 text-question-foreground/90 sm:text-sm">
-                A 58-year-old man presents with crushing chest pain radiating to his left arm. ECG shows ST elevation in leads II, III, and aVF. Which coronary artery is most likely occluded?
-              </p>
-              <svg className="my-4 h-8 w-36 text-question-accent" viewBox="0 0 144 32" fill="none" aria-label="ECG rhythm">
-                <path d="M1 19h37l10-1 10-12 12 23 11-10h19l8-2 7 3 10-1 8-5 10 4" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-              <div className="space-y-2">
-                {answers.map((item, index) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => { setAnswer(index); setShowExplanation(false); }}
-                    className={`flex min-h-10 w-full items-center gap-3 rounded-md border px-3 py-2 text-left font-mono text-xs transition-colors ${answer === index ? "border-question-accent/50 bg-question-accent/10 text-question-accent" : "border-transparent text-question-muted hover:border-question-border hover:text-question-foreground"}`}
-                  >
-                    <span className="grid size-5 shrink-0 place-items-center rounded-full border border-current text-[9px]">{answer === index ? <Check className="size-3" /> : String.fromCharCode(65 + index)}</span>
-                    {item}{index === 1 && <span className="ml-auto hidden text-[9px] uppercase sm:inline">RCA occlusion</span>}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-question-border pt-5">
-                <button type="button" onClick={() => setShowExplanation((value) => !value)} className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-question-accent">
-                  <Sparkles className="size-3.5" /> AI explanation {showExplanation ? "open" : "ready"}
-                </button>
-                <div className="flex gap-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-question-muted">
-                  <span className="rounded-full border border-question-border px-2.5 py-1">High yield</span>
-                  <span className="rounded-full border border-question-border px-2.5 py-1">Cardiology</span>
-                </div>
-              </div>
-              {showExplanation && (
-                <p className="mt-4 rounded-md border border-question-accent/30 bg-question-accent/10 p-3 font-mono text-[11px] leading-5 text-question-foreground">
-                  ST elevation in II, III, and aVF localizes an inferior myocardial infarction, most commonly caused by right coronary artery occlusion.
-                </p>
-              )}
-            </div>
-            <div className="absolute -bottom-6 right-4 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:right-[-1rem]">
-              <strong className="block text-sm text-primary">+15% accuracy</strong><small className="text-[10px] text-muted-foreground">Cardiology this week</small>
-            </div>
-          </div>
+          <QuestionCard />
         </section>
 
+        {/* MOVING SUBJECT BAR */}
         <div className="marquee border-y border-primary/20 bg-foreground py-4 text-background">
           <div className="marquee-track">
-            {[...specialties, ...specialties].map((item, index) => (
-              <span key={`${item}-${index}`} className="flex shrink-0 items-center gap-8 font-mono text-[10px] font-bold uppercase tracking-[0.2em]">
-                {item}<span className="text-primary">·</span>
+            {[...subjects, ...subjects].map((item, index) => (
+              <span
+                key={`${item}-${index}`}
+                className="flex shrink-0 items-center gap-8 font-mono text-[10px] font-bold uppercase tracking-[0.2em]"
+              >
+                {item}
+                <span className="text-primary">·</span>
               </span>
             ))}
           </div>
         </div>
-      </main>
 
-      <footer className="relative z-10 border-t border-border bg-background px-5 py-16 sm:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 border-b border-border pb-14 md:grid-cols-[1.5fr_repeat(4,1fr)]">
-            <div>
-              <img src={dark ? darkLogo.url : lightLogo.url} alt="Wisen" className="h-12 w-auto" />
-              <p className="mt-5 max-w-xs font-display text-2xl leading-tight">Study smarter.<br />Remember longer.</p>
-            </div>
-            {[
-              ["Product", "How it works", "Question Bank", "Wisen AI", "Features"],
-              ["Resources", "FAQ", "Help", "Contact"],
-              ["Company", "About", "Founder"],
-              ["Legal", "Privacy Policy", "Terms of Service"],
-            ].map(([title, ...links]) => (
-              <div key={title}>
-                <h2 className="mb-5 text-xs font-bold uppercase tracking-[0.15em]">{title}</h2>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  {links.map((link) => <li key={link}><a href="#top" className="transition-colors hover:text-primary">{link}</a></li>)}
-                </ul>
-              </div>
+        {/* FOUR STEPS */}
+        <section id="how-it-works" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:py-28">
+          <div className="max-w-2xl">
+            <h2 className="font-display text-[clamp(2.4rem,4.5vw,4rem)] leading-[0.95]">
+              Four steps to <em className="text-primary">mastery.</em>
+            </h2>
+            <p className="mt-5 text-base leading-7 text-muted-foreground">
+              A simple study loop designed to turn medical content into lasting knowledge.
+            </p>
+          </div>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step) => (
+              <article
+                key={step.number}
+                className="rounded-lg border border-border bg-card/60 p-6 shadow-sm backdrop-blur transition-colors hover:border-primary/40"
+              >
+                <span className="font-mono text-xs font-bold tracking-[0.2em] text-primary">
+                  {step.number}
+                </span>
+                <h3 className="mt-5 font-display text-2xl leading-tight">{step.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.body}</p>
+              </article>
             ))}
           </div>
-          <p className="pt-7 text-xs text-muted-foreground">© 2026 Wisen. Built for medical students.</p>
-        </div>
-      </footer>
+        </section>
+
+        {/* CORE FEATURES */}
+        <section id="features" className="mx-auto max-w-7xl px-5 pb-8 sm:px-8">
+          <div className="max-w-2xl">
+            <h2 className="font-display text-[clamp(2.4rem,4.5vw,4rem)] leading-[0.95]">
+              Core <em className="text-primary">Features</em>
+            </h2>
+            <p className="mt-5 text-base leading-7 text-muted-foreground">
+              Wisen AI for medical education, built around the way medical students study.
+            </p>
+          </div>
+
+          <div className="mt-14 space-y-4">
+            {features.map((feature, index) => (
+              <article
+                key={feature.id}
+                id={feature.id}
+                className="grid scroll-mt-28 gap-6 rounded-lg border border-border bg-card/60 p-6 shadow-sm backdrop-blur sm:p-9 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
+              >
+                <div className="flex items-start gap-4">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-md bg-accent text-primary">
+                    <feature.icon className="size-5" />
+                  </span>
+                  <div>
+                    <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                      {String(index + 1).padStart(2, "0")} · {feature.eyebrow}
+                    </p>
+                    <h3 className="mt-2 font-display text-[clamp(1.8rem,2.6vw,2.6rem)] leading-tight">
+                      {feature.title}
+                    </h3>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-base leading-7 text-muted-foreground">{feature.body}</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {feature.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* STORY */}
+        <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:py-28">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
+            <h2 className="font-display text-[clamp(2.4rem,4.5vw,4.2rem)] leading-[0.95]">
+              Started as a student problem.
+              <br />
+              <em className="text-primary">Grew into a platform.</em>
+            </h2>
+            <div className="space-y-5 text-base leading-7 text-muted-foreground">
+              <p>
+                Medical school can mean scattered PDFs, endless recordings, lecture notes, question
+                banks, and countless tabs — all while trying to remember what actually matters for the
+                exam.
+              </p>
+              <p>
+                Wisen started with a simple idea: bring studying, practice, and understanding closer
+                together.
+              </p>
+              <p>
+                Instead of searching through pages to find an answer, Wisen helps you practice the
+                question, understand the concept, and find the material behind it.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* FOUNDER */}
+        <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 lg:pb-28">
+          <div className="rounded-lg border border-border bg-card/60 p-8 shadow-sm backdrop-blur sm:p-14">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+              Founder
+            </p>
+            <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_1fr] lg:gap-16">
+              <h2 className="font-display text-[clamp(2rem,3.6vw,3.4rem)] leading-tight">
+                Built by a student who <em className="text-primary">understands the problem.</em>
+              </h2>
+              <div className="space-y-5 text-base leading-7 text-muted-foreground">
+                <Quote className="size-6 text-primary" />
+                <p>
+                  I built Wisen because studying medicine should not mean drowning in disorganized
+                  PDFs, endless recordings, and last-minute panic.
+                </p>
+                <p>
+                  I experienced the same problem — searching for the right material, trying to
+                  practice enough questions, and spending too much time finding where an answer came
+                  from.
+                </p>
+                <p>So I built the platform I wished I had as a medical student.</p>
+                <div className="pt-2">
+                  <strong className="block text-sm text-foreground">Tebib Omar Abdelkafi</strong>
+                  <small className="text-xs text-muted-foreground">Founder &amp; CEO, Wisen</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section id="final-cta" className="mx-auto max-w-7xl scroll-mt-24 px-5 pb-24 sm:px-8">
+          <div className="rounded-lg border border-border bg-card/60 px-6 py-16 text-center shadow-sm backdrop-blur sm:px-14 sm:py-20">
+            <h2 className="mx-auto max-w-3xl font-display text-[clamp(2.6rem,5vw,4.6rem)] leading-[0.92]">
+              Study <em className="text-primary">smarter.</em> Remember{" "}
+              <em className="text-primary">longer.</em>
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-muted-foreground">
+              Turn your medical study time into focused practice, clearer understanding, and lasting
+              knowledge.
+            </p>
+            <Button asChild size="lg" className="mt-9 h-12 rounded-md px-8 shadow-lg shadow-primary/15">
+              <a href="#top">
+                Get started <ArrowRight />
+              </a>
+            </Button>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
     </div>
   );
 }
