@@ -36,9 +36,14 @@ export function QuestionCard() {
       </div>
 
       <div className="question-shell rounded-md border border-question-border bg-question p-5 text-question-foreground sm:p-8">
-        <div className="mb-6 flex items-center justify-between border-b border-question-border pb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-question-muted">
-          <span>Question 14 · Embryology</span>
-          <span className="text-question-accent">14 / 40</span>
+        <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-question-border pb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-question-muted">
+          <span className="min-w-0 leading-5">
+            <span className="mr-2 inline-block rounded-sm border border-question-accent/50 bg-question-accent/10 px-2 py-0.5 text-[8px] text-question-accent">
+              Faculty of Medicine Setif 1 · EMD
+            </span>
+            <span className="whitespace-nowrap">Question 14 · Embryology</span>
+          </span>
+          <span className="shrink-0 text-question-accent">14 / 40</span>
         </div>
 
         <p className="font-mono text-sm leading-6 text-question-foreground/90">
@@ -93,7 +98,7 @@ export function QuestionCard() {
                 <small className="block font-mono text-[9px] uppercase tracking-[0.18em] text-question-muted">
                   Source
                 </small>
-                <strong className="text-xs font-semibold">Embryology · Page 42</strong>
+                <strong className="text-xs font-semibold">Faculty of Medicine Setif 1 · Embryology · Page 42</strong>
               </span>
             </div>
             <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-question-accent">
