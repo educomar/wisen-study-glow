@@ -1,17 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
-  BarChart3,
-  BookMarked,
-  BookOpen,
-  FolderOpen,
+  Landmark,
   Quote,
-  Sparkles,
 } from "lucide-react";
 
+import facultyPhoto from "@/assets/faculty-medicine-setif-1.png.asset.json";
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
 import { QuestionCard } from "@/components/site/QuestionCard";
+import { WorkspaceBento } from "@/components/site/WorkspaceBento";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -69,49 +67,6 @@ const steps = [
   },
 ];
 
-const features = [
-  {
-    id: "qbank",
-    eyebrow: "Smart QBank",
-    icon: BookMarked,
-    title: "Practice what matters.",
-    body: "Challenge yourself with medical questions organized by subject and topic. See your answers, understand the explanations, and identify what you need to review.",
-    tags: ["Medical questions", "Subject-based", "Progress tracking"],
-  },
-  {
-    id: "wisen-ai",
-    eyebrow: "Wisen AI",
-    icon: Sparkles,
-    title: "Your medical study companion.",
-    body: "Ask questions about your courses, clarify difficult concepts, and get explanations based on the material you're studying.",
-    tags: ["Ask anything", "Course-aware", "Instant explanations"],
-  },
-  {
-    id: "citations",
-    eyebrow: "Page-Cited Answers",
-    icon: BookOpen,
-    title: "Know where the answer came from.",
-    body: "Wisen doesn't just give you an answer. It points you back to the exact page in your study material.",
-    tags: ["Exact source", "Page citation", "Open the page"],
-  },
-  {
-    id: "materials",
-    eyebrow: "Study Materials",
-    icon: FolderOpen,
-    title: "Your courses. One place.",
-    body: "Keep your medical study materials organized and connected to the questions and explanations you use to learn.",
-    tags: ["PDFs", "Courses", "Organized material"],
-  },
-  {
-    id: "progress",
-    eyebrow: "Progress",
-    icon: BarChart3,
-    title: "See what you know. Find what you don't.",
-    body: "Track your questions, accuracy, subjects, and weak areas so you always know where to focus next.",
-    tags: ["Accuracy", "Weak areas", "Study history"],
-  },
-];
-
 function Index() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -123,7 +78,7 @@ function Index() {
         <section className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:py-24">
           <div className="max-w-2xl animate-fade-in">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground shadow-sm backdrop-blur">
-              <Sparkles className="size-3.5 text-primary" /> Built for medical students
+              <Landmark className="size-3.5 text-primary" /> Built for Faculty of Medicine · UFA Setif 1
             </div>
             <h1 className="font-display text-[clamp(3.4rem,7vw,6.6rem)] leading-[0.86] text-foreground">
               Study <em className="text-primary">smarter.</em>
@@ -192,78 +147,49 @@ function Index() {
           </div>
         </section>
 
-        {/* CORE FEATURES */}
-        <section id="features" className="mx-auto max-w-7xl px-5 pb-8 sm:px-8">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-[clamp(2.4rem,4.5vw,4rem)] leading-[0.95]">
-              Core <em className="text-primary">Features</em>
-            </h2>
-            <p className="mt-5 text-base leading-7 text-muted-foreground">
-              Wisen AI for medical education, built around the way medical students study.
-            </p>
-          </div>
-
-          <div className="mt-14 space-y-4">
-            {features.map((feature, index) => (
-              <article
-                key={feature.id}
-                id={feature.id}
-                className="grid scroll-mt-28 gap-6 rounded-lg border border-border bg-card/60 p-6 shadow-sm backdrop-blur sm:p-9 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-md bg-accent text-primary">
-                    <feature.icon className="size-5" />
-                  </span>
-                  <div>
-                    <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                      {String(index + 1).padStart(2, "0")} · {feature.eyebrow}
-                    </p>
-                    <h3 className="mt-2 font-display text-[clamp(1.8rem,2.6vw,2.6rem)] leading-tight">
-                      {feature.title}
-                    </h3>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-base leading-7 text-muted-foreground">{feature.body}</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {feature.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full border border-border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <WorkspaceBento />
 
         {/* STORY */}
         <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:py-28">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
-            <h2 className="font-display text-[clamp(2.4rem,4.5vw,4.2rem)] leading-[0.95]">
-              Started as a student problem.
-              <br />
-              <em className="text-primary">Grew into a platform.</em>
-            </h2>
-            <div className="space-y-5 text-base leading-7 text-muted-foreground">
-              <p>
-                Medical school can mean scattered PDFs, endless recordings, lecture notes, question
-                banks, and countless tabs — all while trying to remember what actually matters for the
-                exam.
-              </p>
-              <p>
-                Wisen started with a simple idea: bring studying, practice, and understanding closer
-                together.
-              </p>
-              <p>
-                Instead of searching through pages to find an answer, Wisen helps you practice the
-                question, understand the concept, and find the material behind it.
-              </p>
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16">
+            <div>
+              <h2 className="font-display text-[clamp(2.4rem,4.5vw,4.2rem)] leading-[0.95]">
+                Started as a student problem.
+                <br />
+                <em className="text-primary">Grew into a platform.</em>
+              </h2>
+              <div className="mt-7 space-y-5 text-base leading-7 text-muted-foreground">
+                <p>
+                  Medical school can mean scattered PDFs, endless recordings, lecture notes, question
+                  banks, and countless tabs — all while trying to remember what actually matters for the
+                  exam.
+                </p>
+                <p>
+                  Wisen started with a simple idea: bring studying, practice, and understanding closer
+                  together.
+                </p>
+                <p>
+                  Instead of searching through pages to find an answer, Wisen helps you practice the
+                  question, understand the concept, and find the material behind it.
+                </p>
+              </div>
             </div>
+
+            <figure className="faculty-frame relative overflow-hidden rounded-lg border border-border bg-card/60 p-2 shadow-xl backdrop-blur">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-md">
+                <img
+                  src={facultyPhoto.url}
+                  alt="Entrance of the Faculty of Medicine at University Ferhat Abbas Setif 1"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-foreground/80 px-4 py-4 text-background backdrop-blur-sm sm:px-5">
+                  <figcaption className="flex items-start gap-3 text-xs leading-5 sm:text-sm">
+                    <Landmark className="mt-0.5 size-4 shrink-0 text-primary" />
+                    Born on the steps of Faculty of Medicine University Ferhat Abbas Setif 1
+                  </figcaption>
+                </div>
+              </div>
+            </figure>
           </div>
         </section>
 
