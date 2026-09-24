@@ -39,7 +39,7 @@ const compactFeatures = [
     id: "citations",
     icon: FileText,
     title: "Page-Cited Answers",
-    body: "Real citations pinpointing the exact page and paragraph from your Sétif faculty courses.",
+    body: "Real citations pinpointing the exact page and paragraph from your Setif faculty courses.",
     visual: (
       <div className="mt-auto rounded-md border border-border bg-background/60 p-3 pt-2 font-mono text-[9px] text-muted-foreground" aria-hidden="true">
         <span className="text-primary">PAGE 42</span>
@@ -69,11 +69,9 @@ const compactFeatures = [
     body: "Visual progress tracking showing your accuracy per subject so you know where to focus.",
     visual: (
       <div className="mt-auto space-y-2 pt-5" aria-hidden="true">
-        {[82, 64, 46].map((width, index) => (
-          <div key={width} className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${width - index * 3}%` }} />
-          </div>
-        ))}
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full w-4/5 rounded-full bg-primary" /></div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full w-3/5 rounded-full bg-primary" /></div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full w-2/5 rounded-full bg-primary" /></div>
       </div>
     ),
   },
