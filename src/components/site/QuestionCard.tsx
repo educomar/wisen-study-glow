@@ -1,6 +1,8 @@
 import { ArrowUpRight, BookOpen, Check, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import facultyAvatar from "@/assets/faculty-medicine-setif-1-avatar.png.asset.json";
+
 const options = [
   "Forms the neural tube",
   "Induces neural development",
@@ -37,8 +39,13 @@ export function QuestionCard() {
 
       <div className="question-shell rounded-md border border-question-border bg-question p-5 text-question-foreground sm:p-8">
         <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-question-border pb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-question-muted">
-          <span className="min-w-0 leading-5">
-            <span className="mr-2 inline-block rounded-sm border border-question-accent/50 bg-question-accent/10 px-2 py-0.5 text-[8px] text-question-accent">
+          <span className="flex min-w-0 flex-wrap items-center gap-2 leading-5">
+            <img
+              src={facultyAvatar.url}
+              alt="Faculty of Medicine Setif 1"
+              className="size-7 shrink-0 rounded-full border border-question-accent/50 object-cover ring-1 ring-question-border"
+            />
+            <span className="rounded-sm border border-question-accent/50 bg-question-accent/10 px-2 py-0.5 text-[8px] text-question-accent">
               Faculty of Medicine Setif 1 · EMD
             </span>
             <span className="whitespace-nowrap">Question 14 · Embryology</span>

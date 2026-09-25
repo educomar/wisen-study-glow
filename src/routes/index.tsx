@@ -5,7 +5,7 @@ import {
   Quote,
 } from "lucide-react";
 
-import facultyPhoto from "@/assets/faculty-medicine-setif-1.png.asset.json";
+import facultyPhoto from "@/assets/faculty-medicine-setif-1-4k.png.asset.json";
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
 import { QuestionCard } from "@/components/site/QuestionCard";
@@ -80,12 +80,10 @@ function Index() {
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground shadow-sm backdrop-blur">
               <Landmark className="size-3.5 text-primary" /> Built for Faculty of Medicine · UFA Setif 1
             </div>
-            <h1 className="font-display text-[clamp(3.4rem,7vw,6.6rem)] leading-[0.86] text-foreground">
-              Study <em className="text-primary">smarter.</em>
-              <br />
-              Score <em className="text-primary">higher.</em>
-              <br />
-              <em className="text-primary">Pass.</em>
+            <h1 className="font-display text-[clamp(2.8rem,6.5vw,6.25rem)] leading-[0.9] text-foreground">
+              <span className="block whitespace-nowrap">Study <em className="text-primary">smarter.</em></span>
+              <span className="block whitespace-nowrap">Score <em className="higher-highlight text-primary">higher.</em></span>
+              <span className="block whitespace-nowrap"><em className="text-primary">Pass.</em></span>
             </h1>
             <p className="mt-8 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
               Wisen turns your medical courses into questions, explanations, and focused study — so
