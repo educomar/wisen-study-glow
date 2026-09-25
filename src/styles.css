@@ -181,6 +181,12 @@ html { scroll-behavior: smooth; }
 }
 
 .question-shell { box-shadow: 0 28px 80px color-mix(in oklab, var(--foreground) 23%, transparent); }
+.faculty-badge {
+  animation: faculty-float 4s ease-in-out infinite;
+  box-shadow:
+    0 14px 32px color-mix(in oklab, var(--foreground) 22%, transparent),
+    0 0 24px color-mix(in oklab, var(--primary) 20%, transparent);
+}
 .higher-highlight {
   position: relative;
   display: inline-block;
@@ -205,10 +211,15 @@ html { scroll-behavior: smooth; }
 
 @keyframes marquee { to { transform: translateX(-50%); } }
 @keyframes draw-highlight { to { transform: scaleX(1) rotate(-1.5deg); } }
+@keyframes faculty-float {
+  0%, 100% { transform: translateY(0) rotate(1deg); }
+  50% { transform: translateY(-6px) rotate(-1deg); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .marquee-track { animation-play-state: paused; }
   .animate-fade-in { animation: none; }
+  .faculty-badge { animation: none; }
   .higher-highlight::after { animation: none; transform: scaleX(1) rotate(-1.5deg); }
 }

@@ -67,6 +67,29 @@ const steps = [
   },
 ];
 
+const storyEvidence = [
+  {
+    tag: "EMDs",
+    title: "Residency exam format",
+    body: "Question style benchmarked against real EMD vignettes, not generic trivia.",
+  },
+  {
+    tag: "Adaptive",
+    title: "Spaced repetition engine",
+    body: "Self-adjusts to what you keep forgetting, not a fixed 24-hour schedule.",
+  },
+  {
+    tag: "Free tier",
+    title: "No credit card required",
+    body: "Start with everything you need — upgrade only when the limits start to bite.",
+  },
+  {
+    tag: "SETIF — FIRST",
+    title: "Built in Sétif",
+    body: "Priced and localized for the region it was built to serve.",
+  },
+];
+
 function Index() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -149,31 +172,36 @@ function Index() {
 
         {/* STORY */}
         <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:py-28">
-          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16">
+          <div>
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+              Built as evidence, used since day one
+            </p>
+            <h2 className="mt-4 font-display text-[clamp(2.4rem,4.5vw,4.2rem)] leading-[0.95]">
+              Started as a student problem.
+              <br />
+              Grew into a <em className="text-primary">platform.</em>
+            </h2>
+          </div>
+
+          <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch lg:gap-12">
             <div>
-              <h2 className="font-display text-[clamp(2.4rem,4.5vw,4.2rem)] leading-[0.95]">
-                Started as a student problem.
-                <br />
-                <em className="text-primary">Grew into a platform.</em>
-              </h2>
-              <div className="mt-7 space-y-5 text-base leading-7 text-muted-foreground">
-                <p>
-                  Medical school can mean scattered PDFs, endless recordings, lecture notes, question
-                  banks, and countless tabs — all while trying to remember what actually matters for the
-                  exam.
-                </p>
-                <p>
-                  Wisen started with a simple idea: bring studying, practice, and understanding closer
-                  together.
-                </p>
-                <p>
-                  Instead of searching through pages to find an answer, Wisen helps you practice the
-                  question, understand the concept, and find the material behind it.
-                </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {storyEvidence.map((item) => (
+                  <article
+                    key={item.tag}
+                    className="min-h-44 rounded-lg border border-border bg-card/60 p-5 shadow-sm backdrop-blur transition-colors hover:border-primary/40"
+                  >
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
+                      {item.tag}
+                    </span>
+                    <h3 className="mt-5 text-base font-bold text-foreground">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                  </article>
+                ))}
               </div>
             </div>
 
-            <figure className="faculty-frame relative overflow-hidden rounded-lg border border-border bg-card/60 p-2 shadow-xl backdrop-blur">
+            <figure className="faculty-frame relative min-h-80 overflow-hidden rounded-lg border border-border bg-card/60 p-2 shadow-xl backdrop-blur">
               <div className="relative aspect-[16/10] overflow-hidden rounded-md">
                 <img
                   src={facultyPhoto.url}

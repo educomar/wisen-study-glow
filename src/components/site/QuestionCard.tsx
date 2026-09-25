@@ -37,14 +37,17 @@ export function QuestionCard() {
         </span>
       </div>
 
+      <div className="faculty-badge absolute -right-1 -top-8 z-20 grid size-16 place-items-center rounded-full border border-primary/40 bg-background/90 p-1 shadow-xl ring-4 ring-background/80 backdrop-blur sm:-right-5 sm:-top-10 sm:size-20">
+        <img
+          src={facultyAvatar.url}
+          alt="Faculty of Medicine Setif 1"
+          className="size-full rounded-full object-cover"
+        />
+      </div>
+
       <div className="question-shell rounded-md border border-question-border bg-question p-5 text-question-foreground sm:p-8">
         <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-question-border pb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-question-muted">
           <span className="flex min-w-0 flex-wrap items-center gap-2 leading-5">
-            <img
-              src={facultyAvatar.url}
-              alt="Faculty of Medicine Setif 1"
-              className="size-7 shrink-0 rounded-full border border-question-accent/50 object-cover ring-1 ring-question-border"
-            />
             <span className="rounded-sm border border-question-accent/50 bg-question-accent/10 px-2 py-0.5 text-[8px] text-question-accent">
               Faculty of Medicine Setif 1 · EMD
             </span>
