@@ -181,13 +181,34 @@ html { scroll-behavior: smooth; }
 }
 
 .question-shell { box-shadow: 0 28px 80px color-mix(in oklab, var(--foreground) 23%, transparent); }
+.higher-highlight {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+.higher-highlight::after {
+  position: absolute;
+  z-index: -1;
+  right: -0.04em;
+  bottom: 0.03em;
+  left: -0.04em;
+  height: 0.13em;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 72%, transparent);
+  content: "";
+  transform: scaleX(0) rotate(-1.5deg);
+  transform-origin: left center;
+  animation: draw-highlight 900ms 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
 .marquee { overflow: hidden; }
 .marquee-track { display: flex; width: max-content; gap: 2rem; animation: marquee 24s linear infinite; }
 
 @keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes draw-highlight { to { transform: scaleX(1) rotate(-1.5deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .marquee-track { animation-play-state: paused; }
   .animate-fade-in { animation: none; }
+  .higher-highlight::after { animation: none; transform: scaleX(1) rotate(-1.5deg); }
 }
