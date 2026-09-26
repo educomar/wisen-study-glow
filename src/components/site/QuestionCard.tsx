@@ -27,7 +27,7 @@ export function QuestionCard() {
 
   return (
     <div className="relative mx-auto w-full max-w-2xl pt-40 animate-fade-in sm:pt-44 lg:rotate-[1.2deg]">
-      <div className="absolute -left-5 bottom-16 z-10 hidden items-center gap-3 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:flex">
+      <div className="absolute -bottom-6 -left-5 z-10 hidden items-center gap-3 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:flex">
         <span className="grid size-8 place-items-center rounded-md bg-accent text-primary">
           <Sparkles className="size-4" />
         </span>
