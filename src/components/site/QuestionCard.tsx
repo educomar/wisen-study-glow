@@ -27,7 +27,7 @@ export function QuestionCard() {
 
   return (
     <div className="relative mx-auto w-full max-w-2xl pt-40 animate-fade-in sm:pt-44 lg:rotate-[1.2deg]">
-      <div className="absolute -left-5 top-36 z-10 hidden items-center gap-3 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:flex lg:top-40">
+      <div className="absolute -left-5 bottom-16 z-10 hidden items-center gap-3 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:flex">
         <span className="grid size-8 place-items-center rounded-md bg-accent text-primary">
           <Sparkles className="size-4" />
         </span>
@@ -37,16 +37,18 @@ export function QuestionCard() {
         </span>
       </div>
 
-      <figure className="faculty-badge absolute right-1 top-0 z-20 w-48 overflow-hidden rounded-md border border-primary/40 bg-background p-1 shadow-xl ring-4 ring-background/80 sm:right-0 sm:w-60 lg:-right-4">
-        <img
-          src={facultyPhoto.url}
-          alt="Facade of the Faculty of Medicine at Setif 1"
-          className="aspect-[16/9] w-full rounded-sm object-cover object-center"
-        />
-        <figcaption className="px-1 py-1.5 text-center font-mono text-[9px] font-semibold leading-tight text-foreground sm:text-[10px]">
-          Faculty of Medicine · Sétif 1
-        </figcaption>
-      </figure>
+      <div className="absolute left-1/2 top-0 z-20 w-48 -translate-x-1/2 sm:w-60">
+        <figure className="faculty-badge overflow-hidden rounded-md border border-primary/40 bg-background p-1 ring-4 ring-background/80">
+          <img
+            src={facultyPhoto.url}
+            alt="Facade of the Faculty of Medicine at Setif 1"
+            className="aspect-[16/9] w-full rounded-sm object-cover object-center"
+          />
+          <figcaption className="px-1 py-1.5 text-center font-mono text-[9px] font-semibold leading-tight text-foreground sm:text-[10px]">
+            Faculty of Medicine · Sétif 1
+          </figcaption>
+        </figure>
+      </div>
 
       <div className="question-shell rounded-md border border-question-border bg-question p-5 text-question-foreground sm:p-8">
         <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-question-border pb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-question-muted">
