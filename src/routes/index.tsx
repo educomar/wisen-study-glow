@@ -70,13 +70,13 @@ const steps = [
 const storyEvidence = [
   {
     tag: "EMDs",
-    title: "Residency exam format",
-    body: "Question style benchmarked against real EMD vignettes, not generic trivia.",
+    title: "Real exam practice",
+    body: "Practice questions built around real EMD formats. Train the way you'll actually be tested.",
   },
   {
     tag: "Adaptive",
-    title: "Spaced repetition engine",
-    body: "Self-adjusts to what you keep forgetting, not a fixed 24-hour schedule.",
+    title: "Learn what matters",
+    body: "Smart repetition built around your weak spots. Turn mistakes into lasting recall.",
   },
   {
     tag: "Free tier",
