@@ -86,7 +86,8 @@ export function WorkspaceBento() {
             The Wisen Workspace
           </p>
           <h2 className="mt-4 font-display text-[clamp(2.4rem,4.5vw,4rem)] leading-[0.95]">
-            Everything you need. <em className="text-primary">Nothing you don&apos;t.</em>
+            <span className="block">Everything you need.</span>
+            <span className="block"><em className="text-primary">Nothing you don&apos;t.</em></span>
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             Built specifically around how medical students at Faculty of Medicine Setif 1 prepare for EMDs.
