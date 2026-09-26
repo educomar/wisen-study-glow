@@ -37,7 +37,7 @@ export function QuestionCard() {
         </span>
       </div>
 
-      <div className="absolute left-1/2 top-0 z-20 w-48 -translate-x-1/2 sm:w-60">
+      <div className="absolute right-0 top-40 z-20 w-48 -translate-y-1/2 sm:w-60">
         <figure className="faculty-badge overflow-hidden rounded-md border border-primary/40 bg-background p-1 ring-4 ring-background/80">
           <img
             src={facultyPhoto.url}
