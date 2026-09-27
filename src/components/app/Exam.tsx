@@ -76,7 +76,7 @@ export function Exam({ onReview, onPractice }: { onReview: () => void; onPractic
     );
   }
 
-  const q = questions[i];
+  const q = questions[i]!;
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex items-center justify-between">

@@ -72,7 +72,7 @@ function answer(prompt: string, slide: Slide): Msg {
     return { role: "ai", text: `Quick check on "${slide.title}":`, points: [`Q: ${slide.keyTerms[0]} — what is its role here?`, `Hint: ${slide.highYield.split(".")[0]}.`, "Reply with your answer and I'll correct it."], cite: slide.n };
   }
   if (p.includes("simplify")) {
-    return { role: "ai", text: "In plain words:", points: [slide.body[0].split(",")[0] + ".", `Remember one idea: ${slide.highYield.split(".")[0]}.`], cite: slide.n };
+    return { role: "ai", text: "In plain words:", points: [slide.body[0]!.split(",")[0] + ".", `Remember one idea: ${slide.highYield.split(".")[0]}.`], cite: slide.n };
   }
   const hit = all.find((s) => s.keyTerms.some((k) => p.includes(k.toLowerCase().split(" ")[0]))) ?? slide;
   return { role: "ai", text: `Based on your lecture (Slide ${hit.n} · ${hit.title}):`, points: [...hit.body.slice(0, 2), `High-yield: ${hit.highYield}`], cite: hit.n };
@@ -82,7 +82,7 @@ const chips = ["What's high-yield for EMD?", "Explain the neural crest", "Quiz m
 
 export function Workspace() {
   const [i, setI] = useState(0);
-  const slide = lecture.slides[i];
+  const slide = lecture.slides[i]!;
   const [msgs, setMsgs] = useState<Msg[]>([{ role: "ai", text: "Hi! I'm grounded in your Embryology Chapter 3 lecture. Select any text on the left or ask me anything.", cite: slide.n }]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -137,7 +137,7 @@ export function Workspace() {
           <div className="flex items-center gap-1">
             <Button size="icon" variant="ghost" disabled={i === 0} onClick={() => setI(i - 1)} aria-label="Previous slide"><ChevronLeft /></Button>
             <span className="font-mono text-xs text-muted-foreground">{i + 1}/{lecture.slides.length}</span>
-            <Button size="icon" variant="ghost" disabled={i === lecture.slides.length - 1} onClick={() => { setI(i + 1); log(`Read Embryology · Slide ${lecture.slides[i + 1].n}`); }} aria-label="Next slide"><ChevronRight /></Button>
+            <Button size="icon" variant="ghost" disabled={i === lecture.slides.length - 1} onClick={() => { setI(i + 1); log(`Read Embryology · Slide ${lecture.slides[i + 1]!.n}`); }} aria-label="Next slide"><ChevronRight /></Button>
           </div>
         </header>
         <div ref={readerRef} onMouseUp={onMouseUp} className="relative flex-1 overflow-y-auto p-5 sm:p-7">

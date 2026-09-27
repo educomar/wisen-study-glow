@@ -18,7 +18,7 @@ export function Flashcards() {
   const all = useMemo(() => [...seedCards, ...s.customCards], [s.customCards]);
   const now = Date.now();
   const due = all.filter((c) => (s.cards[c.id]?.due ?? 0) <= now);
-  const card = due[0];
+  const card = due[0]!;
   const counts = { New: all.filter((c) => !s.cards[c.id]).length, Learning: all.filter((c) => s.cards[c.id]?.status === "learning").length, Review: all.filter((c) => s.cards[c.id]?.status === "review").length };
 
   const rate = (r: (typeof ratings)[number]) => {

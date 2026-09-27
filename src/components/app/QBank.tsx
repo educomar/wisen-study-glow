@@ -53,7 +53,7 @@ export function QuestionView({ q, onNext }: { q: Question; onNext?: () => void }
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md border border-border px-2 py-1 font-mono text-xs text-primary">Reference · Embryology · Slide {q.slide}</span>
-            <Button size="sm" variant="outline" onClick={() => { addCard(q.stem, q.options[q.answer], q.why, q.topic); toast("Saved as flashcard"); }}><Layers /> Save as Flashcard</Button>
+            <Button size="sm" variant="outline" onClick={() => { addCard(q.stem, q.options[q.answer]!, q.why, q.topic); toast("Saved as flashcard"); }}><Layers /> Save as Flashcard</Button>
             {onNext && <Button size="sm" className="ml-auto" onClick={onNext}>Next <ChevronRight /></Button>}
           </div>
         </div>
@@ -62,11 +62,11 @@ export function QuestionView({ q, onNext }: { q: Question; onNext?: () => void }
   );
 }
 
-export function QBank({ topic }: { topic?: string }) {
+export function QBank({ topic }: { topic?: string | undefined }) {
   const s = useAppState();
   const pool = topic ? questions.filter((q) => q.topic === topic) : questions;
   const [i, setI] = useState(0);
-  const q = pool[i % pool.length];
+  const q = pool[i % pool.length]!;
   const weak = Object.entries(s.attempts).map(([t, a]) => ({ t, pct: Math.round((a.correct / a.total) * 100), n: a.total })).sort((a, b) => a.pct - b.pct)[0];
 
   return (
