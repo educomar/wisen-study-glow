@@ -114,7 +114,7 @@ function Index() {
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Button asChild size="lg" className="h-12 rounded-md px-7 shadow-lg shadow-primary/15">
-                <a href="#final-cta">
+                <a href="/app">
                   Get started <ArrowRight />
                 </a>
               </Button>
@@ -262,7 +262,7 @@ function Index() {
               knowledge.
             </p>
             <Button asChild size="lg" className="mt-9 h-12 rounded-md px-8 shadow-lg shadow-primary/15">
-              <a href="#top">
+              <a href="/app">
                 Get started <ArrowRight />
               </a>
             </Button>
