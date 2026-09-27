@@ -98,7 +98,7 @@ function Index() {
 
       <main id="top" className="relative z-10">
         {/* HERO */}
-        <section className="mx-auto grid max-w-7xl items-center gap-12 px-5 pt-8 pb-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:pt-10 lg:pb-24">
+        <section className="mx-auto grid max-w-7xl items-center gap-12 px-5 pt-6 pb-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:pt-8 lg:pb-24">
           <div className="max-w-2xl animate-fade-in">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground shadow-sm backdrop-blur">
               <Landmark className="size-3.5 text-primary" /> Built for Faculty of Medicine · UFA Setif 1

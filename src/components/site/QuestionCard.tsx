@@ -26,7 +26,7 @@ export function QuestionCard() {
   const sourced = stage >= 3;
 
   return (
-    <div className="relative mx-auto w-full max-w-2xl pt-40 animate-fade-in sm:pt-44 lg:rotate-[1.2deg]">
+    <div className="relative mx-auto w-full max-w-2xl pt-16 animate-fade-in sm:pt-20 lg:rotate-[1.2deg]">
       <div className="absolute -bottom-6 -left-5 z-10 hidden items-center gap-3 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:flex">
         <span className="grid size-8 place-items-center rounded-md bg-accent text-primary">
           <Sparkles className="size-4" />
@@ -37,7 +37,7 @@ export function QuestionCard() {
         </span>
       </div>
 
-      <div className="absolute right-0 top-40 z-20 w-48 -translate-y-1/2 sm:w-60">
+      <div className="absolute right-0 top-16 z-20 w-48 -translate-y-1/2 sm:top-20 sm:w-60">
         <figure className="faculty-badge overflow-hidden rounded-md border border-primary/40 bg-background p-1 ring-4 ring-background/80">
           <img
             src={facultyPhoto.url}
