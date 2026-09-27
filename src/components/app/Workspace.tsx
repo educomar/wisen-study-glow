@@ -74,7 +74,7 @@ function answer(prompt: string, slide: Slide): Msg {
   if (p.includes("simplify")) {
     return { role: "ai", text: "In plain words:", points: [slide.body[0]!.split(",")[0] + ".", `Remember one idea: ${slide.highYield.split(".")[0]}.`], cite: slide.n };
   }
-  const hit = all.find((s) => s.keyTerms.some((k) => p.includes(k.toLowerCase().split(" ")[0]))) ?? slide;
+  const hit = all.find((s) => s.keyTerms.some((k) => p.includes(k.toLowerCase().split(" ")[0]!))) ?? slide;
   return { role: "ai", text: `Based on your lecture (Slide ${hit.n} · ${hit.title}):`, points: [...hit.body.slice(0, 2), `High-yield: ${hit.highYield}`], cite: hit.n };
 }
 
