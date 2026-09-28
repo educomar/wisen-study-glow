@@ -21,7 +21,10 @@ export function Exam({ onReview, onPractice }: { onReview: () => void; onPractic
 
   useEffect(() => {
     if (phase !== "run") return;
-    if (left <= 0) return finish();
+    if (left <= 0) {
+      finish();
+      return;
+    }
     const t = setTimeout(() => setLeft(left - 1), 1000);
     return () => clearTimeout(t);
   });
