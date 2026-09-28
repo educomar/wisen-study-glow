@@ -46,13 +46,13 @@ export function PdfPage({ pdf, n, width }: { pdf: PDFDocumentProxy; n: number; w
       c.style.height = `${vp.height}px`;
       const r = page.render({ canvas: c, canvasContext: c.getContext("2d")!, viewport: vp, transform: [os, 0, 0, os, 0, 0] });
       task = r;
-      await r.promise.catch(() => {});
+      await r.promise;
       if (cancelled) return;
       text.current.innerHTML = "";
       text.current.style.setProperty("--scale-factor", String(vp.scale));
       text.current.style.setProperty("--total-scale-factor", String(vp.scale));
       await new lib.TextLayer({ textContentSource: page.streamTextContent(), container: text.current, viewport: vp }).render();
-    })().catch(() => {});
+    })().catch((e) => console.error("pdf page", e));
     return () => { cancelled = true; task?.cancel(); };
   }, [near, width, pdf, n]);
 
