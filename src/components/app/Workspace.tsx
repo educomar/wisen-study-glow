@@ -1,7 +1,6 @@
 import { AlertCircle, BookOpen, CheckCircle2, FileText, FileUp, HelpCircle, Layers, Lightbulb, ListChecks, Loader2, Send, Target, Wand2, X, AlignLeft } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import "pdfjs-dist/web/pdf_viewer.css";
 
 import { lecture, type Slide } from "./data";
 import { addCard, log } from "./store";
