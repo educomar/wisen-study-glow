@@ -44,7 +44,7 @@ export function PdfPage({ pdf, n, width }: { pdf: PDFDocumentProxy; n: number; w
       c.height = Math.floor(vp.height * os);
       c.style.width = `${vp.width}px`;
       c.style.height = `${vp.height}px`;
-      const r = page.render({ canvas: c, canvasContext: c.getContext("2d")!, viewport: vp, transform: [os, 0, 0, os, 0, 0] });
+      const r = page.render({ canvasContext: c.getContext("2d")!, viewport: vp, transform: [os, 0, 0, os, 0, 0] });
       task = r;
       await r.promise;
       if (cancelled) return;
