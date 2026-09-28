@@ -66,7 +66,7 @@ export function Workspace() {
 
   useEffect(() => {
     setPage(doc.pages[0]?.pageNumber ?? 1);
-    setMsgs([{ role: "ai", text: `I'm grounded in “${doc.title}” (${doc.pages.length} pages). Select any text or ask a question — I'll cite the page.`, cite: doc.pages[0]?.pageNumber }]);
+    setMsgs([{ role: "ai", text: `I'm grounded in “${doc.title}” (${doc.pages.length} pages). Select any text or ask a question — I'll cite the page.`, cite: doc.pages[0]?.pageNumber ?? 1 }]);
     readerRef.current?.scrollTo({ top: 0 });
   }, [doc]);
 
@@ -85,7 +85,7 @@ export function Workspace() {
     if (!root) return;
     const ratios = new Map<number, number>();
     const io = new IntersectionObserver((es) => {
-      es.forEach((e) => ratios.set(Number((e.target as HTMLElement).dataset.page), e.intersectionRatio));
+      es.forEach((e) => ratios.set(Number((e.target as HTMLElement).dataset["page"]), e.intersectionRatio));
       let best = 0, bp = 0;
       ratios.forEach((r, p) => { if (r > best) { best = r; bp = p; } });
       if (bp) setPage(bp);
@@ -109,7 +109,7 @@ export function Workspace() {
     const text = s?.toString().trim();
     if (!s || !text || !readerRef.current || s.rangeCount === 0) return setSel(null);
     const anchor = s.anchorNode instanceof Element ? s.anchorNode : s.anchorNode?.parentElement;
-    const pg = Number(anchor?.closest<HTMLElement>("[data-page]")?.dataset.page) || page;
+    const pg = Number(anchor?.closest<HTMLElement>("[data-page]")?.dataset["page"]) || page;
     const r = s.getRangeAt(0).getBoundingClientRect();
     const box = readerRef.current.getBoundingClientRect();
     setSel({ text, page: pg, x: r.left - box.left + r.width / 2, y: r.top - box.top + readerRef.current.scrollTop });
