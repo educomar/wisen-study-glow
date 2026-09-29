@@ -1,6 +1,6 @@
 export type DocPage = { pageNumber: number; text: string };
-export type Mcq = { stem: string; options?: string[]; answer: string; explain: string };
-export type AiMsg = { role: "ai"; text: string; points?: string[]; cite?: number; mcq?: Mcq };
+export type Mcq = { stem: string; options?: string[] | undefined; answer: string; explain: string };
+export type AiMsg = { role: "ai"; text: string; points?: string[]; cite?: number; mcq?: Mcq | undefined; route?: string; routeNote?: string; sources?: string[]; studentExp?: boolean; rich?: boolean };
 
 const STOP = new Set("this that with from have were been their there which what when where these those into also than then they them such about more most other some very your only each over under after before between during because while through being does done make made will would could should shall must upon within without explain simplify summarize quiz page lecture course".split(" "));
 
@@ -13,6 +13,12 @@ function rank(query: string, pages: DocPage[], prefer: number) {
   return pages
     .flatMap((p) => sentences(p.text).map((s) => ({ s, p: p.pageNumber, score: words(s).filter((w) => q.has(w)).length + (p.pageNumber === prefer ? 0.6 : 0) })))
     .sort((a, b) => b.score - a.score);
+}
+
+export function rankPages(query: string, pages: DocPage[], prefer: number) {
+  const hits = rank(query, pages, prefer);
+  const ids = [prefer, ...hits.filter((h) => h.score > 0).map((h) => h.p)].filter((n, i, a) => a.indexOf(n) === i).slice(0, 3);
+  return ids.map((n) => pages.find((p) => p.pageNumber === n)).filter((p): p is DocPage => !!p && !!p.text.trim());
 }
 
 function terms(text: string, n = 8) {
