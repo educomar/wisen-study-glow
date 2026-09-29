@@ -7,6 +7,8 @@ import { addCard, log } from "./store";
 import { respond, sentences, type AiMsg, type DocPage } from "./grounded";
 import { loadPdfLib, PdfPage } from "./PdfPage";
 import { Button } from "@/components/ui/button";
+import { askWisenAI } from "@/lib/ai/client";
+import { AiSettings } from "./AiSettings";
 
 type Msg = { role: "user"; text: string } | AiMsg;
 type Doc = { subject: string; title: string; pages: DocPage[]; pdf?: PDFDocumentProxy };
@@ -93,13 +95,13 @@ export function Workspace() {
     return () => io.disconnect();
   }, [doc, width]);
 
-  const reply = (action: string, query: string, display: string, p = page) => {
+  const reply = async (action: string, query: string, display: string, p = page) => {
+    const history = msgs.slice(-10).map((m) => ({ role: m.role === "user" ? "user" as const : "assistant" as const, text: (m.text + (m.role === "ai" && m.points ? "\n" + m.points.join("\n") : "")).slice(0, 4000) }));
     setMsgs((m) => [...m, { role: "user", text: display }]);
     setTyping(true);
-    setTimeout(() => {
-      setMsgs((m) => [...m, respond(action, query, doc.pages, p, doc.subject)]);
-      setTyping(false);
-    }, 550);
+    const res = await askWisenAI({ action, message: query.slice(0, 6000), subject: doc.subject, title: doc.title, page: p, pages: doc.pages, history });
+    setMsgs((m) => [...m, res]);
+    setTyping(false);
   };
   const send = (t: string) => { if (!t.trim()) return; setInput(""); reply("Ask", t, t); };
 
@@ -221,6 +223,7 @@ export function Workspace() {
           <header className="flex items-center gap-2 border-b border-border px-4 py-2.5">
             <span className="grid size-8 place-items-center rounded-full bg-primary/15 text-primary"><BookOpen className="size-4" /></span>
             <div className="min-w-0 flex-1"><p className="text-sm font-semibold">Wisen AI</p><p className="truncate text-xs text-muted-foreground">Grounded in {doc.title}</p></div>
+            <AiSettings />
             <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] text-primary">Context: {doc.subject} · Page {page}</span>
           </header>
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
@@ -229,10 +232,12 @@ export function Workspace() {
                 <div key={k} className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-sm text-primary-foreground">{m.text}</div>
               ) : (
                 <div key={k} className="max-w-[94%] text-sm">
-                  <p>{m.text}</p>
+                  <div dir="auto" className="space-y-1.5">{m.text.split(/\n+/).map((l, i) => { const b = /^\s*[-•*]\s+/.test(l); const html = l.replace(/^\s*[-•*]\s+/, "").split(/\*\*(.+?)\*\*/g).map((x, j) => j % 2 ? <strong key={j}>{x}</strong> : x); return b ? <p key={i} className="pl-4 before:-ml-3 before:mr-1.5 before:text-primary before:content-['•']">{html}</p> : <p key={i}>{html}</p>; })}</div>
                   {m.points && <ul className="mt-2 list-disc space-y-1 pl-5 text-foreground/90">{m.points.map((p) => <li key={p}>{p}</li>)}</ul>}
                   {m.mcq && <McqView q={m.mcq} />}
-                  {m.cite && <button onClick={() => goto(m.cite!)} className="mt-2 inline-flex rounded-md border border-border px-2 py-0.5 font-mono text-[11px] text-primary hover:bg-accent">[Source: {doc.subject} · Page {m.cite}]</button>}
+                  {m.route && <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground" title={m.routeNote}>Routed via <span className="text-primary">{m.route}</span>{m.routeNote ? ` · ${m.routeNote}` : ""}</p>}
+                  {m.sources?.map((s) => <p key={s} className="mt-1 inline-flex mr-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 font-mono text-[11px] text-primary">Source: {s}</p>)}
+                  {m.cite ? <button onClick={() => goto(m.cite!)} className="mt-2 inline-flex rounded-md border border-border px-2 py-0.5 font-mono text-[11px] text-primary hover:bg-accent">[Source: {doc.subject} · Page {m.cite}]</button> : null}
                 </div>
               ),
             )}
@@ -241,12 +246,12 @@ export function Workspace() {
           </div>
           <div className="border-t border-border p-3">
             <div className="mb-2 flex flex-wrap gap-1.5">
-              {["Summarize this page", "What's high-yield for EMD?", "Generate an EMD question"].map((c) => (
-                <button key={c} onClick={() => reply(c.startsWith("Summarize") ? "Summarize" : c.startsWith("Generate") ? "Generate EMD Question" : "Why on EMD?", doc.pages.find((p) => p.pageNumber === page)?.text ?? "", `${c} (Page ${page})`)} className="rounded-full border border-border px-3 py-1 text-xs hover:border-primary hover:text-primary">{c}</button>
+              {["Summarize this page", "What's high-yield for EMD?", "Generate an EMD question", "EMD & coefficients at UFAS1"].map((c) => (
+                <button key={c} onClick={() => reply(c.startsWith("Summarize") ? "Summarize" : c.startsWith("Generate") ? "Generate EMD Question" : c.startsWith("EMD &") ? "Ask" : "Why on EMD?", c.startsWith("EMD &") ? "EMD dates, QCM correction and module coefficients at UFAS1 1ère année" : `${c} (Page ${page}): ${(doc.pages.find((p) => p.pageNumber === page)?.text ?? "").slice(0, 1500)}`, `${c}${c.startsWith("EMD &") ? "" : ` (Page ${page})`}`)} className="rounded-full border border-border px-3 py-1 text-xs hover:border-primary hover:text-primary">{c}</button>
               ))}
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2">
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={`Ask about page ${page}…`} className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              <input value={input} onChange={(e) => setInput(e.target.value)} dir="auto" placeholder={`Ask in English, Français, العربية or Darija…`} className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
               <Button type="submit" size="icon" className="size-10" aria-label="Send"><Send /></Button>
             </form>
           </div>
