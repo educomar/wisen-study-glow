@@ -1,0 +1,235 @@
+{
+  "metadata": {
+    "title": "UFAS1 Faculty of Medicine — 1st Year Medicine Knowledge Base",
+    "university": "Université Ferhat Abbas Sétif 1",
+    "faculty": "Faculté de Médecine",
+    "city": "Sétif",
+    "country": "Algérie",
+    "year": "1ère année médecine",
+    "languages": ["Arabic", "French", "English"],
+    "purpose": "AI retrieval / RAG knowledge base",
+    "source_scope": "User-provided student information",
+    "important_note": "Student experiences must not be presented as official rules. Time-sensitive academic information should be verified against the latest official faculty documents."
+  },
+  "medical_studies": {
+    "duration_years": 7,
+    "cycles": {
+      "pre_clinical": {
+        "duration_years": 3,
+        "years": [1, 2, 3],
+        "description": "The first two years mainly study the normal state of the human body, its composition and functioning. The third year is described as a transition between pre-clinical and clinical cycles."
+      },
+      "clinical": {
+        "duration_years": 3,
+        "years": [4, 5, 6],
+        "description": "Clinical years are described as being organized using a modular system."
+      },
+      "internat": {
+        "duration_years": 1,
+        "year": 7
+      }
+    }
+  },
+  "first_year": {
+    "system": "Semestriel",
+    "exams": {
+      "EMD1": "Around end of January",
+      "EMD2": "Around mid-June"
+    },
+    "annual_modules": [
+      { "name": "Anatomie", "english": "Anatomy", "coefficient": 2 },
+      { "name": "Biochimie", "english": "Biochemistry", "coefficient": 2 },
+      { "name": "Biophysique", "english": "Biophysics", "coefficient": 2 },
+      { "name": "Biostatistique et informatique", "english": "Biostatistics and Computer Science", "coefficient": 2 },
+      { "name": "Cytologie", "english": "Cytology", "coefficient": 2 },
+      { "name": "Chimie", "english": "Chemistry", "coefficient": 2 }
+    ],
+    "semester_modules": {
+      "S1": [
+        { "name": "SSH", "full_name": "Santé, Société et Humanité", "coefficient": 1 },
+        { "name": "Embryologie", "english": "Embryology", "coefficient": 1 }
+      ],
+      "S2": [
+        { "name": "Histologie", "english": "Histology", "coefficient": 1 },
+        { "name": "Physiologie", "english": "Physiology", "coefficient": 1 }
+      ]
+    },
+    "english_taught_modules": ["Anatomy", "Histology", "Embryology", "Cytology"],
+    "language_note": "Other modules may use a mixture of French and English."
+  },
+  "assessment": {
+    "question_types": {
+      "QROC": "Question à réponse ouverte courte",
+      "QCS": "Question à choix simple; one correct answer",
+      "QCM": "Question à choix multiple; multiple options may be correct"
+    },
+    "qcm_correction": {
+      "tout_ou_rien": {
+        "description": "All correct options must be selected; an additional or missing option results in zero.",
+        "example": { "correct": ["A", "B", "C"], "A_B": 0, "A_B_C": 0.99, "A_B_C_D": 0 }
+      },
+      "partiel": {
+        "description": "An incomplete correct answer receives partial credit; an incorrect option results in zero.",
+        "example": { "correct": ["A", "B", "C"], "A_B": 0.66, "A_B_C": 0.99, "A_B_C_D": 0 }
+      },
+      "partiel_ameliore_positif": {
+        "description": "An incomplete correct answer receives partial credit; an incorrect option can reduce the score.",
+        "example": { "correct": ["A", "B", "C"], "A_B": 0.66, "A_B_C": 0.99, "A_B_D": 0.33 }
+      }
+    },
+    "strategy_note": "Students should know the correction system before the exam and avoid selecting options they are not confident about."
+  },
+  "modules": {
+    "Anatomie": {
+      "english": "Anatomy",
+      "type": "annual",
+      "coefficient": 2,
+      "topics": ["Upper limb / membre supérieur", "Lower limb / membre inférieur", "Osteology", "Arthrology", "Muscles", "Vascularisation", "Innervation"],
+      "study_method": ["Memorization", "Understanding", "Visual memory", "Use anatomical schemas and atlases", "Use 3D anatomy applications", "Practice with previous exams"],
+      "resources": ["3D Atlas Anatomy", "Kamina", "Anatomical atlases", "Pr Hammoudi", "Taimtalks Med", "Kenhub", "Previous-year QCMs"],
+      "teachers": [
+        { "name": "Pr Hammoudi", "source_type": "student_experience", "notes": "Students report that explanations are very good and questions are based on the course." },
+        { "name": "Pr Hamdane", "source_type": "student_experience", "notes": "Uses the board for explanations; students are advised to follow the diagrams and explanations." }
+      ],
+      "assessment_notes": "Annual module; student information describes a compensatory system between periods and a non-compensable eliminatory grade below 5/20."
+    },
+    "Biochimie": {
+      "english": "Biochemistry",
+      "type": "annual",
+      "coefficient": 2,
+      "topics": ["Proteins: structure, function, metabolism", "Carbohydrates / glucides: structure, function, metabolism", "Lipids: structure, function, metabolism"],
+      "study_method": ["Understanding", "Memorization", "Metabolism exercises", "Previous-year QCMs"],
+      "teachers": [
+        { "name": "Mme Djenane", "source_type": "student_experience", "notes": "Uses the board extensively; students report that taking notes is useful." },
+        { "name": "Mme Khabat", "source_type": "student_experience", "notes": "Explains using the course." }
+      ],
+      "assessment_notes": "Annual module. Student information describes a non-compensable eliminatory grade below 5/20."
+    },
+    "Cytologie": {
+      "english": "Cytology",
+      "type": "annual",
+      "coefficient": 2,
+      "number_of_courses": 12,
+      "topics": ["Cell", "Cell components", "Organelles", "Cell functions", "Human cell", "Viruses", "Bacteria", "Bacterial morphology and types"],
+      "study_method": ["Memorization", "Repeated revision", "QCM practice"],
+      "teacher": { "name": "Pr Tedjar", "source_type": "student_experience", "notes": "Students describe the exams as generally accessible; some previous questions may recur, while new questions can also appear." },
+      "exam": { "approx_questions": 30, "formats": ["QCM", "QCS"] },
+      "assessment_notes": "Student information describes a non-compensable eliminatory grade below 5/20."
+    },
+    "Biophysique": {
+      "english": "Biophysics",
+      "type": "annual",
+      "coefficient": 2,
+      "main_axes": ["Electricity", "Solutions", "Geometrical Optics", "Radiation"],
+      "topics": {
+        "Electricity": ["Electrostatics", "Electrodynamics", "Electrical circuits", "Ohm-related concepts", "Power", "Electric current"],
+        "Solutions": ["Water", "Ions", "Transport", "Dialysis", "Blood filtration"],
+        "Geometrical Optics": ["Lenses", "Lens types", "Light", "Eye", "Myopia", "Vision correction", "Lens power"],
+        "Radiation": ["Types of radiation", "Rayonnements", "Rayons", "Radiations", "Electromagnetic and quantum-related concepts"]
+      },
+      "teachers": [
+        { "name": "Pr Belguett", "source_type": "student_experience", "notes": "Uses the board; students report that taking notes during class is useful. Previous QCMs are described as frequently useful/repeated." },
+        { "name": "Pr Kachi", "source_type": "student_experience", "notes": "Mentioned for Solutions; uses course material and explains well according to the student report." }
+      ],
+      "study_method": ["Understanding", "Few memorization-heavy elements", "Exercises", "Previous-year QCMs"],
+      "exam": { "approx_questions": 20 },
+      "assessment_notes": "Annual module; student information describes a compensatory system and a non-compensable eliminatory grade below 5/20."
+    },
+    "Biostatistique et informatique": {
+      "english": "Biostatistics and Computer Science",
+      "type": "annual_for_biostatistics_plus_semester_component_for_informatics",
+      "coefficient": 2,
+      "biostatistics": {
+        "number_of_courses": 12,
+        "topics": ["Statistical terminology", "Statistical formulas", "When to use formulas", "Statistical tests", "Types of tests", "Medical applications"],
+        "applications": ["Disease statistics", "Drug effectiveness", "Relationship between disease and a factor"],
+        "study_method": ["Practice", "Many exercises", "Previous-year QCMs", "Formula notebook"],
+        "teacher": { "name": "Pr Fermas", "source_type": "student_experience" },
+        "high_frequency_topics_reported": ["Normal distribution", "Statistical tests"]
+      },
+      "second_semester_exam_structure_reported": { "biostatistics_questions": 15, "computer_science_questions": 15, "total_questions": 30 },
+      "assessment_notes": "Student information describes a compensatory system and a non-compensable eliminatory grade below 5/20."
+    },
+    "Chimie": {
+      "english": "Chemistry",
+      "type": "annual",
+      "coefficient": 2,
+      "number_of_chapters": 6,
+      "sections": {
+        "Chimie générale": ["Atoms", "Matter", "pH", "Dissociation", "Periodic table", "Chemical bonds"],
+        "Chimie organique": ["Carbon chemistry", "Carbon compounds", "Structures", "Reactions"]
+      },
+      "teacher": { "name": "Pr Ounaghi Yasmine", "source_type": "student_experience", "notes": "Explains using the course; the student report describes the course as relatively stable." },
+      "resources": ["Pr Mohsen El Meski — YouTube", "Previous-year QCMs"],
+      "exam": { "approx_questions_range": [30, 40], "reported_difficulty": "medium" },
+      "study_method": ["Understand the course", "Memorize the periodic table", "Practice previous QCMs"]
+    },
+    "Embryologie": {
+      "english": "Embryology",
+      "type": "semester",
+      "semester": "S1",
+      "coefficient": 1,
+      "number_of_courses": 7,
+      "number_of_TD": 4,
+      "topics": ["Gametogenesis", "Sperm formation", "Oocyte formation", "Fertilization", "Embryo formation", "First four weeks of development"],
+      "teacher": { "name": "Pr Guettaf", "source_type": "student_experience", "notes": "Students report that attending the course or listening to the teacher's explanations is useful." },
+      "resources": ["Ninga Nerd — YouTube"],
+      "exam": { "format": "QCS", "approx_questions_range": [20, 30], "student_report": "Previous-year questions and ideas are reported as generally not repeated; new ideas may appear." }
+    },
+    "SSH": {
+      "full_name": "Santé, Société et Humanité",
+      "type": "semester",
+      "semester": "S1",
+      "coefficient": 1,
+      "approx_number_of_courses": 21,
+      "topics": ["History of medicine", "Ancient medicine", "Greece", "Rome", "Doctor-patient relationship", "Evolution of medicine", "Historical and philosophical aspects of medicine"],
+      "study_method": ["Memorization", "Some understanding", "Start revision early", "Previous-year QCMs"],
+      "exam": { "formats": ["QCM", "QCS"], "reported_example": "Around 40 QCMs", "reported_focus": ["Histoire des hôpitaux"] },
+      "source_note": "The content and exam-focus details are based on student experience supplied by the user."
+    },
+    "Histologie": {
+      "english": "Histology",
+      "type": "semester",
+      "semester": "S2",
+      "coefficient": 1,
+      "status": "Only basic metadata was provided; detailed content is not yet included."
+    },
+    "Physiologie": {
+      "english": "Physiology",
+      "type": "semester",
+      "semester": "S2",
+      "coefficient": 1,
+      "status": "Only basic metadata was provided; detailed content is not yet included."
+    }
+  },
+  "student_experience": {
+    "perceived_advantages": [
+      "Students describe the theoretical teaching as strong.",
+      "Some teachers are described as competent and supportive.",
+      "Course material is considered important.",
+      "Previous exams and educational resources are available."
+    ],
+    "perceived_difficulties": [
+      "Large student numbers can make practical activities more difficult.",
+      "A high student-to-hospital capacity ratio is reported as a practical challenge.",
+      "Some students report significant stress around assessments.",
+      "Teaching styles vary between instructors.",
+      "French and English may both be used."
+    ],
+    "labeling_rule": "These are student perceptions and must not be presented as official institutional facts."
+  },
+  "ai_retrieval_rules": {
+    "source_priority": [
+      "Official university/faculty documents",
+      "Official academic regulations",
+      "Official examination announcements",
+      "Teacher-provided course information",
+      "Student experiences and previous-year reports"
+    ],
+    "never_invent": true,
+    "exam_prediction_rule": "Never guarantee that a question will appear on an exam. Say that a topic or question was reported as recurrent only when supported by the source.",
+    "missing_information_response": "This information is not currently available in the knowledge base.",
+    "time_sensitive_fields": ["exam_dates", "teachers", "curriculum", "coefficients", "correction_system", "retake_rules", "question_count"],
+    "language_handling": ["Arabic", "Algerian Darija", "French", "English"]
+  }
+}
