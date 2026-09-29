@@ -1,6 +1,6 @@
 export type DocPage = { pageNumber: number; text: string };
-export type Mcq = { stem: string; options?: string[]; answer: string; explain: string };
-export type AiMsg = { role: "ai"; text: string; points?: string[]; cite?: number; mcq?: Mcq; route?: string; routeNote?: string; sources?: string[]; studentExp?: boolean; rich?: boolean };
+export type Mcq = { stem: string; options?: string[] | undefined; answer: string; explain: string };
+export type AiMsg = { role: "ai"; text: string; points?: string[]; cite?: number; mcq?: Mcq | undefined; route?: string; routeNote?: string; sources?: string[]; studentExp?: boolean; rich?: boolean };
 
 const STOP = new Set("this that with from have were been their there which what when where these those into also than then they them such about more most other some very your only each over under after before between during because while through being does done make made will would could should shall must upon within without explain simplify summarize quiz page lecture course".split(" "));
 

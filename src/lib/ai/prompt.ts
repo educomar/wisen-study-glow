@@ -9,7 +9,7 @@ export type WisenRequest = {
   page: number;
   excerpts: { page: number; text: string }[];
   history: { role: "user" | "assistant"; text: string }[];
-  image?: string;
+  image?: string | undefined;
 };
 
 const LANG_RULE: Record<Lang, string> = {
