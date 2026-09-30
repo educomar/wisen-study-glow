@@ -74,9 +74,14 @@ export const lecture = {
   ] as Slide[],
 };
 
+export type Difficulty = "Easy" | "Medium" | "Hard";
 export type Question = {
   id: string;
+  subject: string;
+  /** lesson / chapter */
   topic: string;
+  difficulty: Difficulty;
+  source?: string;
   stem: string;
   options: string[];
   answer: number;
@@ -85,7 +90,7 @@ export type Question = {
   slide: number;
 };
 
-export const questions: Question[] = [
+const embryo: Omit<Question, "subject" | "difficulty">[] = [
   {
     id: "q1",
     topic: "Neurulation",
@@ -238,7 +243,13 @@ export const questions: Question[] = [
   },
 ];
 
-export type Card = { id: string; front: string; back: string; tip: string; topic: string };
+const DIFF: Record<string, Difficulty> = { q1: "Hard", q2: "Medium", q3: "Easy", q4: "Medium", q5: "Easy", q6: "Easy", q7: "Easy", q8: "Medium", q9: "Medium", q10: "Hard" };
+
+export const questions: Question[] = [
+  ...embryo.map((q) => ({ ...q, subject: "Embryology", difficulty: DIFF[q.id] ?? "Medium" })),
+];
+
+export type Card = { id: string; front: string; back: string; tip: string; topic: string; source?: string };
 
 export const seedCards: Card[] = [
   { id: "c1", topic: "Neurulation", front: "Main function of the notochord?", back: "Induces overlying ectoderm to form the neural plate (via SHH, chordin, noggin).", tip: "Induces — does not form — the neural tube." },

@@ -1,25 +1,19 @@
-import { AlertCircle, BookOpen, CheckCircle2, FileText, FileUp, HelpCircle, Layers, Lightbulb, ListChecks, Loader2, Send, Target, Wand2, X, AlignLeft } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, FileUp, HelpCircle, Layers, Lightbulb, ListChecks, Loader2, NotebookPen, Target, Wand2, X, AlignLeft } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { PDFDocumentProxy } from "pdfjs-dist";
+import { toast } from "sonner";
 
+import { ask, pushMsgs } from "./chat";
 import { lecture, type Slide } from "./data";
-import { addCard, log } from "./store";
-import { respond, sentences, type AiMsg, type DocPage } from "./grounded";
-import { loadPdfLib, PdfPage } from "./PdfPage";
+import { clearJump, sampleDoc, setDoc, setPage, setSubject, uploadPdf, useDoc, type Stage } from "./doc";
+import { sentences } from "./grounded";
+import { PdfPage } from "./PdfPage";
+import { addCard, addNote, log } from "./store";
+import { WisenChat } from "./WisenChat";
 import { Button } from "@/components/ui/button";
-import { askWisenAI } from "@/lib/ai/client";
-import { AiSettings } from "./AiSettings";
-
-type Msg = { role: "user"; text: string } | AiMsg;
-type Doc = { subject: string; title: string; pages: DocPage[]; pdf?: PDFDocumentProxy };
 
 const SUBJECTS = ["Embryology", "Anatomy", "Histology", "Pathology", "Cardiology", "Pharmacology", "Physiology"];
-const sampleDoc: Doc = {
-  subject: "Embryology",
-  title: "Embryology — Chapter 3: Neurulation",
-  pages: lecture.slides.map((s) => ({ pageNumber: s.n, text: [s.title + ".", ...s.body, s.highYield].join(" ") })),
-};
-const ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["Summarize", AlignLeft], ["Why on EMD?", Target], ["Make Flashcard", Layers], ["Quiz me", HelpCircle], ["Generate EMD Question", ListChecks]] as const;
+export const SUBJECT_LIST = SUBJECTS;
+const ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["Summarize", AlignLeft], ["Why on EMD?", Target], ["Make Flashcard", Layers], ["Quiz me", HelpCircle], ["Generate EMD Question", ListChecks], ["Save note", NotebookPen]] as const;
 const STAGES = ["Parsing pages…", "Indexing medical content", "Ready to study"];
 
 function Diagram({ kind }: { kind?: Slide["diagram"] }) {
@@ -31,52 +25,21 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
   return <svg viewBox="0 0 300 110" className={c}><rect x="140" y="10" width="20" height="90" rx="8" fill="currentColor" opacity=".3" />{[0, 1, 2, 3, 4].map((i) => <g key={i}><rect x="100" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /><rect x="170" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /></g>)}<text x="210" y="60" fontSize="10" fill="currentColor">Somite pairs</text></svg>;
 }
 
-function McqView({ q }: { q: NonNullable<AiMsg["mcq"]> }) {
-  const [pick, setPick] = useState<string | null>(null);
-  return (
-    <div className="mt-2 rounded-lg border border-border bg-muted/40 p-3">
-      <p className="font-medium">{q.stem}</p>
-      {q.options ? (
-        <div className="mt-2 grid gap-1.5">
-          {q.options.map((o, k) => {
-            const state = pick && (o === q.answer ? "border-primary bg-primary/10 text-primary" : o === pick ? "border-destructive bg-destructive/10 text-destructive" : "opacity-60");
-            return <button key={o} disabled={!!pick} onClick={() => setPick(o)} className={`rounded-md border border-border px-3 py-1.5 text-left text-xs ${state || "hover:border-primary"}`}>{String.fromCharCode(65 + k)}. {o}</button>;
-          })}
-        </div>
-      ) : !pick && <button onClick={() => setPick("x")} className="mt-2 rounded-md border border-border px-3 py-1 text-xs hover:border-primary">Reveal answer</button>}
-      {pick && <p className="mt-2 text-xs text-muted-foreground"><span className="font-semibold text-foreground">{q.options ? `Answer: ${q.answer}. ` : ""}</span>{q.options ? q.explain : q.answer} {!q.options && q.explain}</p>}
-    </div>
-  );
-}
-
-export function Workspace() {
-  const [doc, setDoc] = useState<Doc>(sampleDoc);
-  const [subject, setSubject] = useState("Embryology");
-  const [page, setPage] = useState(doc.pages[0]!.pageNumber);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
+export function Workspace({ context }: { context?: string | undefined }) {
+  const { doc, page, jump, restoring } = useDoc();
+  const subject = doc.subject;
   const [sel, setSel] = useState<{ text: string; page: number; x: number; y: number } | null>(null);
-  const [stage, setStage] = useState<{ i: number; done: number; total: number; name: string } | null>(null);
+  const [stage, setStage] = useState<Stage | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
   const [drag, setDrag] = useState(false);
   const readerRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setPage(doc.pages[0]?.pageNumber ?? 1);
-    setMsgs([{ role: "ai", text: `I'm grounded in “${doc.title}” (${doc.pages.length} pages). Select any text or ask a question — I'll cite the page.`, cite: doc.pages[0]?.pageNumber ?? 1 }]);
-    readerRef.current?.scrollTo({ top: 0 });
-  }, [doc]);
-
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [msgs, typing]);
 
   useEffect(() => {
     const el = readerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setWidth(Math.round(Math.min(el.clientWidth - 40, 1000) / 20) * 20));
+    const ro = new ResizeObserver(() => { if (el.clientWidth > 0) setWidth(Math.round(Math.min(el.clientWidth - 40, 1000) / 20) * 20); });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -86,6 +49,7 @@ export function Workspace() {
     if (!root) return;
     const ratios = new Map<number, number>();
     const io = new IntersectionObserver((es) => {
+      if (!root.offsetParent) return;
       es.forEach((e) => ratios.set(Number((e.target as HTMLElement).dataset["page"]), e.intersectionRatio));
       let best = 0, bp = 0;
       ratios.forEach((r, p) => { if (r > best) { best = r; bp = p; } });
@@ -95,15 +59,19 @@ export function Workspace() {
     return () => io.disconnect();
   }, [doc, width]);
 
-  const reply = async (action: string, query: string, display: string, p = page) => {
-    const history = msgs.slice(-10).map((m) => ({ role: m.role === "user" ? "user" as const : "assistant" as const, text: (m.text + (m.role === "ai" && m.points ? "\n" + m.points.join("\n") : "")).slice(0, 4000) }));
-    setMsgs((m) => [...m, { role: "user", text: display }]);
-    setTyping(true);
-    const res = await askWisenAI({ action, message: query.slice(0, 6000), subject: doc.subject, title: doc.title, page: p, pages: doc.pages, history });
-    setMsgs((m) => [...m, res]);
-    setTyping(false);
-  };
-  const send = (t: string) => { if (!t.trim()) return; setInput(""); reply("Ask", t, t); };
+  // Jump requests (citations, restored reading position) — wait until the reader is visible and laid out.
+  useEffect(() => {
+    if (jump == null || width === 0) return;
+    let tries = 0, raf = 0;
+    const tick = () => {
+      const root = readerRef.current;
+      const el = root?.querySelector<HTMLElement>(`[data-page="${jump}"]`);
+      if (root?.offsetParent && el) { root.scrollTo({ top: el.offsetTop - 12, behavior: "smooth" }); clearJump(); return; }
+      if (tries++ < 60) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [jump, width, doc]);
 
   const onMouseUp = () => {
     const s = window.getSelection();
@@ -122,55 +90,33 @@ export function Workspace() {
     const label = `${a} · ${doc.subject} · Page ${sel.page}: ${q}`;
     if (a === "Make Flashcard") {
       const ctx = sentences(doc.pages.find((p) => p.pageNumber === sel.page)?.text ?? "")[0] ?? "";
-      addCard(`${doc.subject} p.${sel.page}: explain “${sel.text.slice(0, 70)}”`, sel.text, ctx, doc.subject);
+      addCard(`${doc.subject} p.${sel.page}: explain “${sel.text.slice(0, 70)}”`, sel.text, ctx, doc.subject, doc.title);
       log(`Created flashcard from ${doc.subject} · Page ${sel.page}`);
-      setMsgs((m) => [...m, { role: "user", text: label }, { role: "ai", text: `Flashcard added to your deck [Source: Page ${sel.page}].`, cite: sel.page }]);
-    } else reply(a, sel.text, label, sel.page);
+      pushMsgs({ role: "user", text: label }, { role: "ai", text: `Flashcard added to your deck [Source: Page ${sel.page}].`, cite: sel.page });
+    } else if (a === "Save note") {
+      addNote(sel.text, doc.subject, doc.title, sel.page);
+      toast("Saved to high-yield notes");
+    } else void ask(a, sel.text, label, sel.page);
     setSel(null);
     window.getSelection()?.removeAllRanges();
   };
 
-  const goto = (p: number) => readerRef.current?.querySelector(`[data-page="${p}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-
   async function onFile(f?: File) {
     if (!f) return;
     setErr(null);
-    if (!f.name.toLowerCase().endsWith(".pdf") && f.type !== "application/pdf") return setErr(`“${f.name}” isn't a PDF. Please upload a .pdf course file.`);
-    if (f.size > 80 * 1024 * 1024) return setErr("This PDF is larger than 80 MB. Please upload a smaller file.");
-    const buf = new Uint8Array(await f.arrayBuffer());
-    if (!(buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46)) return setErr("This file looks corrupted or isn't a real PDF.");
-    const name = f.name.replace(/\.pdf$/i, "");
-    setStage({ i: 0, done: 0, total: 0, name });
-    try {
-      const lib = await loadPdfLib();
-      const pdf = await lib.getDocument({ data: buf }).promise;
-      const pages: DocPage[] = [];
-      for (let n = 1; n <= pdf.numPages; n++) {
-        const tc = await (await pdf.getPage(n)).getTextContent();
-        pages.push({ pageNumber: n, text: tc.items.map((it) => ("str" in it ? it.str + (it.hasEOL ? "\n" : " ") : "")).join("") });
-        setStage({ i: 0, done: n, total: pdf.numPages, name });
-      }
-      setStage({ i: 1, done: pdf.numPages, total: pdf.numPages, name });
-      await new Promise((r) => setTimeout(r, 500));
-      setStage({ i: 2, done: pdf.numPages, total: pdf.numPages, name });
-      await new Promise((r) => setTimeout(r, 450));
-      setDoc({ subject, title: name, pages, pdf });
-      log(`Uploaded ${subject} course · ${name} (${pdf.numPages} pages)`);
-      if (!pages.some((p) => p.text.trim())) setErr("No selectable text found — this looks like a scanned PDF. You can read it, but Wisen AI can't cite it yet.");
-    } catch (e) {
-      setErr((e as Error)?.name === "PasswordException" ? "This PDF is password-protected. Please upload an unlocked copy." : "We couldn't read this PDF. It may be corrupted or damaged.");
-    } finally {
-      setStage(null);
-      if (fileRef.current) fileRef.current.value = "";
-    }
+    const r = await uploadPdf(f, subject, setStage);
+    if (fileRef.current) fileRef.current.value = "";
+    if (r.error) return setErr(r.error);
+    if (r.warning) setErr(r.warning);
+    pushMsgs({ role: "ai", text: `Now grounded in “${f.name.replace(/\.pdf$/i, "")}”. Select any text or ask a question — I'll cite the page.`, cite: 1 });
   }
 
-  const isSample = !doc.pdf;
+  const isSample = !!doc.sample;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0">
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
-        <select value={subject} onChange={(e) => { setSubject(e.target.value); if (doc.pdf) setDoc({ ...doc, subject: e.target.value }); }} aria-label="Subject" className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary">
+        <select value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary">
           {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
         </select>
         <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
@@ -178,7 +124,8 @@ export function Workspace() {
           <p className="truncate text-sm font-semibold">{doc.title}</p>
           <span className="shrink-0 font-mono text-[11px] text-muted-foreground">· {doc.pages.length} pages</span>
         </div>
-        {!isSample && <Button size="sm" variant="ghost" onClick={() => { setDoc(sampleDoc); setSubject("Embryology"); setErr(null); }}>Sample lecture</Button>}
+        {restoring && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" /> Restoring your document…</span>}
+        {!isSample && <Button size="sm" variant="ghost" onClick={() => { setDoc(sampleDoc); setErr(null); pushMsgs({ role: "ai", text: `Switched back to “${sampleDoc.title}”.`, cite: 12 }); }}>Sample lecture</Button>}
         <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
         <Button size="sm" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp /> Upload Course PDF</Button>
       </div>
@@ -199,7 +146,7 @@ export function Workspace() {
                 ))}
               </div>
             )}
-            {doc.pdf ? (
+            {!isSample && doc.pdf ? (
               <div className="space-y-5">{width > 0 && doc.pages.map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={doc.pdf!} n={p.pageNumber} width={width} />)}</div>
             ) : (
               <div className="space-y-5">
@@ -219,43 +166,7 @@ export function Workspace() {
           </div>
         </section>
 
-        <section className="flex min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border bg-card">
-          <header className="flex items-center gap-2 border-b border-border px-4 py-2.5">
-            <span className="grid size-8 place-items-center rounded-full bg-primary/15 text-primary"><BookOpen className="size-4" /></span>
-            <div className="min-w-0 flex-1"><p className="text-sm font-semibold">Wisen AI</p><p className="truncate text-xs text-muted-foreground">Grounded in {doc.title}</p></div>
-            <AiSettings />
-            <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] text-primary">Context: {doc.subject} · Page {page}</span>
-          </header>
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
-            {msgs.map((m, k) =>
-              m.role === "user" ? (
-                <div key={k} className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-sm text-primary-foreground">{m.text}</div>
-              ) : (
-                <div key={k} className="max-w-[94%] text-sm">
-                  <div dir="auto" className="space-y-1.5">{m.text.split(/\n+/).map((l, i) => { const b = /^\s*[-•*]\s+/.test(l); const html = l.replace(/^\s*[-•*]\s+/, "").split(/\*\*(.+?)\*\*/g).map((x, j) => j % 2 ? <strong key={j}>{x}</strong> : x); return b ? <p key={i} className="pl-4 before:-ml-3 before:mr-1.5 before:text-primary before:content-['•']">{html}</p> : <p key={i}>{html}</p>; })}</div>
-                  {m.points && <ul className="mt-2 list-disc space-y-1 pl-5 text-foreground/90">{m.points.map((p) => <li key={p}>{p}</li>)}</ul>}
-                  {m.mcq && <McqView q={m.mcq} />}
-                  {m.route && <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground" title={m.routeNote}>Routed via <span className="text-primary">{m.route}</span>{m.routeNote ? ` · ${m.routeNote}` : ""}</p>}
-                  {m.sources?.map((s) => <p key={s} className="mt-1 inline-flex mr-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 font-mono text-[11px] text-primary">Source: {s}</p>)}
-                  {m.cite ? <button onClick={() => goto(m.cite!)} className="mt-2 inline-flex rounded-md border border-border px-2 py-0.5 font-mono text-[11px] text-primary hover:bg-accent">[Source: {doc.subject} · Page {m.cite}]</button> : null}
-                </div>
-              ),
-            )}
-            {typing && <div className="flex gap-1">{[0, 1, 2].map((d) => <span key={d} className="size-2 animate-bounce rounded-full bg-primary" style={{ animationDelay: `${d * 120}ms` }} />)}</div>}
-            <div ref={endRef} />
-          </div>
-          <div className="border-t border-border p-3">
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              {["Summarize this page", "What's high-yield for EMD?", "Generate an EMD question", "EMD & coefficients at UFAS1"].map((c) => (
-                <button key={c} onClick={() => reply(c.startsWith("Summarize") ? "Summarize" : c.startsWith("Generate") ? "Generate EMD Question" : c.startsWith("EMD &") ? "Ask" : "Why on EMD?", c.startsWith("EMD &") ? "EMD dates, QCM correction and module coefficients at UFAS1 1ère année" : `${c} (Page ${page}): ${(doc.pages.find((p) => p.pageNumber === page)?.text ?? "").slice(0, 1500)}`, `${c}${c.startsWith("EMD &") ? "" : ` (Page ${page})`}`)} className="rounded-full border border-border px-3 py-1 text-xs hover:border-primary hover:text-primary">{c}</button>
-              ))}
-            </div>
-            <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2">
-              <input value={input} onChange={(e) => setInput(e.target.value)} dir="auto" placeholder={`Ask in English, Français, العربية or Darija…`} className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-              <Button type="submit" size="icon" className="size-10" aria-label="Send"><Send /></Button>
-            </form>
-          </div>
-        </section>
+        <WisenChat context={context} />
       </div>
 
       {stage && (

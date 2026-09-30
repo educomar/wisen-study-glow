@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, BarChart3, Bookmark, BookOpen, ClipboardCheck, Layers, ListChecks, Moon, PanelLeftClose, PanelLeftOpen, Pencil, Sun } from "lucide-react";
+import { ArrowLeft, BarChart3, Bookmark, BookOpen, ClipboardCheck, Layers, ListChecks, MessageSquareText, Moon, PanelLeftClose, PanelLeftOpen, Pencil, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ProfileDialog } from "@/components/app/ProfileDialog";
@@ -10,6 +10,8 @@ import { Flashcards } from "@/components/app/Flashcards";
 import { ProgressView, Saved } from "@/components/app/Progress";
 import { QBank } from "@/components/app/QBank";
 import { Workspace } from "@/components/app/Workspace";
+import { WisenAI } from "@/components/app/WisenAI";
+import { setTab as saveTab, useAppState, type Tab } from "@/components/app/store";
 import { Logo } from "@/components/site/Logo";
 import { useTheme } from "@/components/site/theme";
 import { Toaster } from "@/components/ui/sonner";
@@ -28,15 +30,15 @@ export const Route = createFileRoute("/app")({
   component: AppShell,
 });
 
-const tabs = [
+const tabs: { id: Tab; label: string; icon: typeof BookOpen }[] = [
+  { id: "qbank", label: "QBank", icon: ListChecks },
+  { id: "ai", label: "Wisen AI", icon: MessageSquareText },
   { id: "workspace", label: "Parallel Workspace", icon: BookOpen },
-  { id: "qbank", label: "Smart EMD QBank", icon: ListChecks },
   { id: "cards", label: "Flashcards", icon: Layers },
   { id: "exam", label: "EMD Exam Mode", icon: ClipboardCheck },
   { id: "progress", label: "Progress & Weak Areas", icon: BarChart3 },
   { id: "saved", label: "Saved & Bookmarks", icon: Bookmark },
-] as const;
-type Tab = (typeof tabs)[number]["id"];
+];
 
 function AppShell() {
   const { dark, toggle } = useTheme();
@@ -44,12 +46,12 @@ function AppShell() {
   const { user, profile, setProfile, loading } = useSession();
   const [editing, setEditing] = useState(false);
   useEffect(() => { if (!loading && user && profile && !profile.onboarded) navigate({ to: "/onboarding" }); }, [loading, user, profile, navigate]);
-  const [tab, setTab] = useState<Tab>("workspace");
+  const app = useAppState();
+  const tab = app.tab;
   const [collapsed, setCollapsed] = useState(false);
-  const [topic, setTopic] = useState<string | undefined>();
-  const practice = (t: string) => { setTopic(t); setTab("qbank"); };
-  const go = (t: Tab) => { if (t === "qbank") setTopic(undefined); setTab(t); };
-  const current = tabs.find((t) => t.id === tab)!;
+  const go = (t: Tab) => saveTab(t);
+  const current = tabs.find((t) => t.id === tab) ?? tabs[0]!;
+  const ctx = profile ? badge(profile) : undefined;
 
   return (
     <div className="flex h-dvh flex-col bg-background text-foreground md:flex-row">
@@ -106,12 +108,17 @@ function AppShell() {
           )}
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-          {tab === "workspace" && <Workspace />}
-          {tab === "qbank" && <QBank key={topic ?? "all"} topic={topic} />}
-          {tab === "cards" && <Flashcards />}
-          {tab === "exam" && <Exam onReview={() => setTab("workspace")} onPractice={practice} />}
-          {tab === "progress" && <ProgressView onPractice={practice} />}
-          {tab === "saved" && <Saved />}
+          {tabs.map((t) => (
+            <div key={t.id} className={tab === t.id ? (t.id === "workspace" || t.id === "ai" ? "lg:h-full" : "") : "hidden"}>
+              {t.id === "qbank" && <QBank context={ctx} />}
+              {t.id === "ai" && <WisenAI context={ctx} />}
+              {t.id === "workspace" && <Workspace context={ctx} />}
+              {t.id === "cards" && <Flashcards />}
+              {t.id === "exam" && <Exam />}
+              {t.id === "progress" && <ProgressView />}
+              {t.id === "saved" && <Saved />}
+            </div>
+          ))}
         </div>
       </main>
       {user && profile && <ProfileDialog open={editing} onOpenChange={setEditing} user={user} profile={profile} onSaved={setProfile} />}
