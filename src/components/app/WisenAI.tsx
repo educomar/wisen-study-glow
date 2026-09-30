@@ -5,7 +5,7 @@ import { setTab, useAppState } from "./store";
 import { WisenChat } from "./WisenChat";
 import { Button } from "@/components/ui/button";
 
-export function WisenAI({ context }: { context?: string }) {
+export function WisenAI({ context }: { context?: string | undefined }) {
   const { doc, page } = useDoc();
   const s = useAppState();
   const weak = Object.entries(s.attempts).map(([t, a]) => ({ t, pct: Math.round((a.correct / a.total) * 100) })).sort((a, b) => a.pct - b.pct).slice(0, 3);

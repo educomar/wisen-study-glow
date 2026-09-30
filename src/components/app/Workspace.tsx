@@ -25,7 +25,7 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
   return <svg viewBox="0 0 300 110" className={c}><rect x="140" y="10" width="20" height="90" rx="8" fill="currentColor" opacity=".3" />{[0, 1, 2, 3, 4].map((i) => <g key={i}><rect x="100" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /><rect x="170" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /></g>)}<text x="210" y="60" fontSize="10" fill="currentColor">Somite pairs</text></svg>;
 }
 
-export function Workspace({ context }: { context?: string }) {
+export function Workspace({ context }: { context?: string | undefined }) {
   const { doc, page, jump, restoring } = useDoc();
   const subject = doc.subject;
   const [sel, setSel] = useState<{ text: string; page: number; x: number; y: number } | null>(null);

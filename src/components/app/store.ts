@@ -48,14 +48,10 @@ const initial: AppState = {
   customCards: [],
   customQuestions: [],
   attempts: {
-    Neurulation: { correct: 7, total: 13 },
-    Gastrulation: { correct: 8, total: 13 },
+    Neurulation: { correct: 5, total: 12 },
     "Neural crest": { correct: 6, total: 9 },
     "Somite formation": { correct: 7, total: 9 },
     Teratology: { correct: 4, total: 6 },
-    "Upper limb": { correct: 11, total: 13 },
-    "Action potential": { correct: 9, total: 12 },
-    Epithelia: { correct: 7, total: 10 },
   },
   examHistory: [],
   activity: [
@@ -108,11 +104,11 @@ export function recordAttempt(lesson: string, correct: boolean) {
 }
 
 export function addCard(front: string, back: string, tip: string, topic: string, source?: string) {
-  update((s) => ({ ...s, customCards: [...s.customCards, { id: `u${Date.now()}${Math.floor(Math.random() * 1e4)}`, front, back, tip, topic, source }] }));
+  update((s) => ({ ...s, customCards: [...s.customCards, { id: `u${Date.now()}${Math.floor(Math.random() * 1e4)}`, front, back, tip, topic, ...(source ? { source } : {}) }] }));
 }
 
 export function addNote(text: string, subject: string, source: string, page?: number) {
-  update((s) => ({ ...s, notes: [{ id: `n${Date.now()}`, text, subject, source, page, t: Date.now() }, ...s.notes] }));
+  update((s) => ({ ...s, notes: [{ id: `n${Date.now()}`, text, subject, source, ...(page ? { page } : {}), t: Date.now() }, ...s.notes] }));
 }
 
 export const toggle = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);

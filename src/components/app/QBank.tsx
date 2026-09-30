@@ -13,7 +13,7 @@ export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary";
 const fmt = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
-export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: { q: Question; picked?: number | null; onPick?: (k: number) => void; onNext?: () => void; onPrev?: () => void }) {
+export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: { q: Question; picked?: number | null; onPick?: (k: number) => void; onNext?: (() => void) | undefined; onPrev?: (() => void) | undefined }) {
   const s = useAppState();
   const [local, setLocal] = useState<number | null>(null);
   const picked = onPick ? (pickedProp ?? null) : local;
@@ -91,7 +91,7 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
   return pool.filter((q) => (f.subject === "All" || q.subject === f.subject) && (f.lesson === "All" || q.topic === f.lesson) && (f.difficulty === "All" || q.difficulty === f.difficulty));
 }
 
-export function QBank({ context, defaultSubject }: { context?: string; defaultSubject?: string }) {
+export function QBank({ context, defaultSubject }: { context?: string | undefined; defaultSubject?: string }) {
   const s = useAppState();
   const { doc, page } = useDoc();
   const pool = useMemo(() => [...questions, ...s.customQuestions], [s.customQuestions]);
@@ -127,7 +127,7 @@ export function QBank({ context, defaultSubject }: { context?: string; defaultSu
 
   const generate = () => {
     const pages = doc.pages.filter((p) => p.text.trim());
-    if (!pages.length) return toast.error("The active document has no readable text.");
+    if (!pages.length) { toast.error("The active document has no readable text.");
     const around = [...pages].sort((a, b) => Math.abs(a.pageNumber - page) - Math.abs(b.pageNumber - page)).slice(0, 5);
     const made: Question[] = [];
     around.forEach((p, k) => {
