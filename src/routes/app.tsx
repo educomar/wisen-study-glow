@@ -1,6 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BarChart3, Bookmark, BookOpen, ClipboardCheck, Layers, ListChecks, Moon, PanelLeftClose, PanelLeftOpen, Sun } from "lucide-react";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, BarChart3, Bookmark, BookOpen, ClipboardCheck, Layers, ListChecks, Moon, PanelLeftClose, PanelLeftOpen, Pencil, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { ProfileDialog } from "@/components/app/ProfileDialog";
+import { badge, useSession } from "@/lib/profile";
 
 import { Exam } from "@/components/app/Exam";
 import { Flashcards } from "@/components/app/Flashcards";
@@ -37,6 +40,10 @@ type Tab = (typeof tabs)[number]["id"];
 
 function AppShell() {
   const { dark, toggle } = useTheme();
+  const navigate = useNavigate();
+  const { user, profile, setProfile, loading } = useSession();
+  const [editing, setEditing] = useState(false);
+  useEffect(() => { if (!loading && user && profile && !profile.onboarded) navigate({ to: "/onboarding" }); }, [loading, user, profile, navigate]);
   const [tab, setTab] = useState<Tab>("workspace");
   const [collapsed, setCollapsed] = useState(false);
   const [topic, setTopic] = useState<string | undefined>();
@@ -69,10 +76,10 @@ function AppShell() {
             <ArrowLeft className="size-4" /> {!collapsed && "Back to landing"}
           </Link>
           {!collapsed && (
-            <div className="mt-2 rounded-lg border border-border p-3">
-              <p className="text-sm font-medium">Medical student</p>
+            <button onClick={() => profile && setEditing(true)} className="mt-2 w-full rounded-lg border border-border p-3 text-left">
+              <p className="truncate text-sm font-medium">{profile?.full_name || "Guest student"}</p>
               <p className="font-mono text-[10px] uppercase text-primary">Faculty of Medicine · Sétif 1</p>
-            </div>
+            </button>
           )}
         </div>
       </aside>
@@ -83,7 +90,20 @@ function AppShell() {
             <button onClick={toggle} className="rounded-md p-2 hover:bg-accent" aria-label="Toggle theme">{dark ? <Sun className="size-4" /> : <Moon className="size-4" />}</button>
             <Link to="/" className="rounded-md p-2 hover:bg-accent" aria-label="Back to landing"><ArrowLeft className="size-4" /></Link>
           </div>
-          <span className="hidden font-mono text-[11px] uppercase text-muted-foreground md:block">Embryology · Chapter 3</span>
+          {user && profile ? (
+            <button onClick={() => setEditing(true)} className="flex items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3 hover:border-primary" aria-label="Edit profile">
+              <span className="grid size-7 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">{(profile.full_name || user.email || "?").charAt(0).toUpperCase()}</span>
+              <span className="hidden text-sm font-medium sm:inline">{profile.full_name || user.email}</span>
+              <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary">{badge(profile)}</span>
+              <Pencil className="size-3.5 text-muted-foreground" />
+            </button>
+          ) : !loading && (
+            <div className="flex items-center gap-2">
+              <span className="hidden font-mono text-[10px] uppercase text-muted-foreground sm:inline">Guest preview</span>
+              <Link to="/login" className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary">Log in</Link>
+              <Link to="/register" className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground">Sign up</Link>
+            </div>
+          )}
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           {tab === "workspace" && <Workspace />}
@@ -94,6 +114,7 @@ function AppShell() {
           {tab === "saved" && <Saved />}
         </div>
       </main>
+      {user && profile && <ProfileDialog open={editing} onOpenChange={setEditing} user={user} profile={profile} onSaved={setProfile} />}
       <Toaster />
     </div>
   );
