@@ -10,14 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as TeamLoginRouteImport } from './routes/team/login'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminFilesRouteImport } from './routes/_authenticated/admin/files'
+import { Route as AuthenticatedAdminFlashcardsRouteImport } from './routes/_authenticated/admin/flashcards'
+import { Route as AuthenticatedAdminKbRouteImport } from './routes/_authenticated/admin/kb'
+import { Route as AuthenticatedAdminQbankRouteImport } from './routes/_authenticated/admin/qbank'
+import { Route as AuthenticatedAdminStudentsRouteImport } from './routes/_authenticated/admin/students'
+import { Route as AuthenticatedAdminSubjectsRouteImport } from './routes/_authenticated/admin/subjects'
+import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin/team'
+import { Route as TeamInviteTokenRouteImport } from './routes/team/invite.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -40,6 +56,64 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const TeamLoginRoute = TeamLoginRouteImport.update({
+  id: '/team/login',
+  path: '/team/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminFilesRoute = AuthenticatedAdminFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminFlashcardsRoute =
+  AuthenticatedAdminFlashcardsRouteImport.update({
+    id: '/flashcards',
+    path: '/flashcards',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminKbRoute = AuthenticatedAdminKbRouteImport.update({
+  id: '/kb',
+  path: '/kb',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminQbankRoute = AuthenticatedAdminQbankRouteImport.update({
+  id: '/qbank',
+  path: '/qbank',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminStudentsRoute =
+  AuthenticatedAdminStudentsRouteImport.update({
+    id: '/students',
+    path: '/students',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminSubjectsRoute =
+  AuthenticatedAdminSubjectsRouteImport.update({
+    id: '/subjects',
+    path: '/subjects',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const TeamInviteTokenRoute = TeamInviteTokenRouteImport.update({
+  id: '/team/invite/$token',
+  path: '/team/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +121,17 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/team/login': typeof TeamLoginRoute
+  '/admin/files': typeof AuthenticatedAdminFilesRoute
+  '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
+  '/admin/kb': typeof AuthenticatedAdminKbRoute
+  '/admin/qbank': typeof AuthenticatedAdminQbankRoute
+  '/admin/students': typeof AuthenticatedAdminStudentsRoute
+  '/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
+  '/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/team/invite/$token': typeof TeamInviteTokenRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,29 +139,103 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/team/login': typeof TeamLoginRoute
+  '/admin/files': typeof AuthenticatedAdminFilesRoute
+  '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
+  '/admin/kb': typeof AuthenticatedAdminKbRoute
+  '/admin/qbank': typeof AuthenticatedAdminQbankRoute
+  '/admin/students': typeof AuthenticatedAdminStudentsRoute
+  '/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
+  '/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/team/invite/$token': typeof TeamInviteTokenRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/app': typeof AppRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/team/login': typeof TeamLoginRoute
+  '/_authenticated/admin/files': typeof AuthenticatedAdminFilesRoute
+  '/_authenticated/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
+  '/_authenticated/admin/kb': typeof AuthenticatedAdminKbRoute
+  '/_authenticated/admin/qbank': typeof AuthenticatedAdminQbankRoute
+  '/_authenticated/admin/students': typeof AuthenticatedAdminStudentsRoute
+  '/_authenticated/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
+  '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/team/invite/$token': typeof TeamInviteTokenRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/login' | '/onboarding' | '/register'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/onboarding'
+    | '/register'
+    | '/admin'
+    | '/team/login'
+    | '/admin/files'
+    | '/admin/flashcards'
+    | '/admin/kb'
+    | '/admin/qbank'
+    | '/admin/students'
+    | '/admin/subjects'
+    | '/admin/team'
+    | '/team/invite/$token'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/login' | '/onboarding' | '/register'
-  id: '__root__' | '/' | '/app' | '/login' | '/onboarding' | '/register'
+  to:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/onboarding'
+    | '/register'
+    | '/team/login'
+    | '/admin/files'
+    | '/admin/flashcards'
+    | '/admin/kb'
+    | '/admin/qbank'
+    | '/admin/students'
+    | '/admin/subjects'
+    | '/admin/team'
+    | '/team/invite/$token'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/app'
+    | '/login'
+    | '/onboarding'
+    | '/register'
+    | '/_authenticated/admin'
+    | '/team/login'
+    | '/_authenticated/admin/files'
+    | '/_authenticated/admin/flashcards'
+    | '/_authenticated/admin/kb'
+    | '/_authenticated/admin/qbank'
+    | '/_authenticated/admin/students'
+    | '/_authenticated/admin/subjects'
+    | '/_authenticated/admin/team'
+    | '/team/invite/$token'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AppRoute: typeof AppRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   RegisterRoute: typeof RegisterRoute
+  TeamLoginRoute: typeof TeamLoginRoute
+  TeamInviteTokenRoute: typeof TeamInviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -86,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -116,15 +282,134 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/team/login': {
+      id: '/team/login'
+      path: '/team/login'
+      fullPath: '/team/login'
+      preLoaderRoute: typeof TeamLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/files': {
+      id: '/_authenticated/admin/files'
+      path: '/files'
+      fullPath: '/admin/files'
+      preLoaderRoute: typeof AuthenticatedAdminFilesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/flashcards': {
+      id: '/_authenticated/admin/flashcards'
+      path: '/flashcards'
+      fullPath: '/admin/flashcards'
+      preLoaderRoute: typeof AuthenticatedAdminFlashcardsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/kb': {
+      id: '/_authenticated/admin/kb'
+      path: '/kb'
+      fullPath: '/admin/kb'
+      preLoaderRoute: typeof AuthenticatedAdminKbRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/qbank': {
+      id: '/_authenticated/admin/qbank'
+      path: '/qbank'
+      fullPath: '/admin/qbank'
+      preLoaderRoute: typeof AuthenticatedAdminQbankRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/students': {
+      id: '/_authenticated/admin/students'
+      path: '/students'
+      fullPath: '/admin/students'
+      preLoaderRoute: typeof AuthenticatedAdminStudentsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/subjects': {
+      id: '/_authenticated/admin/subjects'
+      path: '/subjects'
+      fullPath: '/admin/subjects'
+      preLoaderRoute: typeof AuthenticatedAdminSubjectsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/team': {
+      id: '/_authenticated/admin/team'
+      path: '/team'
+      fullPath: '/admin/team'
+      preLoaderRoute: typeof AuthenticatedAdminTeamRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/team/invite/$token': {
+      id: '/team/invite/$token'
+      path: '/team/invite/$token'
+      fullPath: '/team/invite/$token'
+      preLoaderRoute: typeof TeamInviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminFilesRoute: typeof AuthenticatedAdminFilesRoute
+  AuthenticatedAdminFlashcardsRoute: typeof AuthenticatedAdminFlashcardsRoute
+  AuthenticatedAdminKbRoute: typeof AuthenticatedAdminKbRoute
+  AuthenticatedAdminQbankRoute: typeof AuthenticatedAdminQbankRoute
+  AuthenticatedAdminStudentsRoute: typeof AuthenticatedAdminStudentsRoute
+  AuthenticatedAdminSubjectsRoute: typeof AuthenticatedAdminSubjectsRoute
+  AuthenticatedAdminTeamRoute: typeof AuthenticatedAdminTeamRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminFilesRoute: AuthenticatedAdminFilesRoute,
+    AuthenticatedAdminFlashcardsRoute: AuthenticatedAdminFlashcardsRoute,
+    AuthenticatedAdminKbRoute: AuthenticatedAdminKbRoute,
+    AuthenticatedAdminQbankRoute: AuthenticatedAdminQbankRoute,
+    AuthenticatedAdminStudentsRoute: AuthenticatedAdminStudentsRoute,
+    AuthenticatedAdminSubjectsRoute: AuthenticatedAdminSubjectsRoute,
+    AuthenticatedAdminTeamRoute: AuthenticatedAdminTeamRoute,
+    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AppRoute: AppRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   RegisterRoute: RegisterRoute,
+  TeamLoginRoute: TeamLoginRoute,
+  TeamInviteTokenRoute: TeamInviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

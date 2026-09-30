@@ -4,10 +4,11 @@ import { toast } from "sonner";
 
 import { questions, type Question } from "./data";
 import { openPage } from "./doc";
+import { remoteQuestions } from "./remote";
 import { addCard, getState, log, practice, recordAttempt, toggle, update, useAppState, type AppState, type QSession } from "./store";
 import { Button } from "@/components/ui/button";
 
-export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions];
+export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions, ...remoteQuestions()];
 
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary";
 const fmt = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
