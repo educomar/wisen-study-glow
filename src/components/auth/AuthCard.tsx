@@ -6,7 +6,8 @@ import { lovable } from "@/integrations/lovable/index";
 
 export function AuthCard({ title, subtitle, children, footer }: { title: string; subtitle: string; children: ReactNode; footer: ReactNode }) {
   return (
-    <div className="wisen-ambient relative flex min-h-dvh items-center justify-center bg-background px-4 py-10 text-foreground">
+    <div className="relative flex min-h-dvh items-center justify-center bg-background px-4 py-10 text-foreground">
+      <div className="wisen-ambient" aria-hidden />
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card/80 p-7 shadow-2xl backdrop-blur-xl sm:p-9">
         <Link to="/" aria-label="Wisen home" className="mb-6 inline-block"><Logo /></Link>
         <h1 className="font-serif text-4xl">{title}</h1>
