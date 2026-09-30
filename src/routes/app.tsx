@@ -12,6 +12,7 @@ import { QBank } from "@/components/app/QBank";
 import { Workspace } from "@/components/app/Workspace";
 import { WisenAI } from "@/components/app/WisenAI";
 import { setTab as saveTab, useAppState, type Tab } from "@/components/app/store";
+import { useRemoteQuestions } from "@/components/app/remote";
 import { Logo } from "@/components/site/Logo";
 import { useTheme } from "@/components/site/theme";
 import { Toaster } from "@/components/ui/sonner";
@@ -47,6 +48,7 @@ function AppShell() {
   const [editing, setEditing] = useState(false);
   useEffect(() => { if (!loading && user && profile && !profile.onboarded) navigate({ to: "/onboarding" }); }, [loading, user, profile, navigate]);
   const app = useAppState();
+  useRemoteQuestions();
   const tab = app.tab;
   const [collapsed, setCollapsed] = useState(false);
   const go = (t: Tab) => saveTab(t);
