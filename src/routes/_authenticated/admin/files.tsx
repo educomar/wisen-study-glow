@@ -35,7 +35,7 @@ function Files() {
   const onFile = async (file: File) => {
     const existing = replaceId.current ? list.data?.find((r) => r.id === replaceId.current) : undefined;
     const target = existing ? { s: existing.subject_id, u: existing.unit_id, l: existing.lesson_id ?? "" } : pick;
-    if (!target.u) return toast.error("Choose a subject and unit first.");
+    if (!target.u) { toast.error("Choose a subject and unit first."); return; }
     setBusy(true);
     try {
       const up = await getUrl({ data: { fileName: file.name } });
