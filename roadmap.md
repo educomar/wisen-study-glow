@@ -5,5 +5,5 @@
 - [x] Verify light/dark desktop and mobile layouts and preview health.
 
 ## /app connected study workflow
-- [ ] Reorder sidebar, persistent state, connected loop across all tools
-- [ ] Do NOT add new sample questions (user request) — keep original 10 only
+- [x] Reorder sidebar, persistent state, connected loop across all tools
+- [x] Do NOT add new sample questions (user request) — keep original 10 only
