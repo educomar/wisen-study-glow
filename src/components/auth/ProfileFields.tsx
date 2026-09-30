@@ -1,0 +1,41 @@
+import { FACULTIES, ordinal, YEARS, type Department, type Exam } from "@/lib/profile";
+
+export type Fields = { faculty: string; department: Department; academic_year: number; current_target_exam: Exam };
+export const DEFAULTS: Fields = { faculty: FACULTIES[0]!, department: "Medicine", academic_year: 1, current_target_exam: "EMD1" };
+
+const chip = (on: boolean) => `rounded-md border px-3 py-2 text-sm transition ${on ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`;
+
+export function ProfileFields({ v, onChange }: { v: Fields; onChange: (v: Fields) => void }) {
+  return (
+    <div className="space-y-5">
+      <label className="block">
+        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Faculty</span>
+        <select value={v.faculty} onChange={(e) => onChange({ ...v, faculty: e.target.value })} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm">
+          {FACULTIES.map((f) => <option key={f}>{f}</option>)}
+        </select>
+      </label>
+      <div>
+        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Department</span>
+        <div className="grid grid-cols-2 gap-2">
+          {(["Medicine", "Dentistry"] as Department[]).map((d) => (
+            <button type="button" key={d} className={chip(v.department === d)} onClick={() => onChange({ ...v, department: d, academic_year: Math.min(v.academic_year, YEARS[d]) })}>{d} Department</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Academic year</span>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {Array.from({ length: YEARS[v.department] }, (_, i) => i + 1).map((y) => (
+            <button type="button" key={y} className={chip(v.academic_year === y)} onClick={() => onChange({ ...v, academic_year: y })}>{ordinal(y)}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Currently preparing for</span>
+        <div className="grid grid-cols-2 gap-2">
+          {(["EMD1", "EMD2"] as Exam[]).map((x) => <button type="button" key={x} className={chip(v.current_target_exam === x)} onClick={() => onChange({ ...v, current_target_exam: x })}>{x}</button>)}
+        </div>
+      </div>
+    </div>
+  );
+}
