@@ -1,15 +1,14 @@
-import { AlertTriangle, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, Layers, RotateCcw, Sparkles as Wand, X } from "lucide-react";
+import { AlertTriangle, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, Layers, RotateCcw, Wand2 as Wand, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { questions, type AppStateQ, type Question } from "./qpool";
+import { questions, type Question } from "./data";
 import { openPage, useDoc } from "./doc";
 import { respond } from "./grounded";
-import { addCard, getState, log, practice, recordAttempt, toggle, update, useAppState, type QSession } from "./store";
+import { addCard, getState, log, practice, recordAttempt, toggle, update, useAppState, type AppState, type QSession } from "./store";
 import { Button } from "@/components/ui/button";
 
-export { allQuestions } from "./qpool";
-export type { AppStateQ };
+export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions];
 
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary";
 const fmt = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
