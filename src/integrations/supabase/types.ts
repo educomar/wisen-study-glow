@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          academic_year: number
+          created_at: string
+          current_target_exam: string
+          department: string
+          faculty: string
+          full_name: string
+          id: string
+          onboarded: boolean
+          updated_at: string
+        }
+        Insert: {
+          academic_year?: number
+          created_at?: string
+          current_target_exam?: string
+          department?: string
+          faculty?: string
+          full_name?: string
+          id: string
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: number
+          created_at?: string
+          current_target_exam?: string
+          department?: string
+          faculty?: string
+          full_name?: string
+          id?: string
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
