@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { seedCards, type Card } from "./data";
-import { uploadPdf, useDoc, type Doc, type Stage } from "./doc";
+import { getDoc, uploadPdf, useDoc, type Doc, type Stage } from "./doc";
 import { sentences } from "./grounded";
 import { log, toggle, update, useAppState, type FlashSession } from "./store";
 import { Button } from "@/components/ui/button";
@@ -67,8 +67,6 @@ export function Flashcards() {
     const r = await uploadPdf(file, doc.subject, setBusy);
     if (fileRef.current) fileRef.current.value = "";
     if (r.error) return toast.error(r.error);
-    // uploadPdf made it the active document; read it back and generate
-    const { getDoc } = await import("./doc");
     generate(getDoc().doc);
   };
 
