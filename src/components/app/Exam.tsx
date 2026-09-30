@@ -58,7 +58,7 @@ export function Exam() {
           </label>
           <div><span className="mb-1.5 block font-medium">Number of questions</span>
             <div className="grid grid-cols-4 gap-2">{COUNTS.map((c) => <button key={c} onClick={() => setE({ count: c, minutes: Math.max(10, Math.round(c * 1.5 / 5) * 5) })} className={`rounded-md border py-2 font-mono ${e.count === c ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary"}`}>{c}</button>)}</div>
-            {avail < e.count && <p className="mt-1.5 text-xs text-muted-foreground">Only {avail} questions are in the QBank for this subject — the exam will use all {avail}. Generate more from your documents in the QBank.</p>}
+            {avail < e.count && <p className="mt-1.5 text-xs text-muted-foreground">Only {avail} questions are in the QBank for this subject — the exam will use all {avail}.</p>}
           </div>
           <label className="block"><span className="mb-1.5 block font-medium">Duration</span>
             <select value={e.minutes} onChange={(ev) => setE({ minutes: Number(ev.target.value) })} className="h-10 w-full rounded-md border border-input bg-background px-2 outline-none focus:border-primary">{DURATIONS.map((d) => <option key={d} value={d}>{d} minutes</option>)}</select>

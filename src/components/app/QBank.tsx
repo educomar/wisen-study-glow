@@ -1,10 +1,9 @@
-import { AlertTriangle, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, Layers, RotateCcw, Wand2 as Wand, X } from "lucide-react";
+import { AlertTriangle, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, Layers, RotateCcw, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { questions, type Question } from "./data";
-import { openPage, useDoc } from "./doc";
-import { respond } from "./grounded";
+import { openPage } from "./doc";
 import { addCard, getState, log, practice, recordAttempt, toggle, update, useAppState, type AppState, type QSession } from "./store";
 import { Button } from "@/components/ui/button";
 
@@ -93,7 +92,6 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
 
 export function QBank({ context, defaultSubject }: { context?: string | undefined; defaultSubject?: string }) {
   const s = useAppState();
-  const { doc, page } = useDoc();
   const pool = useMemo(() => [...questions, ...s.customQuestions], [s.customQuestions]);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
@@ -125,25 +123,6 @@ export function QBank({ context, defaultSubject }: { context?: string | undefine
   const stats = Object.entries(s.attempts).map(([t, a]) => ({ t, pct: Math.round((a.correct / a.total) * 100), n: a.total, subject: pool.find((x) => x.topic === t)?.subject ?? "Course" })).sort((a, b) => a.pct - b.pct);
   const weak = stats[0];
 
-  const generate = () => {
-    const pages = doc.pages.filter((p) => p.text.trim());
-    if (!pages.length) { toast.error("The active document has no readable text.");
-    const around = [...pages].sort((a, b) => Math.abs(a.pageNumber - page) - Math.abs(b.pageNumber - page)).slice(0, 5);
-    const made: Question[] = [];
-    around.forEach((p, k) => {
-      const r = respond("Generate EMD Question", p.text.slice(0, 1500), doc.pages, p.pageNumber, doc.subject);
-      const m = r.mcq;
-      if (!m?.options) return;
-      made.push({ id: `g${Date.now()}${k}`, subject: doc.subject, topic: doc.sample ? "Neurulation" : doc.title.slice(0, 40), difficulty: "Medium", source: doc.title, stem: m.stem, options: m.options, answer: Math.max(0, m.options.indexOf(m.answer)), why: m.explain || `See page ${r.cite ?? p.pageNumber} of your course.`, distractors: [], slide: r.cite ?? p.pageNumber });
-    });
-    if (!made.length) return toast.error("Not enough distinct content to build questions from this document.");
-    update((st) => ({ ...st, customQuestions: [...st.customQuestions, ...made] }));
-    const f = { subject: doc.subject, lesson: made[0]!.topic, difficulty: "All" };
-    update((st) => ({ ...st, qbank: { ...f, order: [...made.map((x) => x.id), ...shuffle(filtered([...pool, ...made], f).filter((x) => !made.includes(x))).map((x) => x.id)], i: 0, answers: {}, startedAt: Date.now() } }));
-    log(`Generated ${made.length} QBank questions from ${doc.title}`);
-    toast(`${made.length} questions generated from “${doc.title}”`);
-  };
-
   return (
     <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[1fr_17rem]">
       <div className="min-w-0 space-y-3">
@@ -156,14 +135,13 @@ export function QBank({ context, defaultSubject }: { context?: string | undefine
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <p className="font-mono text-muted-foreground">{list.length ? `Question ${Math.min(session.i, list.length - 1) + 1} of ${list.length}` : "No questions"} · {answered.length} answered · {correct} correct{context && ` · ${context}`}</p>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={generate}><Wand /> Generate from active document</Button>
             <Button size="sm" variant="ghost" onClick={() => setFilter({})}><RotateCcw /> New session</Button>
           </div>
         </div>
         {q ? (
           <QuestionView key={q.id} q={q} picked={session.answers[q.id] ?? null} onPick={(k) => update((st) => ({ ...st, qbank: st.qbank && { ...st.qbank, answers: { ...st.qbank.answers, [q.id]: k } } }))} onPrev={session.i > 0 ? () => setI(session.i - 1) : undefined} onNext={session.i < list.length - 1 ? () => setI(session.i + 1) : undefined} />
         ) : (
-          <div className="rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">No questions match these filters yet. Try another lesson, or generate questions from your active document.</div>
+          <div className="rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">No questions match these filters yet. Try another subject, lesson or difficulty.</div>
         )}
         {list.length > 0 && session.i === list.length - 1 && answered.length === list.length && (
           <div className="rounded-xl border border-primary/40 bg-primary/5 p-4 text-sm">Session complete — {correct}/{list.length} correct ({Math.round((correct / list.length) * 100)}%) in {fmt(elapsed)}. <button className="font-semibold text-primary underline-offset-2 hover:underline" onClick={() => setFilter({})}>Start a new session</button></div>

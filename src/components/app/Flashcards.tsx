@@ -56,7 +56,7 @@ export function Flashcards() {
 
   const generate = (d: Doc) => {
     const made = cardsFrom(d);
-    if (!made.length) return toast.error("Not enough readable text to build flashcards.");
+    if (!made.length) { toast.error("Not enough readable text to build flashcards."); return; }
     update((st) => ({ ...st, customCards: [...st.customCards, ...made], flash: { ...st.flash, source: "doc", cardId: made[0]!.id, flipped: false } }));
     log(`Generated ${made.length} flashcards from ${d.title}`);
     toast(`${made.length} flashcards generated from “${d.title}”`);
@@ -66,7 +66,7 @@ export function Flashcards() {
     if (!file) return;
     const r = await uploadPdf(file, doc.subject, setBusy);
     if (fileRef.current) fileRef.current.value = "";
-    if (r.error) return toast.error(r.error);
+    if (r.error) { toast.error(r.error); return; }
     generate(getDoc().doc);
   };
 
