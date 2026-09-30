@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { AuthCard, inputCls } from "@/components/auth/AuthCard";
@@ -78,6 +78,14 @@ export function TeamAuthForm({ next, lockedEmail }: { next: string; lockedEmail?
 function TeamLogin() {
   const { next } = Route.useSearch();
   const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/admin";
+  const nav = useNavigate();
+  useEffect(() => {
+    const saved = sessionStorage.getItem("wisen-team-next");
+    if (!saved) return;
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) { sessionStorage.removeItem("wisen-team-next"); nav({ to: saved.startsWith("/") && !saved.startsWith("//") ? saved : "/admin" }); }
+    });
+  }, [nav]);
   return (
     <AuthCard title="Wisen Team" subtitle="For Admins and Editors. Students, use the regular log in." footer={<Link to="/login" className="hover:underline">Student log in</Link>}>
       <TeamAuthForm next={target} />
