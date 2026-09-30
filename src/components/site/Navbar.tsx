@@ -41,10 +41,10 @@ export function Navbar() {
             {dark ? <Sun /> : <Moon />}
           </Button>
           <Button asChild variant="ghost" className="hidden h-10 px-4 sm:inline-flex">
-            <a href="/app">Log in</a>
+            <a href="/login">Log in</a>
           </Button>
           <Button asChild className="hidden h-10 rounded-md px-5 shadow-lg shadow-primary/15 sm:inline-flex">
-            <a href="/app">
+            <a href="/register">
               Get started <ArrowRight />
             </a>
           </Button>
@@ -74,11 +74,11 @@ export function Navbar() {
                 {link.label}
               </a>
             ))}
-            <a href="/app" onClick={() => setOpen(false)} className="py-1">
+            <a href="/login" onClick={() => setOpen(false)} className="py-1">
               Log in
             </a>
             <Button asChild className="mt-2 h-11 w-full rounded-md">
-              <a href="/app" onClick={() => setOpen(false)}>
+              <a href="/register" onClick={() => setOpen(false)}>
                 Get started <ArrowRight />
               </a>
             </Button>
