@@ -135,10 +135,6 @@ export function Workspace({ context }: { context?: string | undefined }) {
     <div className="flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0">
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
         <Button size="sm" variant={showCourses ? "default" : "outline"} onClick={() => setShowCourses(!showCourses)}><Library /> My courses</Button>
-        <select value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary">
-          {!subjectOptions.includes(subject) && <option>{subject}</option>}
-          {subjectOptions.map((s) => <option key={s}>{s}</option>)}
-        </select>
         <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
           <FileText className="size-4 shrink-0 text-primary" />
           <p className="truncate text-sm font-semibold">{doc.title}</p>

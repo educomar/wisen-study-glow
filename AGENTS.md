@@ -14,3 +14,7 @@
 - Team content writes go through `saveContent`/`deleteContent` so every change is audited and QBank edits snapshot to `question_versions`.
 - Student QBank reads the same `subjects → units → lessons → qbank_questions` tables, scoped by profile via RLS (`student_can_see_subject`).
 - Resource files use a private `resources` bucket accessed only through server-issued signed URLs (no storage policies).
+- Wisen AI runs on `google/gemini-3.8-flash` via `src/lib/ai/gateway.server.ts` (user choice); the model name never appears in UI or messages.
+- AI-generated questions/flashcards are saved per student in `ai_questions` / `ai_flashcards` (own-row RLS); MCQ answers are a bitmask in the client so scoring stays a number compare.
+- Previous-year EMDs are `lesson_resources.kind = 'past_emd'`; they're hidden from My Courses and used only as style reference for AI exams.
+- Course material is extracted to text in the browser (pdf.js) before being sent to Wisen AI.

@@ -52,7 +52,7 @@ function toMsg(raw: string, fallbackCite: number): Pick<AiMsg, "text" | "mcq" | 
   return { text, mcq, cite: c ? Number(c[1]) : fallbackCite };
 }
 
-export async function askWisenAI(p: { action: string; message: string; subject: string; title: string; page: number; pages: DocPage[]; history: WisenRequest["history"]; image?: string }): Promise<AiMsg> {
+export async function askWisenAI(p: { action: string; message: string; subject: string; title: string; page: number; pages: DocPage[]; history: WisenRequest["history"]; image?: string; attachment?: { name: string; text: string } }): Promise<AiMsg> {
   const excerpts = rankPages(p.message, p.pages, p.page).map((pg) => ({ page: pg.pageNumber, text: pg.text.replace(/\s+/g, " ").slice(0, 2400) }));
   const req: WisenRequest = { message: p.message, action: p.action, subject: p.subject, title: p.title, page: p.page, excerpts, history: p.history.slice(-10), image: p.image };
   const { route, kb, system, user } = prepare(req);
@@ -70,7 +70,7 @@ export async function askWisenAI(p: { action: string; message: string; subject: 
     }
   }
   try {
-    const r = await askWisen({ data: req });
+    const r = await askWisen({ data: { ...req, ...(p.attachment ? { attachment: p.attachment } : {}) } });
     if (r.ok) return { role: "ai", ...toMsg(r.text, pageCite ?? 0), route: MODELS[r.route].label, routeNote: `${r.reason} · Wisen engine`, sources, studentExp: hasExp, rich: true };
   } catch { /* fall through to offline */ }
   const local = respond(p.action === "Ask" ? "Ask" : p.action, p.message, p.pages, p.page, p.subject);

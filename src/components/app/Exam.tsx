@@ -1,5 +1,14 @@
-import { Clock, Flag } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Clock, Flag, Loader2, Wand2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+
+import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
+import { useCurriculum } from "./Curriculum";
+import type { Question } from "./data";
+import { Inline } from "./RichText";
+import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
+import { generateQuestions } from "@/lib/ai/study.functions";
 
 import { allQuestions } from "./QBank";
 import { getState, log, practice, recordAttempt, setTab, update, useAppState, type ExamSession } from "./store";
@@ -23,8 +32,50 @@ function submit() {
   update((s) => ({ ...s, exam: { ...s.exam, phase: "done", usedSec: used }, examHistory: [{ t: Date.now(), subject: e.subject, score, total: qs.length }, ...s.examHistory].slice(0, 20) }));
 }
 
+const correctText = (q: Question) => q.options.filter((_, k) => isCorrectOption(q, k)).join(" · ");
+const pickedText = (q: Question, a: number) => ((q as AiQuestion).multi ? q.options.filter((_, k) => (a >> k) & 1).join(" · ") : q.options[a]);
+
+function AiExamSetup() {
+  const e = useAppState().exam;
+  const { tree, signedIn } = useCurriculum();
+  const [sc, setSc] = useState<Scope>(emptyScope);
+  const [qtype, setQtype] = useState<"SCQ" | "MCQ">("SCQ");
+  const [busy, setBusy] = useState<string | null>(null);
+  const gen = useServerFn(generateQuestions);
+  if (!signedIn) return null;
+  const run = async () => {
+    const r = resolveScope(tree, sc);
+    if (!r.files.length) { toast.error("No course files in this selection yet."); return; }
+    try {
+      setBusy("Reading your course files…");
+      const material = await extractMaterial(r.files, sc.f ? 1 : 6, (d, n) => setBusy(`Reading course files ${d}/${n}…`));
+      if (!material.length) { toast.error("These files have no readable text (they may be scanned or not PDFs)."); return; }
+      setBusy("Studying previous-year EMDs…");
+      const pastEmds = (await extractMaterial(r.emds, 3)).map((p) => ({ name: p.name, text: p.text.slice(0, 30000) }));
+      setBusy("Wisen AI is building your EMD…");
+      const rows = await gen({ data: { mode: "exam", qtype, difficulty: "Medium", count: Math.min(30, e.count), subject: r.subject, unit: r.unit, lesson: r.lesson, material, pastEmds } });
+      await reloadAi();
+      setE({ subject: r.subject, phase: "run", qids: rows.map((x) => `ai-${x.id}`), answers: rows.map(() => null), flags: rows.map(() => false), i: 0, endsAt: Date.now() + e.minutes * 60e3, usedSec: 0 });
+      log(`Wisen AI built an EMD simulation · ${r.label}${pastEmds.length ? ` · styled on ${pastEmds.length} past EMD(s)` : ""}`);
+    } catch (err) { toast.error((err as Error).message || "Generation failed"); } finally { setBusy(null); }
+  };
+  return (
+    <div className="mx-auto mb-4 max-w-xl space-y-3 rounded-2xl border border-primary/30 bg-card p-6">
+      <p className="flex items-center gap-2 font-semibold"><Wand2 className="size-4 text-primary" /> Generate a new EMD with Wisen AI</p>
+      <p className="text-xs text-muted-foreground">Original questions from your selected course files, modelled on the style of previous-year EMDs — never copied from them.</p>
+      <ScopePicker tree={tree} value={sc} onChange={setSc} />
+      <div className="flex flex-wrap items-center gap-2">
+        <select aria-label="Question type" value={qtype} onChange={(ev) => setQtype(ev.target.value as "SCQ" | "MCQ")} className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary"><option value="SCQ">SCQ · one answer</option><option value="MCQ">MCQ · several answers</option></select>
+        <span className="text-xs text-muted-foreground">{Math.min(30, e.count)} questions · {e.minutes} min (set below)</span>
+      </div>
+      <Button className="w-full" disabled={!sc.s || !!busy} onClick={() => void run()}>{busy ? <><Loader2 className="animate-spin" /> {busy}</> : "Generate & start EMD"}</Button>
+    </div>
+  );
+}
+
 export function Exam() {
   const s = useAppState();
+  useAi();
   const e = s.exam;
   const pool = allQuestions(s);
   const [, tick] = useState(0);
@@ -49,6 +100,8 @@ export function Exam() {
       setE({ phase: "run", qids: qs.map((q) => q.id), answers: qs.map(() => null), flags: qs.map(() => false), i: 0, endsAt: Date.now() + e.minutes * 60e3, usedSec: 0 });
     };
     return (
+      <>
+      <AiExamSetup />
       <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 sm:p-8">
         <p className="font-mono text-xs uppercase text-primary">EMD Simulation · Faculty of Medicine Sétif 1</p>
         <h2 className="mt-2 font-serif text-4xl">Set up your exam</h2>
@@ -67,6 +120,7 @@ export function Exam() {
         </div>
         <Button className="mt-6 w-full" size="lg" disabled={!avail} onClick={start}>Start exam</Button>
       </div>
+      </>
     );
   }
 
@@ -108,10 +162,10 @@ export function Exam() {
           <p className="mb-3 font-semibold">Mistake review</p>
           {qs.map((q, k) => e.answers[k] !== q.answer && (
             <div key={q.id} className="border-t border-border py-3 text-sm first:border-0">
-              <p>{k + 1}. {q.stem}</p>
-              <p className="mt-1 text-destructive">Your answer: {e.answers[k] === null ? "—" : q.options[e.answers[k]!]}</p>
-              <p className="text-primary">Correct: {q.options[q.answer]}</p>
-              <p className="mt-1 text-muted-foreground">{q.why}</p>
+              <p>{k + 1}. <Inline text={q.stem} /></p>
+              <p className="mt-1 text-destructive">Your answer: {e.answers[k] === null ? "—" : <Inline text={pickedText(q, e.answers[k]!) ?? ""} />}</p>
+              <p className="text-primary">Correct: <Inline text={correctText(q)} /></p>
+              <p className="mt-1 text-muted-foreground"><Inline text={q.why} /></p>
             </div>
           ))}
           {score === qs.length && <p className="text-sm text-muted-foreground">Perfect score — no mistakes.</p>}
@@ -123,7 +177,10 @@ export function Exam() {
 
   const q = qs[e.i];
   if (!q) return null;
-  const answer = (k: number) => setE({ answers: e.answers.map((a, j) => (j === e.i ? k : a)) });
+  const multi = !!(q as AiQuestion).multi;
+  const cur = e.answers[e.i];
+  const answer = (k: number) => setE({ answers: e.answers.map((a, j) => (j !== e.i ? a : multi ? ((a ?? 0) ^ (1 << k)) || null : k)) });
+  const on = (k: number) => (multi ? !!(((cur ?? 0) >> k) & 1) : cur === k);
   return (
     <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[1fr_15rem]">
       <div className="rounded-xl border border-border bg-card p-6">
@@ -131,12 +188,13 @@ export function Exam() {
           <p className="font-mono text-xs text-muted-foreground">Question {e.i + 1} of {qs.length} · {q.subject}</p>
           <Button size="sm" variant={e.flags[e.i] ? "default" : "outline"} onClick={() => setE({ flags: e.flags.map((f, j) => (j === e.i ? !f : f)) })}><Flag /> {e.flags[e.i] ? "Marked" : "Mark for review"}</Button>
         </div>
-        <p className="mt-3 text-[15px] leading-relaxed">{q.stem}</p>
+        <p className="mt-3 text-[15px] leading-relaxed"><Inline text={q.stem} /></p>
+        {multi && <p className="mt-1 text-xs text-muted-foreground">MCQ — select every correct answer.</p>}
         <div className="mt-5 space-y-2">
           {q.options.map((o, k) => (
-            <label key={o + k} className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm ${e.answers[e.i] === k ? "border-primary bg-primary/5" : "border-border"}`}>
-              <input type="radio" name={q.id} checked={e.answers[e.i] === k} onChange={() => answer(k)} className="accent-[var(--primary)]" />
-              {String.fromCharCode(65 + k)}. {o}
+            <label key={o + k} className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm ${on(k) ? "border-primary bg-primary/5" : "border-border"}`}>
+              <input type={multi ? "checkbox" : "radio"} name={q.id} checked={on(k)} onChange={() => answer(k)} className="accent-[var(--primary)]" />
+              <span>{String.fromCharCode(65 + k)}. <Inline text={o} /></span>
             </label>
           ))}
         </div>

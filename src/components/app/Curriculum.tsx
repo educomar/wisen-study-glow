@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type CurFile = { id: string; file_name: string; subject: string; unit: string; lesson: string };
-type Tree = { id: string; name: string; units: { id: string; name: string; lessons: { id: string; name: string; files: CurFile[] }[] }[] }[];
+export type Tree = { id: string; name: string; emds: CurFile[]; units: { id: string; name: string; lessons: { id: string; name: string; files: CurFile[] }[] }[] }[];
 
 /** Subject → Unit → Lesson → File browser, scoped to the student's profile by RLS. */
 export function useCurriculum() {
@@ -18,15 +18,16 @@ export function useCurriculum() {
         supabase.from("subjects").select("id,name,position").order("position"),
         supabase.from("units").select("id,subject_id,name,position").order("position"),
         supabase.from("lessons").select("id,unit_id,name,position").order("position"),
-        supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at"),
+        supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type,kind,subject_id").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at"),
       ]);
       setTree((s.data ?? []).map((sub) => ({
         id: sub.id, name: sub.name,
+        emds: (r.data ?? []).filter((f) => f.subject_id === sub.id && f.kind === "past_emd").map((f) => ({ id: f.id, file_name: f.file_name, subject: sub.name, unit: "", lesson: "" })),
         units: (un.data ?? []).filter((x) => x.subject_id === sub.id).map((unit) => ({
           id: unit.id, name: unit.name,
           lessons: (l.data ?? []).filter((x) => x.unit_id === unit.id).map((les) => ({
             id: les.id, name: les.name,
-            files: (r.data ?? []).filter((f) => f.lesson_id === les.id).map((f) => ({ id: f.id, file_name: f.file_name, subject: sub.name, unit: unit.name, lesson: les.name })),
+            files: (r.data ?? []).filter((f) => f.lesson_id === les.id && f.kind !== "past_emd").map((f) => ({ id: f.id, file_name: f.file_name, subject: sub.name, unit: unit.name, lesson: les.name })),
           })),
         })),
       })));

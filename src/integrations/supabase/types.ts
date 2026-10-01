@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_flashcards: {
+        Row: {
+          back: string
+          created_at: string
+          front: string
+          id: string
+          scope_label: string
+          subject: string
+          tip: string
+          user_id: string
+        }
+        Insert: {
+          back: string
+          created_at?: string
+          front: string
+          id?: string
+          scope_label?: string
+          subject?: string
+          tip?: string
+          user_id: string
+        }
+        Update: {
+          back?: string
+          created_at?: string
+          front?: string
+          id?: string
+          scope_label?: string
+          subject?: string
+          tip?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_questions: {
+        Row: {
+          answers: Json
+          created_at: string
+          difficulty: string
+          explanation: string
+          id: string
+          lesson: string
+          options: Json
+          origin: string
+          qtype: string
+          source: string
+          stem: string
+          subject: string
+          unit: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          difficulty?: string
+          explanation?: string
+          id?: string
+          lesson?: string
+          options?: Json
+          origin?: string
+          qtype?: string
+          source?: string
+          stem: string
+          subject?: string
+          unit?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          difficulty?: string
+          explanation?: string
+          id?: string
+          lesson?: string
+          options?: Json
+          origin?: string
+          qtype?: string
+          source?: string
+          stem?: string
+          subject?: string
+          unit?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -95,6 +179,7 @@ export type Database = {
           drive_created_at: string | null
           file_name: string
           id: string
+          kind: string
           lesson_id: string | null
           mime_type: string
           size_bytes: number
@@ -109,6 +194,7 @@ export type Database = {
           drive_created_at?: string | null
           file_name: string
           id?: string
+          kind?: string
           lesson_id?: string | null
           mime_type?: string
           size_bytes?: number
@@ -123,6 +209,7 @@ export type Database = {
           drive_created_at?: string | null
           file_name?: string
           id?: string
+          kind?: string
           lesson_id?: string | null
           mime_type?: string
           size_bytes?: number
