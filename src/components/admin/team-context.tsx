@@ -48,7 +48,7 @@ export function useHierarchy() {
   });
 }
 
-export function LessonPicker({ value, onChange, allowUnitOnly, department, year }: { value: { s: string; u: string; l: string }; onChange: (v: { s: string; u: string; l: string }) => void; allowUnitOnly?: boolean; department?: string; year?: number }) {
+export function LessonPicker({ value, onChange, allowUnitOnly, department, year }: { value: { s: string; u: string; l: string }; onChange: (v: { s: string; u: string; l: string }) => void; allowUnitOnly?: boolean; department?: string | undefined; year?: number | undefined }) {
   const { data } = useHierarchy();
   if (!data) return null;
   const units = data.units.filter((u) => u.subject_id === value.s);
