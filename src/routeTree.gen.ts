@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminQbankRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminStudentsRouteImport } from './routes/_authenticated/admin/students'
 import { Route as AuthenticatedAdminSubjectsRouteImport } from './routes/_authenticated/admin/subjects'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin/team'
+import { Route as ApiCurriculumFileIdRouteImport } from './routes/api/curriculum-file.$id'
 import { Route as TeamInviteTokenRouteImport } from './routes/team/invite.$token'
 
 const IndexRoute = IndexRouteImport.update({
@@ -109,6 +110,11 @@ const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const ApiCurriculumFileIdRoute = ApiCurriculumFileIdRouteImport.update({
+  id: '/api/curriculum-file/$id',
+  path: '/api/curriculum-file/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamInviteTokenRoute = TeamInviteTokenRouteImport.update({
   id: '/team/invite/$token',
   path: '/team/invite/$token',
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/api/curriculum-file/$id': typeof ApiCurriculumFileIdRoute
   '/team/invite/$token': typeof TeamInviteTokenRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/api/curriculum-file/$id': typeof ApiCurriculumFileIdRoute
   '/team/invite/$token': typeof TeamInviteTokenRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/_authenticated/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/api/curriculum-file/$id': typeof ApiCurriculumFileIdRoute
   '/team/invite/$token': typeof TeamInviteTokenRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/admin/students'
     | '/admin/subjects'
     | '/admin/team'
+    | '/api/curriculum-file/$id'
     | '/team/invite/$token'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/admin/students'
     | '/admin/subjects'
     | '/admin/team'
+    | '/api/curriculum-file/$id'
     | '/team/invite/$token'
     | '/admin'
   id:
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/students'
     | '/_authenticated/admin/subjects'
     | '/_authenticated/admin/team'
+    | '/api/curriculum-file/$id'
     | '/team/invite/$token'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
@@ -235,6 +247,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   RegisterRoute: typeof RegisterRoute
   TeamLoginRoute: typeof TeamLoginRoute
+  ApiCurriculumFileIdRoute: typeof ApiCurriculumFileIdRoute
   TeamInviteTokenRoute: typeof TeamInviteTokenRoute
 }
 
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTeamRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/api/curriculum-file/$id': {
+      id: '/api/curriculum-file/$id'
+      path: '/api/curriculum-file/$id'
+      fullPath: '/api/curriculum-file/$id'
+      preLoaderRoute: typeof ApiCurriculumFileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/invite/$token': {
       id: '/team/invite/$token'
       path: '/team/invite/$token'
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   RegisterRoute: RegisterRoute,
   TeamLoginRoute: TeamLoginRoute,
+  ApiCurriculumFileIdRoute: ApiCurriculumFileIdRoute,
   TeamInviteTokenRoute: TeamInviteTokenRoute,
 }
 export const routeTree = rootRouteImport

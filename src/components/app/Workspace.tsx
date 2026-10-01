@@ -101,23 +101,40 @@ export function Workspace({ context }: { context?: string | undefined }) {
     window.getSelection()?.removeAllRanges();
   };
 
-  async function onFile(f?: File) {
+  async function onFile(f?: File, subj = subject) {
     if (!f) return;
     setErr(null);
-    const r = await uploadPdf(f, subject, setStage);
+    const r = await uploadPdf(f, subj, setStage);
     if (fileRef.current) fileRef.current.value = "";
     if (r.error) return setErr(r.error);
     if (r.warning) setErr(r.warning);
-    pushMsgs({ role: "ai", text: `Now grounded in “${f.name.replace(/\.pdf$/i, "")}”. Select any text or ask a question — I'll cite the page.`, cite: 1 });
+    pushMsgs({ role: "ai", text: `Now grounded in “${f.name.replace(/\.pdf$/i, "")}” (${subj}). Select any text or ask a question — I'll cite the page.`, cite: 1 });
+  }
+
+  async function openCurriculum(f: CurFile) {
+    setErr(null);
+    setStage({ i: 0, done: 0, total: 0, name: f.file_name });
+    try {
+      const file = await fetchCurriculumFile(f);
+      setShowCourses(false);
+      await onFile(file, f.subject);
+      log(`Opened ${f.subject} · ${f.unit} · ${f.lesson}`);
+    } catch {
+      setStage(null);
+      setErr(`We couldn't open “${f.file_name}” right now. Please try again in a moment.`);
+    }
   }
 
   const isSample = !!doc.sample;
+  const subjectOptions = tree && tree.length ? tree.map((t) => t.name) : SUBJECTS;
 
   return (
     <div className="flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0">
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
+        <Button size="sm" variant={showCourses ? "default" : "outline"} onClick={() => setShowCourses(!showCourses)}><Library /> My courses</Button>
         <select value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary">
-          {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
+          {!subjectOptions.includes(subject) && <option>{subject}</option>}
+          {subjectOptions.map((s) => <option key={s}>{s}</option>)}
         </select>
         <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
           <FileText className="size-4 shrink-0 text-primary" />
@@ -127,8 +144,9 @@ export function Workspace({ context }: { context?: string | undefined }) {
         {restoring && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" /> Restoring your document…</span>}
         {!isSample && <Button size="sm" variant="ghost" onClick={() => { setDoc(sampleDoc); setErr(null); pushMsgs({ role: "ai", text: `Switched back to “${sampleDoc.title}”.`, cite: 12 }); }}>Sample lecture</Button>}
         <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-        <Button size="sm" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp /> Upload Course PDF</Button>
+        <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp /> Upload PDF</Button>
       </div>
+      {showCourses && <div className="max-h-80 overflow-y-auto rounded-xl border border-border bg-card"><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
       {err && <div role="alert" className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"><AlertCircle className="size-4 shrink-0" /><span className="flex-1">{err}</span><button onClick={() => setErr(null)} aria-label="Dismiss"><X className="size-4" /></button></div>}
 
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
