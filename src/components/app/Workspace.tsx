@@ -1,4 +1,5 @@
-import { AlertCircle, CheckCircle2, FileText, FileUp, HelpCircle, Layers, Lightbulb, ListChecks, Loader2, NotebookPen, Target, Wand2, X, AlignLeft } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, FileUp, HelpCircle, Layers, Library, Lightbulb, ListChecks, Loader2, NotebookPen, Target, Wand2, X, AlignLeft } from "lucide-react";
+import { CurriculumBrowser, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -33,6 +34,8 @@ export function Workspace({ context }: { context?: string | undefined }) {
   const [err, setErr] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
   const [drag, setDrag] = useState(false);
+  const [showCourses, setShowCourses] = useState(false);
+  const { tree, signedIn } = useCurriculum();
   const readerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
