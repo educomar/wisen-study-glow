@@ -15,6 +15,13 @@
       "when": 1790777536422,
       "tag": "0001_team_system",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790823856319,
+      "tag": "0002_student_read_resources",
+      "breakpoints": true
     }
   ]
 }
