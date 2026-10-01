@@ -307,7 +307,7 @@ export const saveResource = createServerFn({ method: "POST" })
       const { data: old } = await context.supabase.from("lesson_resources").select("storage_path").eq("id", id).single();
       const { error } = await context.supabase.from("lesson_resources").update({ file_name: vals.file_name, storage_path: vals.storage_path, mime_type: vals.mime_type, size_bytes: vals.size_bytes, uploaded_by: t.userId }).eq("id", id);
       if (error) throw new Error(error.message);
-      if (old?.storage_path) await supabaseAdmin.storage.from("resources").remove([old.storage_path]);
+      if (old?.storage_path && !old.storage_path.startsWith("gdrive:")) await supabaseAdmin.storage.from("resources").remove([old.storage_path]);
       await audit(context.supabase, t, "replaced_file", "resource", id, vals.file_name);
       return { id };
     }
@@ -324,6 +324,7 @@ export const resourceDownloadUrl = createServerFn({ method: "POST" })
     await requireTeam(context.supabase, context.userId);
     const { data: r } = await context.supabase.from("lesson_resources").select("storage_path").eq("id", data.id).single();
     if (!r) throw new Error("Not found");
+    if (r.storage_path.startsWith("gdrive:")) return { url: `https://drive.google.com/file/d/${encodeURIComponent(r.storage_path.slice(7))}/view` };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: s } = await supabaseAdmin.storage.from("resources").createSignedUrl(r.storage_path, 300);
     return { url: s?.signedUrl ?? "" };
@@ -338,7 +339,7 @@ export const deleteResource = createServerFn({ method: "POST" })
     if (!r) throw new Error("Not found");
     await context.supabase.from("lesson_resources").delete().eq("id", data.id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.storage.from("resources").remove([r.storage_path]);
+    if (!r.storage_path.startsWith("gdrive:")) await supabaseAdmin.storage.from("resources").remove([r.storage_path]);
     await audit(context.supabase, t, "deleted_file", "resource", data.id, r.file_name);
     return { ok: true };
   });
