@@ -1,0 +1,2 @@
+GRANT SELECT ON public.lesson_resources TO authenticated;
+CREATE POLICY "Students read own resources" ON public.lesson_resources FOR SELECT TO authenticated USING (public.student_can_see_subject(subject_id));
