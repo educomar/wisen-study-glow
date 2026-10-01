@@ -6,7 +6,7 @@ export type CardState = { due: number; status: "new" | "learning" | "review" };
 export type Activity = { t: number; text: string };
 export type Note = { id: string; text: string; subject: string; source: string; page?: number; t: number };
 export type QSession = { subject: string; lesson: string; difficulty: string; order: string[]; i: number; answers: Record<string, number>; startedAt: number };
-export type FlashSession = { source: "all" | "doc" | "saved"; cardId: string | null; flipped: boolean; reviewed: number };
+export type FlashSession = { source: "all" | "doc" | "saved" | "ai"; cardId: string | null; flipped: boolean; reviewed: number };
 export type ExamSession = {
   phase: "setup" | "run" | "done";
   subject: string;

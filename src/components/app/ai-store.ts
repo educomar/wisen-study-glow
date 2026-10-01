@@ -25,7 +25,7 @@ export function toQuestion(r: Row): AiQuestion {
   const ans = ((r.answers as number[]) ?? [0]).map(Number);
   const multi = r.qtype === "MCQ";
   const d = ["Easy", "Medium", "Hard"].includes(r.difficulty) ? r.difficulty : "Medium";
-  return { id: `ai-${r.id}`, subject: r.subject, topic: r.lesson || r.unit || r.subject, unit: r.unit, difficulty: d as Question["difficulty"], stem: r.stem, options, answer: multi ? mask(ans) : ans[0] ?? 0, why: r.explanation, distractors: [], slide: 0, source: r.source || undefined, multi, origin: r.origin };
+  return { id: `ai-${r.id}`, subject: r.subject, topic: r.lesson || r.unit || r.subject, unit: r.unit, difficulty: d as Question["difficulty"], stem: r.stem, options, answer: multi ? mask(ans) : ans[0] ?? 0, why: r.explanation, distractors: [], slide: 0, source: r.source, multi, origin: r.origin };
 }
 
 async function load() {
