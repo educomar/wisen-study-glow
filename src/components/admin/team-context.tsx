@@ -39,7 +39,7 @@ export function useHierarchy() {
     queryKey: ["hierarchy"],
     queryFn: async () => {
       const [s, u, l] = await Promise.all([
-        supabase.from("subjects").select("id,name,faculty,department,academic_year").order("department").order("academic_year").order("name"),
+        supabase.from("subjects").select("id,name,faculty,department,academic_year").order("department").order("academic_year").order("position").order("name"),
         supabase.from("units").select("id,subject_id,name").order("position").order("created_at"),
         supabase.from("lessons").select("id,unit_id,name").order("position").order("created_at"),
       ]);
@@ -48,7 +48,7 @@ export function useHierarchy() {
   });
 }
 
-export function LessonPicker({ value, onChange, allowUnitOnly }: { value: { s: string; u: string; l: string }; onChange: (v: { s: string; u: string; l: string }) => void; allowUnitOnly?: boolean }) {
+export function LessonPicker({ value, onChange, allowUnitOnly, department, year }: { value: { s: string; u: string; l: string }; onChange: (v: { s: string; u: string; l: string }) => void; allowUnitOnly?: boolean; department?: string | undefined; year?: number | undefined }) {
   const { data } = useHierarchy();
   if (!data) return null;
   const units = data.units.filter((u) => u.subject_id === value.s);
@@ -57,7 +57,7 @@ export function LessonPicker({ value, onChange, allowUnitOnly }: { value: { s: s
     <div className="flex flex-wrap gap-2">
       <select className={sel} value={value.s} onChange={(e) => onChange({ s: e.target.value, u: "", l: "" })}>
         <option value="">Subject…</option>
-        {data.subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}
+        {data.subjects.filter((s) => (!department || s.department === department) && (!year || s.academic_year === year)).map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}
       </select>
       <select className={sel} value={value.u} disabled={!value.s} onChange={(e) => onChange({ ...value, u: e.target.value, l: "" })}>
         <option value="">Unit…</option>

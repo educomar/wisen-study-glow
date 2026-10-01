@@ -18,7 +18,7 @@ export function useCurriculum() {
         supabase.from("subjects").select("id,name,position").order("position"),
         supabase.from("units").select("id,subject_id,name,position").order("position"),
         supabase.from("lessons").select("id,unit_id,name,position").order("position"),
-        supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type").order("file_name"),
+        supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at"),
       ]);
       setTree((s.data ?? []).map((sub) => ({
         id: sub.id, name: sub.name,

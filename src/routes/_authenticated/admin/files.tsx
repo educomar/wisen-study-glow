@@ -4,7 +4,7 @@ import { Eye, RefreshCw, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { LessonPicker, PageHead, useAction, useHierarchy, useServerFn } from "@/components/admin/team-context";
+import { LessonPicker, PageHead, sel, useAction, useHierarchy, useServerFn } from "@/components/admin/team-context";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteResource, resourceDownloadUrl, resourceUploadUrl, saveResource } from "@/lib/team.functions";
@@ -13,6 +13,8 @@ export const Route = createFileRoute("/_authenticated/admin/files")({ component:
 
 function Files() {
   const [pick, setPick] = useState({ s: "", u: "", l: "" });
+  const [dept, setDept] = useState("");
+  const [year, setYear] = useState(0);
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const replaceId = useRef<string | undefined>(undefined);
@@ -24,11 +26,18 @@ function Files() {
   const act = useAction();
 
   const list = useQuery({
-    queryKey: ["resources", pick.s, pick.u, pick.l],
+    queryKey: ["resources", pick.s, pick.u, pick.l, dept, year, h?.subjects.length],
     queryFn: async () => {
-      let q = supabase.from("lesson_resources").select("*").order("created_at", { ascending: false });
+      let q = supabase.from("lesson_resources").select("*").order("subject_id").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at");
       if (pick.l) q = q.eq("lesson_id", pick.l); else if (pick.u) q = q.eq("unit_id", pick.u); else if (pick.s) q = q.eq("subject_id", pick.s);
-      return (await q).data ?? [];
+      else if (dept || year) {
+        const ids = (h?.subjects ?? []).filter((x) => (!dept || x.department === dept) && (!year || x.academic_year === year)).map((x) => x.id);
+        q = q.in("subject_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+      }
+      const rows = (await q).data ?? [];
+      const pos = new Map((h?.subjects ?? []).map((x, i) => [x.id, i]));
+      const upos = new Map((h?.units ?? []).map((x, i) => [x.id, i]));
+      return rows.sort((a, b) => (pos.get(a.subject_id) ?? 0) - (pos.get(b.subject_id) ?? 0) || (upos.get(a.unit_id) ?? 0) - (upos.get(b.unit_id) ?? 0) || String(a.drive_created_at ?? a.created_at).localeCompare(String(b.drive_created_at ?? b.created_at)));
     },
   });
 
@@ -56,14 +65,22 @@ function Files() {
     <>
       <PageHead title="Files & Sources" sub="QBank resource files attached to a unit or lesson. Files are private to the Team." />
       <div className="flex flex-wrap items-center gap-2">
-        <LessonPicker value={pick} onChange={setPick} allowUnitOnly />
+        <select aria-label="Department" className={sel} value={dept} onChange={(e) => { setDept(e.target.value); setYear(0); setPick({ s: "", u: "", l: "" }); }}>
+          <option value="">All departments</option>
+          {[...new Set((h?.subjects ?? []).map((x) => x.department))].map((d) => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select aria-label="Study year" className={sel} value={year} onChange={(e) => { setYear(Number(e.target.value)); setPick({ s: "", u: "", l: "" }); }}>
+          <option value={0}>All years</option>
+          {Array.from({ length: dept === "Dentistry" ? 6 : 7 }, (_, i) => i + 1).map((y) => <option key={y} value={y}>Year {y}</option>)}
+        </select>
+        <LessonPicker value={pick} onChange={setPick} allowUnitOnly department={dept || undefined} year={year || undefined} />
         <Button disabled={busy || !pick.u} onClick={() => { replaceId.current = undefined; input.current?.click(); }}><Upload /> {busy ? "Uploading…" : "Upload file"}</Button>
         <input ref={input} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void onFile(f); }} />
       </div>
       <div className="mt-6 divide-y divide-border rounded-xl border border-border bg-card">
         {list.data?.map((r) => (
           <div key={r.id} className="flex flex-wrap items-center gap-2 p-3 text-sm">
-            <div className="min-w-0 flex-1"><p className="truncate font-medium">{r.file_name}</p><p className="text-xs text-muted-foreground">{where(r)} · {(r.size_bytes / 1024).toFixed(0)} KB · {new Date(r.updated_at).toLocaleDateString()}</p></div>
+            <div className="min-w-0 flex-1"><p className="truncate font-medium">{r.file_name}</p><p className="text-xs text-muted-foreground">{where(r)} · {(r.size_bytes / 1024).toFixed(0)} KB · {new Date(r.drive_created_at ?? r.created_at).toLocaleDateString()}</p></div>
             <Button size="sm" variant="ghost" onClick={async () => { const x = await act(view({ data: { id: r.id } })); if (x?.url) window.open(x.url, "_blank", "noopener"); }}><Eye /> View</Button>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => { replaceId.current = r.id; input.current?.click(); }}><RefreshCw /> Replace</Button>
             <Button size="sm" variant="ghost" onClick={() => confirm(`Delete ${r.file_name}?`) && act(del({ data: { id: r.id } }), "File deleted")}><Trash2 /></Button>
