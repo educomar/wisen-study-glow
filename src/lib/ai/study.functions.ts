@@ -44,7 +44,7 @@ Return JSON only: {"questions":[{"stem":"...","options":["..."],"answers":[0-bas
       const options = (q.options ?? []).map(String).filter(Boolean).slice(0, 6);
       const answers = [...new Set((q.answers ?? []).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < options.length))];
       if (!q.stem || options.length < 2 || !answers.length) return [];
-      return [{ user_id: context.userId, qtype: data.qtype === "SCQ" || answers.length === 1 ? (data.qtype === "SCQ" ? "SCQ" : "MCQ") : "MCQ", subject: data.subject, unit: data.unit, lesson: data.lesson, difficulty: data.difficulty, stem: String(q.stem), options, answers: data.qtype === "SCQ" ? answers.slice(0, 1) : answers, explanation: String(q.explanation ?? ""), source: String(q.source ?? ""), origin: data.mode }];
+      return [{ user_id: context.userId, qtype: data.qtype, subject: data.subject, unit: data.unit, lesson: data.lesson, difficulty: data.difficulty, stem: String(q.stem), options, answers: data.qtype === "SCQ" ? answers.slice(0, 1) : answers, explanation: String(q.explanation ?? ""), source: String(q.source ?? ""), origin: data.mode }];
     });
     if (!rows.length) throw new Error("Wisen AI couldn't generate questions from this material. Try another selection.");
     const { data: saved, error } = await context.supabase.from("ai_questions").insert(rows).select("*");
