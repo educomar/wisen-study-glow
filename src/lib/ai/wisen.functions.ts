@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { wisenComplete, type ChatMsg } from "./gateway.server";
 import { prepare } from "./prompt";
 
 const schema = z.object({
@@ -12,51 +13,23 @@ const schema = z.object({
   excerpts: z.array(z.object({ page: z.number().int(), text: z.string().max(2500) })).max(5),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(4000) })).max(12),
   image: z.string().max(7_000_000).startsWith("data:image/").optional(),
+  attachment: z.object({ name: z.string().max(200), text: z.string().max(40000) }).optional(),
 });
 
-// Built-in Wisen engine: same router + UFAS1 retrieval + expertise profile, served through Lovable AI.
+const NOTATION = `Notation: write maths with LaTeX — inline $...$ and display $$...$$. Write chemistry with mhchem inside math, e.g. $\\ce{H2O}$, $\\ce{2H2 + O2 -> 2H2O}$, $\\ce{HCO3- <=> CO3^2- + H+}$. For structures, describe them or use condensed formulas inside \\ce{}.`;
+
+// Wisen engine: same router + UFAS1 retrieval + expertise profile.
 export const askWisen = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }) => {
     const { route, kb, system, user } = prepare(data);
-    const key = process.env["LOVABLE_API_KEY"];
-    if (!key) return { ok: false as const, route: route.primary, error: "unavailable" };
-    const input = [
-      ...data.history.map((h) => ({ role: h.role, content: [{ type: h.role === "user" ? "input_text" : "output_text", text: h.text }] })),
-      { role: "user", content: [{ type: "input_text", text: user }, ...(data.image ? [{ type: "input_image", image_url: data.image }] : [])] },
+    const att = data.attachment ? `\n\nThe student attached the file "${data.attachment.name}". Use it as context:\n${data.attachment.text}` : "";
+    const messages: ChatMsg[] = [
+      { role: "system", content: `${system}\n\n${NOTATION}` },
+      ...data.history.map((h) => ({ role: h.role, content: h.text })),
+      { role: "user", content: data.image ? [{ type: "text", text: user + att }, { type: "image_url", image_url: { url: data.image } }] : user + att },
     ];
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "fetch" },
-      body: JSON.stringify({ model: "openai/gpt-6-astra", instructions: system, input, stream: true, store: false, reasoning: { effort: route.complexity === "complex" ? "medium" : "low", summary: "auto" }, include: ["reasoning.encrypted_content"] }),
-    });
-    if (!res.ok || !res.body) {
-      console.error("wisen gateway", res.status, await res.text().catch(() => ""));
-      return { ok: false as const, route: route.primary, error: res.status === 429 ? "busy" : res.status === 402 ? "credits" : "unavailable" };
-    }
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "", text = "", failed = false;
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      let i;
-      while ((i = buf.indexOf("\n\n")) >= 0) {
-        const frame = buf.slice(0, i);
-        buf = buf.slice(i + 2);
-        for (const line of frame.split("\n")) {
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (!payload || payload === "[DONE]") continue;
-          try {
-            const ev = JSON.parse(payload);
-            if (ev.type === "response.output_text.delta") text += ev.delta;
-            else if (ev.type === "error" || ev.type === "response.failed") failed = true;
-          } catch { /* partial */ }
-        }
-      }
-    }
-    if (failed || !text.trim()) return { ok: false as const, route: route.primary, error: "unavailable" };
-    return { ok: true as const, route: route.primary, lang: route.lang, reason: route.reason, text, sources: kb.map((c) => ({ source: c.source, kind: c.kind })) };
+    const r = await wisenComplete(messages);
+    if (!r.ok) return { ok: false as const, route: route.primary, error: r.error };
+    return { ok: true as const, route: route.primary, lang: route.lang, reason: route.reason, text: r.text, sources: kb.map((c) => ({ source: c.source, kind: c.kind })) };
   });
