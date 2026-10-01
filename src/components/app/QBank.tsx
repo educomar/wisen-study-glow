@@ -1,14 +1,22 @@
-import { AlertTriangle, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, Layers, RotateCcw, X } from "lucide-react";
+import { AlertTriangle, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, FileText, Layers, Loader2, RotateCcw, Sparkles as Wand, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { questions, type Question } from "./data";
-import { openPage } from "./doc";
+import { useServerFn } from "@tanstack/react-start";
+
+import { aiQuestions, extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
+import { fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
+import { openPage, uploadPdf } from "./doc";
+import { Inline } from "./RichText";
+import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
+import { generateQuestions } from "@/lib/ai/study.functions";
 import { remoteQuestions } from "./remote";
-import { addCard, getState, log, practice, recordAttempt, toggle, update, useAppState, type AppState, type QSession } from "./store";
+import { addCard, getState, log, practice, recordAttempt, setTab, toggle, update, useAppState, type AppState, type QSession } from "./store";
 import { Button } from "@/components/ui/button";
 
-export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions, ...remoteQuestions()];
+export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions, ...remoteQuestions(), ...aiQuestions()];
+const letters = (q: Question) => q.options.map((_, k) => k).filter((k) => isCorrectOption(q, k)).map((k) => String.fromCharCode(65 + k)).join(", ");
 
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary";
 const fmt = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
@@ -19,12 +27,18 @@ export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: 
   const picked = onPick ? (pickedProp ?? null) : local;
   const done = picked !== null;
   const saved = s.bookmarks.includes(q.id);
+  const multi = !!(q as AiQuestion).multi;
+  const [draft, setDraft] = useState(0);
 
+  const commit = (v: number) => {
+    if (onPick) onPick(v); else setLocal(v);
+    recordAttempt(q.topic, v === q.answer);
+    log(`QBank · ${q.subject} · ${q.topic} — ${v === q.answer ? "correct" : "incorrect"}`);
+  };
   const pick = (k: number) => {
     if (done) return;
-    if (onPick) onPick(k); else setLocal(k);
-    recordAttempt(q.topic, k === q.answer);
-    log(`QBank · ${q.subject} · ${q.topic} — ${k === q.answer ? "correct" : "incorrect"}`);
+    if (multi) { setDraft((d) => d ^ (1 << k)); return; }
+    commit(k);
   };
 
   return (
@@ -34,30 +48,34 @@ export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: 
           <span className="rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] uppercase text-primary">EMD · {q.subject}</span>
           <span className="rounded-md border border-border px-2 py-0.5 font-mono text-[11px] uppercase text-muted-foreground">{q.topic}</span>
           <span className="rounded-md border border-border px-2 py-0.5 font-mono text-[11px] uppercase text-muted-foreground">{q.difficulty}</span>
+          {(q as AiQuestion).origin && <span className="rounded-md border border-border px-2 py-0.5 font-mono text-[11px] uppercase text-muted-foreground">{multi ? "MCQ · several answers" : "SCQ"}</span>}
         </div>
         <Button size="sm" variant="ghost" onClick={() => { update((st) => ({ ...st, bookmarks: toggle(st.bookmarks, q.id) })); toast(saved ? "Bookmark removed" : "Question bookmarked"); }}>
           {saved ? <BookmarkCheck className="text-primary" /> : <Bookmark />} {saved ? "Bookmarked" : "Bookmark"}
         </Button>
       </div>
-      <p className="mt-4 text-[15px] leading-relaxed">{q.stem}</p>
+      <p className="mt-4 text-[15px] leading-relaxed"><Inline text={q.stem} /></p>
       <div className="mt-5 space-y-2">
         {q.options.map((o, k) => {
-          const state = !done ? "" : k === q.answer ? "border-primary bg-primary/10" : k === picked ? "border-destructive bg-destructive/10" : "opacity-60";
+          const chosen = multi ? ((done ? picked! : draft) >> k) & 1 : k === picked;
+          const right = isCorrectOption(q, k);
+          const state = !done ? (multi && chosen ? "border-primary bg-primary/5" : "") : right ? "border-primary bg-primary/10" : chosen ? "border-destructive bg-destructive/10" : "opacity-60";
           return (
             <button key={o + k} onClick={() => pick(k)} className={`flex w-full items-center gap-3 rounded-lg border border-border px-4 py-3 text-left text-sm transition hover:border-primary/60 ${state}`}>
               <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border font-mono text-xs">{String.fromCharCode(65 + k)}</span>
-              <span className="flex-1">{o}</span>
-              {done && k === q.answer && <Check className="size-4 text-primary" />}
-              {done && k === picked && k !== q.answer && <X className="size-4 text-destructive" />}
+              <span className="flex-1"><Inline text={o} /></span>
+              {done && right && <Check className="size-4 text-primary" />}
+              {done && !!chosen && !right && <X className="size-4 text-destructive" />}
             </button>
           );
         })}
       </div>
+      {multi && !done && <Button className="mt-4" disabled={!draft} onClick={() => commit(draft)}>Check answer</Button>}
       {done && (
         <div className="mt-6 space-y-4 text-sm">
           <div className="rounded-lg border-l-4 border-primary bg-primary/5 p-4">
-            <p className="font-semibold">{picked === q.answer ? "Correct." : "Incorrect."} Why {String.fromCharCode(65 + q.answer)} is right</p>
-            <p className="mt-1 text-foreground/85">{q.why}</p>
+            <p className="font-semibold">{picked === q.answer ? "Correct." : "Incorrect."} Why {letters(q)} {multi ? "are" : "is"} right</p>
+            <p className="mt-1 text-foreground/85"><Inline text={q.why} /></p>
           </div>
           {q.distractors.some(Boolean) && (
             <div className="space-y-1.5">
@@ -66,12 +84,12 @@ export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: 
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            {q.source ? (
+            {(q as AiQuestion).origin ? (q.source ? <span className="rounded-md border border-border px-2 py-1 font-mono text-xs text-primary">Source · {q.source}</span> : null) : q.source ? (
               <button onClick={() => openPage(q.slide)} className="rounded-md border border-border px-2 py-1 font-mono text-xs text-primary hover:bg-accent">Reference · {q.source} · Page {q.slide}</button>
             ) : (
               <span className="rounded-md border border-border px-2 py-1 font-mono text-xs text-primary">Reference · {q.subject} · Slide {q.slide}</span>
             )}
-            <Button size="sm" variant="outline" onClick={() => { addCard(q.stem, q.options[q.answer]!, q.why, q.topic, q.source); toast("Saved as flashcard"); }}><Layers /> Save as Flashcard</Button>
+            <Button size="sm" variant="outline" onClick={() => { addCard(q.stem, multi ? q.options.filter((_, k) => isCorrectOption(q, k)).join(" · ") : q.options[q.answer]!, q.why, q.topic, q.source); toast("Saved as flashcard"); }}><Layers /> Save as Flashcard</Button>
           </div>
         </div>
       )}
@@ -91,9 +109,86 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
   return pool.filter((q) => (f.subject === "All" || q.subject === f.subject) && (f.lesson === "All" || q.topic === f.lesson) && (f.difficulty === "All" || q.difficulty === f.difficulty));
 }
 
-export function QBank({ context, defaultSubject }: { context?: string | undefined; defaultSubject?: string }) {
+export function QBank(props: { context?: string | undefined; defaultSubject?: string }) {
+  const [tab, setTabQ] = useState<"ai" | "emd">("ai");
+  const t = (k: typeof tab, l: string) => <button onClick={() => setTabQ(k)} className={`rounded-md px-3 py-1.5 text-sm font-medium ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>{l}</button>;
+  return (
+    <div className="mx-auto max-w-6xl space-y-3">
+      <div className="inline-flex gap-1 rounded-lg border border-border bg-card p-1">{t("ai", "Generated by Wisen AI")}{t("emd", "Previous-year EMDs")}</div>
+      {tab === "ai" ? <><AiGenerator /><Practice {...props} /></> : <PastEmds />}
+    </div>
+  );
+}
+
+function AiGenerator() {
+  const { tree, signedIn } = useCurriculum();
+  const [sc, setSc] = useState<Scope>(emptyScope);
+  const [qtype, setQtype] = useState<"SCQ" | "MCQ">("SCQ");
+  const [difficulty, setDiff] = useState<"Easy" | "Medium" | "Hard">("Medium");
+  const [count, setCount] = useState(5);
+  const [busy, setBusy] = useState<string | null>(null);
+  const gen = useServerFn(generateQuestions);
+  const run = async () => {
+    const r = resolveScope(tree, sc);
+    if (!r.files.length) { toast.error("No course files in this selection yet."); return; }
+    try {
+      setBusy("Reading course files…");
+      const material = await extractMaterial(r.files, sc.f ? 1 : 6, (d, n) => setBusy(`Reading course files ${d}/${n}…`));
+      if (!material.length) { toast.error("These files have no readable text (they may be scanned or not PDFs)."); return; }
+      setBusy("Wisen AI is writing your questions…");
+      const rows = await gen({ data: { mode: "qbank", qtype, difficulty, count, subject: r.subject, unit: r.unit, lesson: r.lesson, material } });
+      await reloadAi();
+      const topic = r.lesson || r.unit || r.subject;
+      update((st) => ({ ...st, qbank: { subject: r.subject, lesson: topic, difficulty: "All", order: rows.map((x) => `ai-${x.id}`), i: 0, answers: {}, startedAt: Date.now() } }));
+      log(`Wisen AI generated ${rows.length} ${qtype} · ${r.label}`);
+      toast(`${rows.length} questions generated and saved to your account`);
+    } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setBusy(null); }
+  };
+  if (!signedIn) return <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Sign in to generate questions from your faculty courses with Wisen AI.</div>;
+  return (
+    <div className="space-y-3 rounded-xl border border-primary/30 bg-card p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold"><Wand className="size-4 text-primary" /> Generate questions with Wisen AI <span className="font-normal text-muted-foreground">· based strictly on your course files</span></p>
+      <ScopePicker tree={tree} value={sc} onChange={setSc} />
+      <div className="flex flex-wrap items-center gap-2">
+        <select aria-label="Question type" className={sel} value={qtype} onChange={(e) => setQtype(e.target.value as "SCQ" | "MCQ")}><option value="SCQ">SCQ · one answer</option><option value="MCQ">MCQ · several answers</option></select>
+        <select aria-label="Difficulty level" className={sel} value={difficulty} onChange={(e) => setDiff(e.target.value as typeof difficulty)}>{["Easy", "Medium", "Hard"].map((d) => <option key={d}>{d}</option>)}</select>
+        <select aria-label="Number of questions" className={sel} value={count} onChange={(e) => setCount(Number(e.target.value))}>{[5, 10, 15].map((n) => <option key={n} value={n}>{n} questions</option>)}</select>
+        <Button size="sm" disabled={!sc.s || !!busy} onClick={() => void run()}>{busy ? <Loader2 className="animate-spin" /> : <Wand />} Generate</Button>
+        {busy && <span className="text-xs text-muted-foreground">{busy}</span>}
+      </div>
+    </div>
+  );
+}
+
+function PastEmds() {
+  const { tree, signedIn } = useCurriculum();
+  const [opening, setOpening] = useState<string | null>(null);
+  const open = async (f: CurFile, subject: string) => {
+    setOpening(f.id);
+    try { const r = await uploadPdf(await fetchCurriculumFile(f), subject, () => undefined); if (r.error) toast.error(r.error); else setTab("workspace"); }
+    catch { toast.error("Couldn't open this file."); } finally { setOpening(null); }
+  };
+  const subs = (tree ?? []).filter((x) => x.emds.length);
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <p className="font-semibold">Previous-year EMDs</p>
+      <p className="mt-1 text-sm text-muted-foreground">Real past exams added by the Wisen team. Kept separate from AI-generated questions.</p>
+      {!signedIn ? <p className="mt-4 text-sm text-muted-foreground">Sign in to see previous-year EMDs.</p>
+        : !subs.length ? <p className="mt-4 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">No previous-year EMDs have been added yet. They'll appear here as soon as the team uploads them.</p>
+        : subs.map((x) => (
+          <div key={x.id} className="mt-4">
+            <p className="font-mono text-[11px] uppercase text-primary">{x.name}</p>
+            {x.emds.map((f) => <button key={f.id} onClick={() => void open(f, x.name)} className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent">{opening === f.id ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4 text-primary" />}<span className="truncate">{f.file_name}</span></button>)}
+          </div>
+        ))}
+    </div>
+  );
+}
+
+function Practice({ context, defaultSubject }: { context?: string | undefined; defaultSubject?: string }) {
   const s = useAppState();
-  const pool = useMemo(() => [...questions, ...s.customQuestions], [s.customQuestions]);
+  const ai = useAi();
+  const pool = useMemo(() => [...questions, ...s.customQuestions, ...ai.qs], [s.customQuestions, ai.qs]);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
 
@@ -125,7 +220,7 @@ export function QBank({ context, defaultSubject }: { context?: string | undefine
   const weak = stats[0];
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[1fr_17rem]">
+    <div className="grid gap-4 lg:grid-cols-[1fr_17rem]">
       <div className="min-w-0 space-y-3">
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
           <select aria-label="Subject" value={session.subject} onChange={(e) => setFilter({ subject: e.target.value })} className={sel}><option value="All">All subjects</option>{subjects.map((x) => <option key={x}>{x}</option>)}</select>
