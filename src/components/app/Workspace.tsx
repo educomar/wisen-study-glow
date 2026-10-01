@@ -155,7 +155,7 @@ export function Workspace({ context }: { context?: string | undefined }) {
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
         <section onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }} className={`relative flex min-h-[28rem] flex-col overflow-hidden rounded-xl border bg-card ${drag ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
           <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-primary">{doc.subject} · {isSample ? `${lecture.faculty}` : "Your upload"}</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary">{doc.subject} · {isSample ? `${lecture.faculty}` : "Course file"}</p>
             <span className="font-mono text-xs text-muted-foreground">Page {page} / {isSample ? doc.pages.at(-1)!.pageNumber : doc.pages.length}</span>
           </header>
           {drag && <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-background/80 text-sm font-semibold text-primary">Drop your PDF to upload</div>}
