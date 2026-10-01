@@ -30,7 +30,7 @@ function emit() {
 export function pushMsgs(...m: Msg[]) { load(); msgs = [...msgs, ...m]; emit(); }
 export function clearChat() { msgs = [greeting()]; emit(); }
 
-export async function ask(action: string, query: string, display: string, page?: number) {
+export async function ask(action: string, query: string, display: string, page?: number, extra?: { image?: string; attachment?: { name: string; text: string } }) {
   load();
   const { doc, page: cur } = getDoc();
   const p = page ?? cur;
@@ -39,7 +39,7 @@ export async function ask(action: string, query: string, display: string, page?:
   typing = true;
   emit();
   try {
-    const res = await askWisenAI({ action, message: query.slice(0, 6000), subject: doc.subject, title: doc.title, page: p, pages: doc.pages, history });
+    const res = await askWisenAI({ action, message: query.slice(0, 6000), subject: doc.subject, title: doc.title, page: p, pages: doc.pages, history, ...extra });
     msgs = [...msgs, res];
   } catch {
     msgs = [...msgs, { role: "ai", text: "Something went wrong reaching Wisen AI. Please try again." }];
