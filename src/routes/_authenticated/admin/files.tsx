@@ -16,6 +16,7 @@ function Files() {
   const [dept, setDept] = useState("");
   const [year, setYear] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState<"course" | "past_emd">("course");
   const input = useRef<HTMLInputElement>(null);
   const replaceId = useRef<string | undefined>(undefined);
   const { data: h } = useHierarchy();
@@ -50,7 +51,7 @@ function Files() {
       const up = await getUrl({ data: { fileName: file.name } });
       const { error } = await supabase.storage.from("resources").uploadToSignedUrl(up.path, up.token, file, { contentType: file.type });
       if (error) throw new Error("Upload failed");
-      await act(save({ data: { id: replaceId.current, subject_id: target.s, unit_id: target.u, lesson_id: target.l || null, file_name: file.name, storage_path: up.path, mime_type: file.type, size_bytes: file.size } }), replaceId.current ? "File replaced" : "File uploaded");
+      await act(save({ data: { id: replaceId.current, subject_id: target.s, unit_id: target.u, lesson_id: target.l || null, file_name: file.name, storage_path: up.path, mime_type: file.type, size_bytes: file.size, kind: existing ? (existing.kind as "course" | "past_emd") : kind } }), replaceId.current ? "File replaced" : "File uploaded");
     } catch (e) { toast.error((e as Error).message); }
     replaceId.current = undefined; setBusy(false);
   };
@@ -74,13 +75,14 @@ function Files() {
           {Array.from({ length: dept === "Dentistry" ? 6 : 7 }, (_, i) => i + 1).map((y) => <option key={y} value={y}>Year {y}</option>)}
         </select>
         <LessonPicker value={pick} onChange={setPick} allowUnitOnly department={dept || undefined} year={year || undefined} />
+        <select aria-label="File type" className={sel} value={kind} onChange={(e) => setKind(e.target.value as "course" | "past_emd")}><option value="course">Course file</option><option value="past_emd">Previous-year EMD</option></select>
         <Button disabled={busy || !pick.u} onClick={() => { replaceId.current = undefined; input.current?.click(); }}><Upload /> {busy ? "Uploading…" : "Upload file"}</Button>
         <input ref={input} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void onFile(f); }} />
       </div>
       <div className="mt-6 divide-y divide-border rounded-xl border border-border bg-card">
         {list.data?.map((r) => (
           <div key={r.id} className="flex flex-wrap items-center gap-2 p-3 text-sm">
-            <div className="min-w-0 flex-1"><p className="truncate font-medium">{r.file_name}</p><p className="text-xs text-muted-foreground">{where(r)} · {(r.size_bytes / 1024).toFixed(0)} KB · {new Date(r.drive_created_at ?? r.created_at).toLocaleDateString()}</p></div>
+            <div className="min-w-0 flex-1"><p className="truncate font-medium">{r.kind === "past_emd" && <span className="mr-1.5 rounded border border-primary/40 px-1.5 py-0.5 font-mono text-[10px] text-primary">PAST EMD</span>}{r.file_name}</p><p className="text-xs text-muted-foreground">{where(r)} · {(r.size_bytes / 1024).toFixed(0)} KB · {new Date(r.drive_created_at ?? r.created_at).toLocaleDateString()}</p></div>
             <Button size="sm" variant="ghost" onClick={async () => { const x = await act(view({ data: { id: r.id } })); if (x?.url) window.open(x.url, "_blank", "noopener"); }}><Eye /> View</Button>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => { replaceId.current = r.id; input.current?.click(); }}><RefreshCw /> Replace</Button>
             <Button size="sm" variant="ghost" onClick={() => confirm(`Delete ${r.file_name}?`) && act(del({ data: { id: r.id } }), "File deleted")}><Trash2 /></Button>

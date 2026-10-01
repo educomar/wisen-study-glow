@@ -298,6 +298,7 @@ export const saveResource = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     id: z.string().uuid().optional(), subject_id: z.string().uuid(), unit_id: z.string().uuid(), lesson_id: z.string().uuid().nullable(),
     file_name: z.string().max(200), storage_path: z.string().max(300), mime_type: z.string().max(120), size_bytes: z.number().int().nonnegative(),
+    kind: z.enum(["course", "past_emd"]).default("course"),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const t = await requireTeam(context.supabase, context.userId);
