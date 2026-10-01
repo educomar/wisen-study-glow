@@ -92,6 +92,7 @@ export type Database = {
       lesson_resources: {
         Row: {
           created_at: string
+          drive_created_at: string | null
           file_name: string
           id: string
           lesson_id: string | null
@@ -105,6 +106,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          drive_created_at?: string | null
           file_name: string
           id?: string
           lesson_id?: string | null
@@ -118,6 +120,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          drive_created_at?: string | null
           file_name?: string
           id?: string
           lesson_id?: string | null
