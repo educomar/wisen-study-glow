@@ -166,7 +166,7 @@ function PastEmds() {
   const open = async (f: CurFile, subject: string) => {
     setOpening(f.id);
     try { const r = await uploadPdf(await fetchCurriculumFile(f), subject, () => undefined); if (r.error) toast.error(r.error); else setTab("workspace"); }
-    catch { toast.error("Couldn't open this file."); } finally { setOpening(null); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't open this file."); } finally { setOpening(null); }
   };
   const subs = (tree ?? []).filter((x) => x.emds.length);
   return (
