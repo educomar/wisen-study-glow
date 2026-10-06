@@ -38,10 +38,20 @@ export function useCurriculum() {
 
 export async function fetchCurriculumFile(f: CurFile): Promise<File> {
   const { data } = await supabase.auth.getSession();
-  const res = await fetch(`/api/curriculum-file/${f.id}`, { headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` } });
-  if (!res.ok) throw new Error(String(res.status));
-  const name = f.file_name.toLowerCase().endsWith(".pdf") ? f.file_name : `${f.file_name}.pdf`;
-  return new File([await res.blob()], name, { type: "application/pdf" });
+  if (!data.session) throw new Error("Sign in to open course files.");
+  const res = await fetch(`/api/curriculum-file/${f.id}`, { headers: { Authorization: `Bearer ${data.session.access_token}` } });
+  if (!res.ok) {
+    const msg = await res.json().then((j: { error?: string }) => j.error).catch(() => null);
+    throw new Error(msg ?? `Could not open file (${res.status})`);
+  }
+  const type = (res.headers.get("content-type") ?? "application/octet-stream").split(";")[0]!;
+  const blob = await res.blob();
+  // Some Drive files have no extension or a wrong MIME; detect PDFs by their magic bytes.
+  const head = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
+  const isPdf = type === "application/pdf" || String.fromCharCode(...head) === "%PDF-";
+  if (!isPdf) throw new Error("This file isn't a PDF, so it can't open in the reader yet.");
+  const name = /\.pdf$/i.test(f.file_name) ? f.file_name : `${f.file_name}.pdf`;
+  return new File([blob], name, { type: "application/pdf" });
 }
 
 export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tree: Tree | null; signedIn: boolean; activeTitle: string; onOpen: (f: CurFile) => void }) {

@@ -122,9 +122,9 @@ export function Workspace({ context }: { context?: string | undefined }) {
       setShowCourses(false);
       await onFile(file, f.subject);
       log(`Opened ${f.subject} · ${f.unit} · ${f.lesson}`);
-    } catch {
+    } catch (e) {
       setStage(null);
-      setErr(`We couldn't open “${f.file_name}” right now. Please try again in a moment.`);
+      setErr(`We couldn't open “${f.file_name}”: ${e instanceof Error ? e.message : "please try again in a moment."}`);
     }
   }
 
