@@ -403,6 +403,51 @@ export type Database = {
         }
         Relationships: []
       }
+      student_data: {
+        Row: {
+          activity: Json
+          attempts: Json
+          bookmarks: Json
+          card_states: Json
+          created_at: string
+          custom_cards: Json
+          custom_questions: Json
+          exam_history: Json
+          notes: Json
+          saved_cards: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity?: Json
+          attempts?: Json
+          bookmarks?: Json
+          card_states?: Json
+          created_at?: string
+          custom_cards?: Json
+          custom_questions?: Json
+          exam_history?: Json
+          notes?: Json
+          saved_cards?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity?: Json
+          attempts?: Json
+          bookmarks?: Json
+          card_states?: Json
+          created_at?: string
+          custom_cards?: Json
+          custom_questions?: Json
+          exam_history?: Json
+          notes?: Json
+          saved_cards?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           academic_year: number
