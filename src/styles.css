@@ -269,5 +269,6 @@ html { scroll-behavior: smooth; }
 .task-kapsules {color:var(--task-kapsules);background:color-mix(in oklab,var(--task-kapsules) 10%,transparent);border-color:color-mix(in oklab,var(--task-kapsules) 20%,transparent);}
 .study-theme .font-serif {font-family:var(--font-sans);font-weight:600;}
 @media(min-width:1024px){.study-room-height{height:calc(100dvh - 184px);min-height:550px;}}
+@media(max-width:1023px){.study-room-height [data-page]{scroll-margin-top:1rem;}.study-room-height section>div.relative.flex-1.overflow-y-auto{max-height:65dvh;}.study-room-height>div{min-height:0;}}
 @media(max-width:640px){.dashboard-card{padding:20px;}.study-theme h1{font-size:26px;}.study-theme input,.study-theme textarea,.study-theme select{max-width:100%;}}
 @media(prefers-reduced-motion:reduce){.study-theme *{scroll-behavior:auto;transition-duration:0s;animation-duration:0s;}}

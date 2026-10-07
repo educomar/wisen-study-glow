@@ -203,7 +203,7 @@ function Practice({ context, defaultSubject, source }: { context?: string | unde
   // Build the question order lazily when filters change (targeted practice sets order: []).
   useEffect(() => {
     const cur = getState().qbank;
-    if (cur && cur.order.length) return;
+    if (cur && cur.order.some(id => pool.some(q => q.id === id))) return;
     const base = cur ?? session;
     const order = shuffle(filtered(pool, base)).map((q) => q.id);
     if (!order.length) return;
