@@ -35,6 +35,7 @@ export function CourseReader() {
   const [width, setWidth] = useState(0);
   const [drag, setDrag] = useState(false);
   const [showCourses, setShowCourses] = useState(true);
+  const [reading, setReading] = useState(false);
   const { tree, signedIn } = useCurriculum();
   const readerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -64,6 +65,7 @@ export function CourseReader() {
 
   // Jump requests (citations, restored reading position) — wait until the reader is visible and laid out.
   useEffect(() => {
+    if (jump != null) { setReading(true); setShowCourses(false); }
     if (jump == null || width === 0) return;
     let tries = 0, raf = 0;
     const tick = () => {
@@ -111,6 +113,7 @@ export function CourseReader() {
     if (fileRef.current) fileRef.current.value = "";
     if (r.error) return setErr(r.error);
     if (r.warning) setErr(r.warning);
+    setReading(true);setShowCourses(false);
     pushMsgs({ role: "ai", text: `Now grounded in “${f.name.replace(/\.pdf$/i, "")}” (${subj}). Select any text or ask a question — I'll cite the page.`, cite: 1 });
   }
 
@@ -146,17 +149,17 @@ export function CourseReader() {
         <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
         <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp /> Upload PDF</Button>
       </div>
-      {showCourses && <div className="max-h-80 overflow-y-auto rounded-xl border border-border bg-card"><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
+      {showCourses && <div className="max-h-[65dvh] overflow-y-auto rounded-lg border border-border bg-card"><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
       {err && <div role="alert" className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"><AlertCircle className="size-4 shrink-0" /><span className="flex-1">{err}</span><button onClick={() => setErr(null)} aria-label="Dismiss"><X className="size-4" /></button></div>}
 
-      <div className="min-h-0 flex-1">
+      <div className={`min-h-0 flex-1 ${reading ? "" : "hidden"}`}>
         <section onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }} className={`relative flex min-h-[28rem] flex-col overflow-hidden rounded-xl border bg-card ${drag ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
           <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary">{doc.subject} · {isSample ? `${lecture.faculty}` : "Course file"}</p>
             <span className="font-mono text-xs text-muted-foreground">Page {page} / {isSample ? (doc.pages.at(-1)?.pageNumber ?? 1) : doc.pages.length}</span>
           </header>
           {drag && <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-background/80 text-sm font-semibold text-primary">Drop your PDF to upload</div>}
-          <div ref={readerRef} onMouseUp={onMouseUp} className="relative flex-1 overflow-y-auto bg-muted/30 p-5">
+          <div ref={readerRef} onMouseUp={onMouseUp} className="relative max-h-[72dvh] flex-1 overflow-y-auto bg-muted/30 p-5">
             {sel && (
               <div className="absolute z-20 flex w-max max-w-[22rem] -translate-x-1/2 -translate-y-[112%] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl" style={{ left: Math.min(Math.max(170, sel.x), (readerRef.current?.clientWidth ?? 400) - 170), top: sel.y }} onMouseUp={(e) => e.stopPropagation()}>
                 {ACTIONS.map(([l, Icon]) => (

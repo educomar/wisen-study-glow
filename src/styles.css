@@ -290,3 +290,5 @@ html { scroll-behavior: smooth; }
 .student-tool-height>div>div.min-h-0>section{height:100%;}
 .student-tool-height>section{max-width:1000px;}
 @media(max-width:767px){.student-tool-height{height:calc(100dvh - 190px);min-height:500px;}}
+
+.study-input.pl-10{padding-left:40px;}
