@@ -22,3 +22,10 @@
 - [x] Add mistakes retry and conversion, Kapsules decks and review history, and EMD navigation.
 - [x] Replace visible Flashcards terminology throughout the platform with Kapsules.
 - [x] Persist new personal data with user ownership; verify signed-in task completion, reload, cross-browser Kapsule history and rejection of foreign-owned tasks.
+
+## Student interface redesign — October 7
+- [ ] Choose new palette, readable typography and simplified layout, then approve a rendered direction.
+- [ ] Unify Home/App navigation and rebuild the student interface using the chosen direction.
+- [ ] Remove Custom EMD and Parallel Workspace, preserving necessary course-file access and existing student data.
+- [ ] Keep each section focused; move weak-area and lesson-performance information to Progress and audit sibling views.
+- [ ] Verify navigation, retained student workflows, readability and preview health.
