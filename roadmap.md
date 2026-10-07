@@ -24,7 +24,7 @@
 - [x] Persist new personal data with user ownership; verify signed-in task completion, reload, cross-browser Kapsule history and rejection of foreign-owned tasks.
 
 ## Student interface redesign — October 7
-- [ ] Choose new palette, readable typography and simplified layout, then approve a rendered direction.
+- [ ] Present three rendered directions using the selected StudyBuddy colors, fonts and background with one unified sidebar; await selection.
 - [ ] Unify Home/App navigation and rebuild the student interface using the chosen direction.
 - [ ] Remove Custom EMD and Parallel Workspace, preserving necessary course-file access and existing student data.
 - [ ] Keep each section focused; move weak-area and lesson-performance information to Progress and audit sibling views.
