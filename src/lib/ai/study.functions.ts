@@ -58,14 +58,14 @@ export const generateFlashcards = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const per = Math.max(2000, Math.floor(90000 / data.material.length));
     const mat = data.material.map((m) => `### File: ${m.name}\n${m.text.slice(0, per)}`).join("\n\n");
-    const system = `You are Wisen AI, making active-recall flashcards for 1st-year medical students (Faculty of Medicine, Sétif 1). ${STRICT} Cover the most important concepts, definitions, mechanisms, numbers and classic exam traps. Fronts are short questions or cloze prompts; backs are concise (1–3 lines). ${LANG} ${NOTATION}
+    const system = `You are Wisen AI, making active-recall Kapsules (active-recall cards) for 1st-year medical students (Faculty of Medicine, Sétif 1). ${STRICT} Cover the most important concepts, definitions, mechanisms, numbers and classic exam traps. Fronts are short questions or cloze prompts; backs are concise (1–3 lines). ${LANG} ${NOTATION}
 Return JSON only: {"cards":[{"front":"...","back":"...","tip":"short high-yield tip or source (file/page)"}]}`;
-    const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: `Make ${data.count} flashcards for: ${data.scope}\n\nMATERIAL:\n${mat}` }], { json: true });
-    if (!r.ok) throw new Error(r.error === "credits" ? "Wisen AI is out of credits right now." : r.error === "busy" ? "Wisen AI is busy — try again in a minute." : "Wisen AI couldn't generate flashcards. Try again.");
+    const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: `Make ${data.count} Kapsules (active-recall cards) for: ${data.scope}\n\nMATERIAL:\n${mat}` }], { json: true });
+    if (!r.ok) throw new Error(r.error === "credits" ? "Wisen AI is out of credits right now." : r.error === "busy" ? "Wisen AI is busy — try again in a minute." : "Wisen AI couldn't generate Kapsules. Try again.");
     const parsed = parseJson<{ cards?: { front?: string; back?: string; tip?: string }[] }>(r.text);
     const rows = (parsed?.cards ?? []).filter((c) => c.front && c.back).map((c) => ({ user_id: context.userId, subject: data.subject, scope_label: data.scope, front: String(c.front), back: String(c.back), tip: String(c.tip ?? "") }));
-    if (!rows.length) throw new Error("Wisen AI couldn't build flashcards from this material.");
+    if (!rows.length) throw new Error("Wisen AI couldn't build Kapsules from this material.");
     const { data: saved, error } = await context.supabase.from("ai_flashcards").insert(rows).select("*");
-    if (error) throw new Error("Couldn't save the flashcards.");
+    if (error) throw new Error("Couldn't save the Kapsules.");
     return saved;
   });

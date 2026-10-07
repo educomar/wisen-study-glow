@@ -24,7 +24,7 @@ function Dashboard() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {Object.entries(data?.stats ?? {}).map(([k, v]) => (
           <div key={k} className="rounded-xl border border-border bg-card p-4">
-            <p className="font-mono text-[11px] uppercase text-muted-foreground">{k}</p>
+            <p className="font-mono text-[11px] uppercase text-muted-foreground">{k === "flashcards" ? "Kapsules" : k}</p>
             <p className="mt-1 font-serif text-3xl">{v}</p>
           </div>
         ))}

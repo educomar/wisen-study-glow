@@ -11,7 +11,7 @@ import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker
 import { generateQuestions } from "@/lib/ai/study.functions";
 
 import { allQuestions } from "./QBank";
-import { getState, log, practice, recordAttempt, setTab, update, useAppState, type ExamSession } from "./store";
+import { getState, log, practice, recordQuestion, setTab, update, useAppState, type ExamSession } from "./store";
 import { Button } from "@/components/ui/button";
 
 const COUNTS = [10, 20, 30, 40];
@@ -24,8 +24,8 @@ function submit() {
   const e = st.exam;
   if (e.phase !== "run") return;
   const pool = allQuestions(st);
-  const qs = e.qids.map((id) => pool.find((q) => q.id === id)!).filter(Boolean);
-  qs.forEach((q, k) => recordAttempt(q.topic, e.answers[k] === q.answer));
+  const qs = e.qids.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
+  qs.forEach((q) => recordQuestion(q, e.answers[e.qids.indexOf(q.id)] ?? null));
   const score = qs.filter((q, k) => e.answers[k] === q.answer).length;
   const used = Math.min(e.minutes * 60, Math.round((Date.now() - (e.endsAt - e.minutes * 60e3)) / 1000));
   log(`EMD Exam Mode · ${e.subject} — ${score}/${qs.length}`);

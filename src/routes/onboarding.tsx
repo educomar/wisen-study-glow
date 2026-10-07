@@ -31,7 +31,7 @@ function Onboarding() {
   useEffect(() => {
     if (loading) return;
     if (!user) nav({ to: "/login" });
-    else if (profile?.onboarded) nav({ to: "/app" });
+    else if (profile?.onboarded) nav({ to: "/home" });
   }, [loading, user, profile, nav]);
 
   if (loading || !user || profile?.onboarded) return <div className="grid min-h-dvh place-items-center bg-background text-sm text-muted-foreground">Loading…</div>;
@@ -40,7 +40,7 @@ function Onboarding() {
     setBusy(true); setErr("");
     try {
       await saveProfile(user, { ...v, full_name: profile?.full_name || (user.user_metadata?.["full_name"] as string) || (user.user_metadata?.["name"] as string) || "", onboarded: true });
-      nav({ to: "/app" });
+      nav({ to: "/home" });
     } catch (e) { setErr((e as Error).message); setBusy(false); }
   };
 

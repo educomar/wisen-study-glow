@@ -51,7 +51,7 @@ const compactFeatures = [
   {
     id: "flashcards",
     icon: Layers3,
-    title: "Instant Flashcards & Active Recall",
+    title: "Instant Kapsules & Active Recall",
     body: "A spaced repetition engine tuned to your upcoming exam calendar.",
     visual: (
       <div className="mt-auto flex items-end gap-2 pt-5" aria-hidden="true">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { saveProfile, type Profile } from "@/lib/profile";
+import { flushStudentData } from "./store";
 
 export function ProfileDialog({ open, onOpenChange, user, profile, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; user: User; profile: Profile; onSaved: (p: Profile) => void }) {
   const [v, setV] = useState<Fields>(profile);
@@ -23,7 +24,7 @@ export function ProfileDialog({ open, onOpenChange, user, profile, onSaved }: { 
     } catch (e) { toast.error((e as Error).message); }
     setBusy(false);
   };
-  const signOut = async () => { await supabase.auth.signOut(); window.location.replace("/login"); };
+  const signOut = async () => { try { await flushStudentData(); await supabase.auth.signOut(); window.location.replace("/login"); } catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); } };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

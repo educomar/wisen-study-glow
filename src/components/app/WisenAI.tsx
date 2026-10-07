@@ -29,7 +29,7 @@ export function WisenAI({ context }: { context?: string | undefined }) {
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="font-mono text-[10px] uppercase tracking-widest text-primary">Continue the loop</p>
           <div className="mt-3 grid gap-2">
-            <Button size="sm" variant="outline" onClick={() => setTab("cards")}><Layers /> Generate flashcards</Button>
+            <Button size="sm" variant="outline" onClick={() => setTab("cards")}><Layers /> Generate Kapsules</Button>
             <Button size="sm" variant="outline" onClick={() => setTab("qbank")}><ListChecks /> Practice in QBank</Button>
           </div>
           {weak.length > 0 && <p className="mt-3 text-xs text-muted-foreground">Weakest: {weak.map((w) => `${w.t} ${w.pct}%`).join(" · ")}</p>}

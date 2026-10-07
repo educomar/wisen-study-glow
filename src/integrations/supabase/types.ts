@@ -414,7 +414,10 @@ export type Database = {
           custom_questions: Json
           exam_history: Json
           notes: Json
+          question_results: Json
+          review_history: Json
           saved_cards: Json
+          study_sessions: Json
           updated_at: string
           user_id: string
         }
@@ -428,7 +431,10 @@ export type Database = {
           custom_questions?: Json
           exam_history?: Json
           notes?: Json
+          question_results?: Json
+          review_history?: Json
           saved_cards?: Json
+          study_sessions?: Json
           updated_at?: string
           user_id: string
         }
@@ -442,7 +448,52 @@ export type Database = {
           custom_questions?: Json
           exam_history?: Json
           notes?: Json
+          question_results?: Json
+          review_history?: Json
           saved_cards?: Json
+          study_sessions?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      study_tasks: {
+        Row: {
+          completed: boolean
+          created_at: string
+          duration: number
+          id: string
+          kind: string
+          slot: string
+          start_time: string
+          task_date: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          duration?: number
+          id?: string
+          kind?: string
+          slot?: string
+          start_time?: string
+          task_date: string
+          title: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          duration?: number
+          id?: string
+          kind?: string
+          slot?: string
+          start_time?: string
+          task_date?: string
+          title?: string
           updated_at?: string
           user_id?: string
         }

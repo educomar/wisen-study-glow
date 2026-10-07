@@ -22,7 +22,7 @@ function FlashAdmin() {
   });
   return (
     <>
-      <PageHead title="Flashcards" sub="Flashcards attached to a lesson." />
+      <PageHead title="Kapsules" sub="Kapsules attached to a lesson." />
       <LessonPicker value={pick} onChange={setPick} />
       {pick.l && (
         <div className="mt-6 space-y-3">
