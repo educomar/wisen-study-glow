@@ -245,6 +245,7 @@ html { scroll-behavior: smooth; }
  --border: oklch(0.88 0.016 155); --input: var(--border); --ring: var(--primary);
  --task-questions: oklch(0.57 0.12 250); --task-must: oklch(0.62 0.12 65); --task-kapsules: oklch(0.6 0.13 310);
  font-family: var(--font-sans);
+ color:var(--foreground);
 }
 .dark .study-theme {
  --background: oklch(0.198 0.011 163); --foreground: oklch(0.961 0.01 154);

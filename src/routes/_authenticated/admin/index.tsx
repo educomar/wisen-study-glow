@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHead, useTeam } from "@/components/admin/team-context";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_authenticated/admin/")({ component: Dashboard });
+export const Route = createFileRoute("/_authenticated/admin/")({ head: () => ({ meta: [{"title": "Team Overview \u2014 Wisen"}, {"name": "description", "content": "Overview of Wisen academic content and team activity."}, {"property": "og:title", "content": "Team Overview \u2014 Wisen"}, {"property": "og:description", "content": "Overview of Wisen academic content and team activity."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: Dashboard });
 
 function Dashboard() {
   const t = useTeam();

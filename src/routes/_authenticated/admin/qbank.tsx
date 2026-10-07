@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteContent, restoreVersion, saveContent } from "@/lib/team.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/qbank")({ component: QBankAdmin });
+export const Route = createFileRoute("/_authenticated/admin/qbank")({ head: () => ({ meta: [{"title": "Faculty QBank Management \u2014 Wisen"}, {"name": "description", "content": "Manage faculty questions, explanations and version history."}, {"property": "og:title", "content": "Faculty QBank Management \u2014 Wisen"}, {"property": "og:description", "content": "Manage faculty questions, explanations and version history."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: QBankAdmin });
 
 type Q = { id: string; stem: string; options: string[]; answer: number; explanation: string; difficulty: string; version: number };
 const blank = { stem: "", options: ["", "", "", ""], answer: 0, explanation: "", difficulty: "Medium" };

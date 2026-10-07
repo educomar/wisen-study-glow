@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { createInvite, deleteMember, listTeam, resendInvite, revokeInvite, setMemberRole, setMemberStatus, updateMemberName } from "@/lib/team.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/team")({ component: () => <AdminOnly><TeamPage /></AdminOnly> });
+export const Route = createFileRoute("/_authenticated/admin/team")({ head: () => ({ meta: [{"title": "Team Management \u2014 Wisen"}, {"name": "description", "content": "Manage Wisen team invitations, access and audit history."}, {"property": "og:title", "content": "Team Management \u2014 Wisen"}, {"property": "og:description", "content": "Manage Wisen team invitations, access and audit history."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: () => <AdminOnly><TeamPage /></AdminOnly> });
 
 const link = (token: string) => `${window.location.origin}/team/invite/${token}`;
 const copy = (token: string) => { void navigator.clipboard.writeText(link(token)); toast.success("Invite link copied — send it to the invited email"); };
