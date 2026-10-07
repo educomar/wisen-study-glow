@@ -11,7 +11,7 @@ import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker
 import { generateFlashcards } from "@/lib/ai/study.functions";
 import { getDoc, uploadPdf, useDoc, type Doc, type Stage } from "./doc";
 import { sentences } from "./grounded";
-import { log, toggle, update, useAppState, type FlashSession } from "./store";
+import { addCard, flushStudentData, log, toggle, update, useAppState, type FlashSession } from "./store";
 import { Button } from "@/components/ui/button";
 
 const ratings = [
@@ -36,7 +36,7 @@ function cardsFrom(doc: Doc, max = 10): Card[] {
   return out;
 }
 
-export function Flashcards() {
+export function Flashcards({ view = "cards" }: { view?: "cards" | "new" | "decks" | "reviews" }) {
   const s = useAppState();
   const { doc } = useDoc();
   const [busy, setBusy] = useState<Stage | null>(null);
@@ -50,7 +50,10 @@ export function Flashcards() {
   const [mode, setMode] = useState<"subject" | "unit" | "file">("unit");
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const genCards = useServerFn(generateFlashcards);
-  const all = useMemo(() => [...seedCards, ...s.customCards, ...ai.cards], [s.customCards, ai.cards]);
+  const all = useMemo(() => [...s.customCards, ...ai.cards], [s.customCards, ai.cards]);
+  const [topic, setTopic] = useState("All");
+  const [manual, setManual] = useState(false);
+  const [front, setFront] = useState(""), [back, setBack] = useState(""), [deckName, setDeckName] = useState("");
   const runAi = async () => {
     const r = resolveScope(tree, mode === "subject" ? { ...emptyScope, s: sc.s } : mode === "unit" ? { ...sc, f: "" } : sc);
     if (mode !== "subject" && !sc.u) { toast.error("Choose a chapter / unit."); return; }
@@ -60,15 +63,16 @@ export function Flashcards() {
       setAiBusy("Reading course files…");
       const material = await extractMaterial(r.files, mode === "file" ? 1 : 6, (d, n) => setAiBusy(`Reading course files ${d}/${n}…`));
       if (!material.length) { toast.error("These files have no readable text (they may be scanned or not PDFs)."); return; }
-      setAiBusy("Wisen AI is writing your flashcards…");
+      setAiBusy("Wisen AI is writing your Kapsules…");
       const rows = await genCards({ data: { subject: r.subject, scope: r.label, count: mode === "subject" ? 20 : 12, material } });
       await reloadAi();
-      update((st) => ({ ...st, flash: { ...st.flash, source: "ai", cardId: `aic-${rows[0]!.id}`, flipped: false } }));
-      log(`Wisen AI generated ${rows.length} flashcards · ${r.label}`);
-      toast(`${rows.length} flashcards generated and saved to your account`);
+      update((st) => ({ ...st, flash: { ...st.flash, source: "ai", cardId: rows[0] ? `aic-${rows[0].id}` : null, flipped: false } }));
+      log(`Wisen AI generated ${rows.length} Kapsules · ${r.label}`);
+      toast(`${rows.length} Kapsules generated and saved to your account`);
     } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setAiBusy(null); }
   };
-  const deck = f.source === "ai" ? ai.cards : f.source === "doc" ? all.filter((c) => c.source === doc.title || (doc.sample && !c.source && seedCards.includes(c))) : f.source === "saved" ? all.filter((c) => s.savedCards.includes(c.id)) : all;
+  const sourceDeck = f.source === "ai" ? ai.cards : f.source === "doc" ? all.filter((c) => c.source === doc.title || (doc.sample && !c.source && seedCards.includes(c))) : f.source === "saved" ? all.filter((c) => s.savedCards.includes(c.id)) : all;
+  const deck = sourceDeck.filter(c => (topic === "All" || c.topic === topic) && (view !== "new" || !s.cards[c.id]));
   const now = Date.now();
   const due = deck.filter((c) => (s.cards[c.id]?.due ?? 0) <= now);
   const card = due.find((c) => c.id === f.cardId) ?? due[0];
@@ -76,19 +80,22 @@ export function Flashcards() {
   const counts = { New: deck.filter((c) => !s.cards[c.id]).length, Learning: deck.filter((c) => s.cards[c.id]?.status === "learning").length, Review: deck.filter((c) => s.cards[c.id]?.status === "review").length };
   const saved = card ? s.savedCards.includes(card.id) : false;
 
-  const rate = (r: (typeof ratings)[number]) => {
+  const rate = async (r: (typeof ratings)[number]) => {
     if (!card) return;
     const next = due.filter((c) => c.id !== card.id)[0];
-    update((st) => ({ ...st, cards: { ...st.cards, [card.id]: { due: Date.now() + r.ms, status: r.st } }, flash: { ...st.flash, cardId: next?.id ?? null, flipped: false, reviewed: st.flash.reviewed + 1 } }));
-    if (due.length === 1) log("Finished today's flashcard queue");
+    const box = r.l === "Again" ? 1 : r.l === "Hard" ? Math.max(1, (s.cards[card.id]?.box ?? 1) - 1) : Math.min(5, (s.cards[card.id]?.box ?? 0) + (r.l === "Easy" ? 2 : 1));
+    const interval = r.l === "Again" ? 60e3 : r.l === "Hard" ? 6 * 60e3 : 864e5 * ([0, 1, 2, 4, 8, 16][box] ?? 1);
+    update((st) => ({ ...st, cards: { ...st.cards, [card.id]: { due: Date.now() + interval, status: r.st, box } }, reviewHistory: [{ id: crypto.randomUUID(), cardId: card.id, topic: card.topic, rating: r.l, t: Date.now() }, ...st.reviewHistory].slice(0, 2000), flash: { ...st.flash, cardId: next?.id ?? null, flipped: false, reviewed: st.flash.reviewed + 1 } }));
+    if (due.length === 1) log("Finished today's Kapsule queue");
+    try { await flushStudentData(); } catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); }
   };
 
   const generate = (d: Doc) => {
     const made = cardsFrom(d);
-    if (!made.length) { toast.error("Not enough readable text to build flashcards."); return; }
-    update((st) => ({ ...st, customCards: [...st.customCards, ...made], flash: { ...st.flash, source: "doc", cardId: made[0]!.id, flipped: false } }));
-    log(`Generated ${made.length} flashcards from ${d.title}`);
-    toast(`${made.length} flashcards generated from “${d.title}”`);
+    if (!made.length) { toast.error("Not enough readable text to build Kapsules."); return; }
+    update((st) => ({ ...st, customCards: [...st.customCards, ...made], flash: { ...st.flash, source: "doc", cardId: made[0]?.id ?? null, flipped: false } }));
+    log(`Generated ${made.length} Kapsules from ${d.title}`);
+    toast(`${made.length} Kapsules generated from “${d.title}”`);
   };
 
   const onFile = async (file?: File) => {
@@ -100,16 +107,20 @@ export function Flashcards() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><select aria-label="Kapsule topic" className="study-input" value={topic} onChange={e=>setTopic(e.target.value)}><option>All</option>{[...new Set(all.map(c=>c.topic))].map(t=><option key={t}>{t}</option>)}</select><Button variant="outline" onClick={()=>setManual(!manual)}>Create Kapsule</Button></div>
+      {manual && <form className="mb-5 space-y-3 border-b border-border pb-5" onSubmit={e=>{e.preventDefault();addCard(front.trim(),back.trim(),"",deckName.trim() || "My Deck");setManual(false);setFront("");setBack("");void flushStudentData().catch(()=>toast.error("Please try saving again."));toast("Kapsule created");}}><input required aria-label="Deck name" placeholder="Deck name" value={deckName} onChange={e=>setDeckName(e.target.value)} className="study-input w-full"/><textarea required aria-label="Kapsule question" placeholder="Question" value={front} onChange={e=>setFront(e.target.value)} className="study-input w-full"/><textarea required aria-label="Kapsule answer" placeholder="Answer" value={back} onChange={e=>setBack(e.target.value)} className="study-input w-full"/><Button type="submit" disabled={!front.trim() || !back.trim()}>Save Kapsule</Button></form>}
+      {view === "reviews" ? <div><h2 className="mb-4 font-bold">Review History</h2>{s.reviewHistory.length ? s.reviewHistory.map(r=><div key={r.id} className="flex justify-between gap-4 border-b border-border py-3 text-sm"><span>{r.topic}<span className="block text-xs text-muted-foreground">{new Date(r.t).toLocaleString()}</span></span><span className="text-primary">{r.rating}</span></div>) : <p className="text-sm text-muted-foreground">No reviews yet</p>}</div> : view === "decks" ? <div className="grid gap-4 sm:grid-cols-2">{[...new Set(all.map(c=>c.topic))].map(t=><div className="dashboard-card" key={t}><h2 className="font-bold">{t}</h2><p className="text-sm text-muted-foreground">{all.filter(c=>c.topic===t).length} Kapsules · {all.filter(c=>c.topic===t && (s.cards[c.id]?.due??0)<=now).length} due</p><Button onClick={()=>{setTopic(t);window.dispatchEvent(new CustomEvent('wisen-review-deck'));}}>Review deck</Button></div>)}{!all.length && <p className="text-sm text-muted-foreground">No decks yet</p>}</div> : <>
+
       <div className="mb-4 space-y-3 rounded-xl border border-primary/30 bg-card p-4">
-        <p className="flex items-center gap-2 text-sm font-semibold"><Wand2 className="size-4 text-primary" /> Generate flashcards with Wisen AI</p>
-        {!signedIn ? <p className="text-sm text-muted-foreground">Sign in to generate flashcards from your faculty courses.</p> : <>
+        <p className="flex items-center gap-2 text-sm font-semibold"><Wand2 className="size-4 text-primary" /> Generate Kapsules with Wisen AI</p>
+        {!signedIn ? <p className="text-sm text-muted-foreground">Sign in to generate Kapsules from your faculty courses.</p> : <>
           <div className="inline-flex gap-1 rounded-lg border border-border p-1 text-xs">
             {([["subject", "Entire subject"], ["unit", "Chapter / unit"], ["file", "Individual file"]] as const).map(([k, l]) => <button key={k} onClick={() => setMode(k)} className={`rounded-md px-2.5 py-1 ${mode === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>{l}</button>)}
           </div>
           <ScopePicker tree={tree} value={mode === "subject" ? { ...emptyScope, s: sc.s } : sc} onChange={setSc} fileLevel={mode === "file"} lessonLevel={mode !== "subject"} />
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" disabled={!sc.s || !!aiBusy} onClick={() => void runAi()}>{aiBusy ? <Loader2 className="animate-spin" /> : <Wand2 />} Generate flashcards</Button>
+            <Button size="sm" disabled={!sc.s || !!aiBusy} onClick={() => void runAi()}>{aiBusy ? <Loader2 className="animate-spin" /> : <Wand2 />} Generate Kapsules</Button>
             {aiBusy && <span className="text-xs text-muted-foreground">{aiBusy}</span>}
           </div>
         </>}
@@ -138,14 +149,14 @@ export function Flashcards() {
       {card ? (
         <>
           <div className="relative">
-            <button onClick={() => setF({ cardId: card.id, flipped: !flipped })} className="group block h-72 w-full [perspective:1200px]" aria-label="Flip card">
+            <button onClick={() => setF({ cardId: card.id, flipped: !flipped })} className="group block h-96 w-full [perspective:1200px]" aria-label="Flip card">
               <div className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] ${flipped ? "[transform:rotateY(180deg)]" : ""}`}>
-                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-8 text-center [backface-visibility:hidden]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg border border-border bg-card p-8 text-center [backface-visibility:hidden]">
                   <span className="mb-4 font-mono text-[11px] uppercase text-primary">{card.topic}</span>
-                  <p className="font-serif text-2xl"><Inline text={card.front} /></p>
+                  <p className="font-semibold text-xl"><Inline text={card.front} /></p>
                   <span className="mt-6 text-xs text-muted-foreground">Tap to reveal answer</span>
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-primary/40 bg-card p-8 text-center [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg border border-primary/40 bg-card p-8 text-center [backface-visibility:hidden] [transform:rotateY(180deg)]">
                   <p className="text-lg"><Inline text={card.back} /></p>
                   <p className="mt-5 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">High-yield tip: <Inline text={card.tip} /></p>
                 </div>
@@ -164,12 +175,13 @@ export function Flashcards() {
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <p className="font-serif text-2xl">{deck.length ? "All caught up." : "No cards in this deck yet."}</p>
+        <div className="rounded-lg border border-border bg-card p-10 text-center">
+          <p className="font-semibold text-xl">{deck.length ? "All caught up." : "No cards in this deck yet."}</p>
           <p className="mt-2 text-sm text-muted-foreground">{deck.length ? "Come back later for your next reviews." : "Generate cards from your active document or upload a new PDF."}</p>
           {deck.length > 0 && <Button variant="outline" className="mt-5" onClick={() => update((st) => ({ ...st, cards: {}, flash: { ...st.flash, cardId: null, flipped: false, reviewed: 0 } }))}><RotateCcw /> Reset deck</Button>}
         </div>
       )}
+    </>}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { ChevronRight, NotebookPen, Target, Trash2, TrendingUp } from "lucide-re
 import { useState } from "react";
 
 import { seedCards } from "./data";
+import { useAi } from "./ai-store";
 import { openPage } from "./doc";
 import { allQuestions, QuestionView } from "./QBank";
 import { practice, update, useAppState } from "./store";
@@ -78,19 +79,20 @@ export function ProgressView() {
   );
 }
 
-const FILTERS = ["All", "Questions", "Flashcards", "Notes"] as const;
+const FILTERS = ["All", "Questions", "Kapsules", "Notes"] as const;
 
 export function Saved() {
   const s = useAppState();
+  const ai = useAi();
   const [f, setF] = useState<(typeof FILTERS)[number]>("All");
   const bq = allQuestions(s).filter((q) => s.bookmarks.includes(q.id));
-  const cards = [...seedCards, ...s.customCards].filter((c) => s.savedCards.includes(c.id) || s.customCards.includes(c));
+  const cards = [...seedCards, ...s.customCards, ...ai.cards].filter((c) => s.savedCards.includes(c.id) || s.customCards.includes(c));
   const show = (k: string) => f === "All" || f === k;
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap gap-1.5">
         {FILTERS.map((k) => {
-          const n = k === "Questions" ? bq.length : k === "Flashcards" ? cards.length : k === "Notes" ? s.notes.length : bq.length + cards.length + s.notes.length;
+          const n = k === "Questions" ? bq.length : k === "Kapsules" ? cards.length : k === "Notes" ? s.notes.length : bq.length + cards.length + s.notes.length;
           return <button key={k} onClick={() => setF(k)} className={`rounded-full border px-3 py-1 text-sm ${f === k ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary"}`}>{k} <span className="font-mono text-xs opacity-80">{n}</span></button>;
         })}
       </div>
@@ -100,14 +102,14 @@ export function Saved() {
           {bq.length ? <div className="space-y-4">{bq.map((q) => <QuestionView key={q.id} q={q} />)}</div> : <p className="text-sm text-muted-foreground">No bookmarks yet — bookmark questions in the QBank.</p>}
         </div>
       )}
-      {show("Flashcards") && (
+      {show("Kapsules") && (
         <div>
-          <p className="mb-3 font-semibold">Saved flashcards ({cards.length})</p>
+          <p className="mb-3 font-semibold">Saved Kapsules ({cards.length})</p>
           {cards.length ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {cards.map((c) => <div key={c.id} className="rounded-xl border border-border bg-card p-4 text-sm"><p className="font-mono text-[10px] uppercase text-primary">{c.topic}{c.source ? ` · ${c.source}` : ""}</p><p className="mt-1 font-medium">{c.front}</p><p className="mt-1 text-muted-foreground">{c.back}</p></div>)}
             </div>
-          ) : <p className="text-sm text-muted-foreground">Save cards in Flashcards, or create them from the reader and QBank.</p>}
+          ) : <p className="text-sm text-muted-foreground">Save cards in Kapsules, or create them from the reader and QBank.</p>}
         </div>
       )}
       {show("Notes") && (

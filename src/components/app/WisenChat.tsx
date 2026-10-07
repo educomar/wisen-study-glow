@@ -31,10 +31,11 @@ function McqView({ q }: { q: NonNullable<AiMsg["mcq"]> }) {
 
 const CHIPS = ["Summarize this page", "What's high-yield for EMD?", "Generate an EMD question", "EMD & coefficients at UFAS1"];
 
-export function WisenChat({ context }: { context?: string | undefined }) {
+export function WisenChat({ context, initialQuery }: { context?: string | undefined; initialQuery?: string | undefined }) {
   const { msgs, typing } = useChat();
   const { doc, page } = useDoc();
   const [input, setInput] = useState("");
+  useEffect(() => { if (initialQuery) setInput(initialQuery); }, [initialQuery]);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [msgs.length, typing]);
 

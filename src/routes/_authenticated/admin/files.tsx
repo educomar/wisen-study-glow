@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteResource, resourceDownloadUrl, resourceUploadUrl, saveResource } from "@/lib/team.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/files")({ component: Files });
+export const Route = createFileRoute("/_authenticated/admin/files")({ head: () => ({ meta: [{"title": "Files & Sources \u2014 Wisen"}, {"name": "description", "content": "Manage Wisen course files and previous-year EMD sources."}, {"property": "og:title", "content": "Files & Sources \u2014 Wisen"}, {"property": "og:description", "content": "Manage Wisen course files and previous-year EMD sources."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: Files });
 
 function Files() {
   const [pick, setPick] = useState({ s: "", u: "", l: "" });

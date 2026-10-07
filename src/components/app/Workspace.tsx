@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 
 const SUBJECTS = ["Embryology", "Anatomy", "Histology", "Pathology", "Cardiology", "Pharmacology", "Physiology"];
 export const SUBJECT_LIST = SUBJECTS;
-const ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["Summarize", AlignLeft], ["Why on EMD?", Target], ["Make Flashcard", Layers], ["Quiz me", HelpCircle], ["Generate EMD Question", ListChecks], ["Save note", NotebookPen]] as const;
+const ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["Summarize", AlignLeft], ["Compare", AlignLeft], ["Exam Prep", Target], ["Make Kapsule", Layers], ["Quiz me", HelpCircle], ["Generate EMD Question", ListChecks], ["Save note", NotebookPen]] as const;
 const STAGES = ["Parsing pages…", "Indexing medical content", "Ready to study"];
 
 function Diagram({ kind }: { kind?: Slide["diagram"] }) {
@@ -91,11 +91,11 @@ export function Workspace({ context }: { context?: string | undefined }) {
     if (!sel) return;
     const q = `“${sel.text.slice(0, 110)}${sel.text.length > 110 ? "…" : ""}”`;
     const label = `${a} · ${doc.subject} · Page ${sel.page}: ${q}`;
-    if (a === "Make Flashcard") {
+    if (a === "Make Kapsule") {
       const ctx = sentences(doc.pages.find((p) => p.pageNumber === sel.page)?.text ?? "")[0] ?? "";
       addCard(`${doc.subject} p.${sel.page}: explain “${sel.text.slice(0, 70)}”`, sel.text, ctx, doc.subject, doc.title);
-      log(`Created flashcard from ${doc.subject} · Page ${sel.page}`);
-      pushMsgs({ role: "user", text: label }, { role: "ai", text: `Flashcard added to your deck [Source: Page ${sel.page}].`, cite: sel.page });
+      log(`Created Kapsule from ${doc.subject} · Page ${sel.page}`);
+      pushMsgs({ role: "user", text: label }, { role: "ai", text: `Kapsule added to your deck [Source: Page ${sel.page}].`, cite: sel.page });
     } else if (a === "Save note") {
       addNote(sel.text, doc.subject, doc.title, sel.page);
       toast("Saved to high-yield notes");
@@ -177,7 +177,6 @@ export function Workspace({ context }: { context?: string | undefined }) {
                     <div className="mt-5 rounded-lg border-l-4 border-primary bg-primary/5 p-4 text-sm"><p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-primary">High-yield note</p>{s.highYield}</div>
                   </article>
                 ))}
-                <p className="text-center text-xs text-muted-foreground">Tip: select any text for Explain, Summarize, flashcards and EMD questions — or drop a PDF here.</p>
               </div>
             )}
           </div>

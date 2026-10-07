@@ -12,7 +12,7 @@ import { Inline } from "./RichText";
 import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
 import { generateQuestions } from "@/lib/ai/study.functions";
 import { remoteQuestions } from "./remote";
-import { addCard, getState, log, practice, recordAttempt, setTab, toggle, update, useAppState, type AppState, type QSession } from "./store";
+import { addCard, getState, log, practice, recordQuestion, setTab, toggle, update, useAppState, type AppState, type QSession } from "./store";
 import { Button } from "@/components/ui/button";
 
 export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions, ...remoteQuestions(), ...aiQuestions()];
@@ -32,7 +32,7 @@ export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: 
 
   const commit = (v: number) => {
     if (onPick) onPick(v); else setLocal(v);
-    recordAttempt(q.topic, v === q.answer);
+    recordQuestion(q, v);
     log(`QBank · ${q.subject} · ${q.topic} — ${v === q.answer ? "correct" : "incorrect"}`);
   };
   const pick = (k: number) => {
@@ -57,16 +57,16 @@ export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: 
       <p className="mt-4 text-[15px] leading-relaxed"><Inline text={q.stem} /></p>
       <div className="mt-5 space-y-2">
         {q.options.map((o, k) => {
-          const chosen = multi ? ((done ? picked! : draft) >> k) & 1 : k === picked;
+          const chosen = multi ? ((done ? picked ?? 0 : draft) >> k) & 1 : k === picked;
           const right = isCorrectOption(q, k);
           const state = !done ? (multi && chosen ? "border-primary bg-primary/5" : "") : right ? "border-primary bg-primary/10" : chosen ? "border-destructive bg-destructive/10" : "opacity-60";
           return (
-            <button key={o + k} onClick={() => pick(k)} className={`flex w-full items-center gap-3 rounded-lg border border-border px-4 py-3 text-left text-sm transition hover:border-primary/60 ${state}`}>
+            <Button variant="outline" key={o + k} onClick={() => pick(k)} className={`h-auto w-full justify-start whitespace-normal px-4 py-3 text-left text-sm ${state}`}>
               <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border font-mono text-xs">{String.fromCharCode(65 + k)}</span>
               <span className="flex-1"><Inline text={o} /></span>
               {done && right && <Check className="size-4 text-primary" />}
               {done && !!chosen && !right && <X className="size-4 text-destructive" />}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -89,7 +89,7 @@ export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: 
             ) : (
               <span className="rounded-md border border-border px-2 py-1 font-mono text-xs text-primary">Reference · {q.subject} · Slide {q.slide}</span>
             )}
-            <Button size="sm" variant="outline" onClick={() => { addCard(q.stem, multi ? q.options.filter((_, k) => isCorrectOption(q, k)).join(" · ") : q.options[q.answer]!, q.why, q.topic, q.source); toast("Saved as flashcard"); }}><Layers /> Save as Flashcard</Button>
+            <Button size="sm" variant="outline" onClick={() => { addCard(q.stem, multi ? q.options.filter((_, k) => isCorrectOption(q, k)).join(" · ") : q.options[q.answer] ?? "", q.why, q.topic, q.source); toast("Saved as Kapsule"); }}><Layers /> Save as Kapsule</Button>
           </div>
         </div>
       )}
@@ -109,7 +109,13 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
   return pool.filter((q) => (f.subject === "All" || q.subject === f.subject) && (f.lesson === "All" || q.topic === f.lesson) && (f.difficulty === "All" || q.difficulty === f.difficulty));
 }
 
-export function QBank(props: { context?: string | undefined; defaultSubject?: string }) {
+export function QBank(props: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
+  if (props.source === "past") return <PastEmds />;
+  if (props.source === "faculty") return <Practice {...props} />;
+  if (props.source === "ai") return <div className="space-y-4"><AiGenerator /><Practice {...props} /></div>;
+  return <LegacyQBank {...props} />;
+}
+function LegacyQBank(props: { context?: string | undefined; defaultSubject?: string }) {
   const [tab, setTabQ] = useState<"ai" | "emd">("ai");
   const t = (k: typeof tab, l: string) => <button onClick={() => setTabQ(k)} className={`rounded-md px-3 py-1.5 text-sm font-medium ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>{l}</button>;
   return (
@@ -185,10 +191,11 @@ function PastEmds() {
   );
 }
 
-function Practice({ context, defaultSubject }: { context?: string | undefined; defaultSubject?: string }) {
+function Practice({ context, defaultSubject, source }: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
   const s = useAppState();
   const ai = useAi();
-  const pool = useMemo(() => [...questions, ...s.customQuestions, ...ai.qs], [s.customQuestions, ai.qs]);
+  const faculty = remoteQuestions();
+  const pool = useMemo(() => source === "faculty" ? faculty : source === "ai" ? [...s.customQuestions, ...ai.qs] : [...questions, ...s.customQuestions, ...ai.qs], [source, faculty, s.customQuestions, ai.qs]);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
 
@@ -196,9 +203,11 @@ function Practice({ context, defaultSubject }: { context?: string | undefined; d
   // Build the question order lazily when filters change (targeted practice sets order: []).
   useEffect(() => {
     const cur = getState().qbank;
-    if (cur && cur.order.length) return;
+    if (cur && cur.order.some(id => pool.some(q => q.id === id))) return;
     const base = cur ?? session;
-    update((st) => ({ ...st, qbank: { ...base, order: shuffle(filtered(pool, base)).map((q) => q.id), i: 0, answers: base.answers, startedAt: base.startedAt || Date.now() } }));
+    const order = shuffle(filtered(pool, base)).map((q) => q.id);
+    if (!order.length) return;
+    update((st) => ({ ...st, qbank: { ...base, order, i: 0, answers: base.answers, startedAt: base.startedAt || Date.now() } }));
   }, [s.qbank, pool]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setFilter = (patch: Partial<QSession>) => {

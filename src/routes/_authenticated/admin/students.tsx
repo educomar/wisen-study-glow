@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AdminOnly, inp, PageHead, useServerFn } from "@/components/admin/team-context";
 import { listStudents } from "@/lib/team.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/students")({ component: () => <AdminOnly><Students /></AdminOnly> });
+export const Route = createFileRoute("/_authenticated/admin/students")({ head: () => ({ meta: [{"title": "Student Management \u2014 Wisen"}, {"name": "description", "content": "Manage Wisen student academic profiles."}, {"property": "og:title", "content": "Student Management \u2014 Wisen"}, {"property": "og:description", "content": "Manage Wisen student academic profiles."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: () => <AdminOnly><Students /></AdminOnly> });
 
 function Students() {
   const get = useServerFn(listStudents);

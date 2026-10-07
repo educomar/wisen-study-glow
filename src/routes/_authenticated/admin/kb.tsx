@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteContent, saveContent } from "@/lib/team.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/kb")({ component: () => <AdminOnly><KB /></AdminOnly> });
+export const Route = createFileRoute("/_authenticated/admin/kb")({ head: () => ({ meta: [{"title": "AI Knowledge Base \u2014 Wisen"}, {"name": "description", "content": "Manage the academic knowledge grounding Wisen AI."}, {"property": "og:title", "content": "AI Knowledge Base \u2014 Wisen"}, {"property": "og:description", "content": "Manage the academic knowledge grounding Wisen AI."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: () => <AdminOnly><KB /></AdminOnly> });
 
 function KB() {
   const [edit, setEdit] = useState<{ id?: string; title: string; category: string; content: string } | null>(null);

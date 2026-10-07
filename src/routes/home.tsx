@@ -1,0 +1,3 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { HomeDashboard } from '@/components/app/HomeDashboard';
+export const Route=createFileRoute('/home')({head:()=>({meta:[{title:'Your Study Day — Wisen'},{name:'description',content:'Your personal Wisen dashboard: daily study plan, saved topics, Kapsules and progress.'},{property:'og:title',content:'Your Study Day — Wisen'},{property:'og:description',content:'Your study plan and medical learning progress in one personal dashboard.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:HomeDashboard});

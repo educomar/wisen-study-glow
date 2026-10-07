@@ -20,3 +20,6 @@
 - Course material is extracted to text in the browser (pdf.js) before being sent to Wisen AI.
 - Student personal study data (bookmarks, notes, attempts, exam history, SRS card state, activity) lives in `student_data` (one own-row RLS row per user), synced by `src/components/app/store.ts`; localStorage is only a per-user cache keyed `wisen-app-state:<uid>` so accounts on a shared browser never mix.
 - `/api/curriculum-file/$id` verifies the bearer with the auth server and reads `lesson_resources` as the caller, so RLS alone decides file access; it serves the stored MIME type and rejects Drive HTML interstitials.
+- `/home` and `/app` share study state and metrics; workspace destinations use validated search parameters for bookmarkable deep links without duplicating tools.
+- Manual planner tasks are individual own-row RLS records in `study_tasks`; question results, review events and sessions extend `student_data` so student tools share persisted history.
+- Study-only theme overrides are scoped to `.study-theme` so redesigns do not change the public website or team workspace.

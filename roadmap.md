@@ -16,9 +16,9 @@
 - [x] AI EMD exam from course files + past EMD style
 
 ## Personal dashboard and study environment
-- [ ] Approve visual direction based on the supplied Viomin references.
-- [ ] Build /home with real personal metrics, saved topics, manual weekly planner, summaries and focus session.
-- [ ] Organize /app into Study Room, Practice, Kapsules and Progress with dashboard deep links.
-- [ ] Add mistakes retry and conversion, Kapsules decks and review history, and EMD navigation.
-- [ ] Replace visible Flashcards terminology throughout the platform with Kapsules.
-- [ ] Persist new personal data with user ownership and verify connected signed-in workflows.
+- [x] Implement compact medical-green direction based on the supplied Viomin references.
+- [x] Build /home with real personal metrics, saved topics, manual weekly planner, summaries and focus session.
+- [x] Organize /app into Study Room, Practice, Kapsules and Progress with dashboard deep links.
+- [x] Add mistakes retry and conversion, Kapsules decks and review history, and EMD navigation.
+- [x] Replace visible Flashcards terminology throughout the platform with Kapsules.
+- [x] Persist new personal data with user ownership; verify signed-in task completion, reload, cross-browser Kapsule history and rejection of foreign-owned tasks.

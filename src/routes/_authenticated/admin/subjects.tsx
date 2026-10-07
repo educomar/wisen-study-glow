@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { deleteContent, saveContent } from "@/lib/team.functions";
 import { FACULTIES, YEARS, type Department } from "@/lib/profile";
 
-export const Route = createFileRoute("/_authenticated/admin/subjects")({ component: Subjects });
+export const Route = createFileRoute("/_authenticated/admin/subjects")({ head: () => ({ meta: [{"title": "Curriculum Management \u2014 Wisen"}, {"name": "description", "content": "Manage Wisen subjects, units and lessons."}, {"property": "og:title", "content": "Curriculum Management \u2014 Wisen"}, {"property": "og:description", "content": "Manage Wisen subjects, units and lessons."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: Subjects });
 
 function Subjects() {
   const { data } = useHierarchy();

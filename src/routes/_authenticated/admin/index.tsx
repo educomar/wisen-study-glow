@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHead, useTeam } from "@/components/admin/team-context";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_authenticated/admin/")({ component: Dashboard });
+export const Route = createFileRoute("/_authenticated/admin/")({ head: () => ({ meta: [{"title": "Team Overview \u2014 Wisen"}, {"name": "description", "content": "Overview of Wisen academic content and team activity."}, {"property": "og:title", "content": "Team Overview \u2014 Wisen"}, {"property": "og:description", "content": "Overview of Wisen academic content and team activity."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: Dashboard });
 
 function Dashboard() {
   const t = useTeam();
@@ -24,7 +24,7 @@ function Dashboard() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {Object.entries(data?.stats ?? {}).map(([k, v]) => (
           <div key={k} className="rounded-xl border border-border bg-card p-4">
-            <p className="font-mono text-[11px] uppercase text-muted-foreground">{k}</p>
+            <p className="font-mono text-[11px] uppercase text-muted-foreground">{k === "flashcards" ? "Kapsules" : k}</p>
             <p className="mt-1 font-serif text-3xl">{v}</p>
           </div>
         ))}

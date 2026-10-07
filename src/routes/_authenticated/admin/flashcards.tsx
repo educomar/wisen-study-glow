@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteContent, saveContent } from "@/lib/team.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/flashcards")({ component: FlashAdmin });
+export const Route = createFileRoute("/_authenticated/admin/flashcards")({ head: () => ({ meta: [{"title": "Kapsules Management \u2014 Wisen"}, {"name": "description", "content": "Manage lesson-linked Kapsules in Wisen."}, {"property": "og:title", "content": "Kapsules Management \u2014 Wisen"}, {"property": "og:description", "content": "Manage lesson-linked Kapsules in Wisen."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: FlashAdmin });
 
 function FlashAdmin() {
   const [pick, setPick] = useState({ s: "", u: "", l: "" });
@@ -22,7 +22,7 @@ function FlashAdmin() {
   });
   return (
     <>
-      <PageHead title="Flashcards" sub="Flashcards attached to a lesson." />
+      <PageHead title="Kapsules" sub="Kapsules attached to a lesson." />
       <LessonPicker value={pick} onChange={setPick} />
       {pick.l && (
         <div className="mt-6 space-y-3">
