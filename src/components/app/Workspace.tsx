@@ -129,6 +129,7 @@ export function CourseReader() {
   }
 
   const isSample = !!doc.sample;
+  const pdf = doc.pdf;
   const subjectOptions = tree && tree.length ? tree.map((t) => t.name) : SUBJECTS;
 
   return (
@@ -163,8 +164,8 @@ export function CourseReader() {
                 ))}
               </div>
             )}
-            {!isSample && doc.pdf ? (
-              <div className="space-y-5">{width > 0 && doc.pages.map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={doc.pdf} n={p.pageNumber} width={width} />)}</div>
+            {!isSample && pdf ? (
+              <div className="space-y-5">{width > 0 && doc.pages.map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={pdf} n={p.pageNumber} width={width} />)}</div>
             ) : (
               <div className="space-y-5">
                 {lecture.slides.map((s) => (

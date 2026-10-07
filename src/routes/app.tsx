@@ -27,8 +27,8 @@ function AppShell(){const search=Route.useSearch(),nav=useNavigate();useRemoteQu
   return <main className="mx-auto max-w-7xl"><header className="mb-8"><h1>{label}</h1></header><StudentSections view={view}/><div className={view==='courses'||view==='ai'?'student-tool-height':''}>
   {view==='courses'&&<CourseReader/>}{view==='ai'&&<WisenChat context={ctx} initialQuery={search.query}/>}
 {(view==='qbank'||view==='faculty'||view==='past')&&<QBank key={view} context={ctx} source={view==='qbank'?'ai':view==='faculty'?'faculty':'past'}/>}
- <div className={view==='exam'||view==='custom'?'':'hidden'}><Exam/></div>
+  {view==='exam'&&<Exam/>}
  {(['cards','new','decks','reviews'] as StudyView[]).includes(view)&&<Flashcards view={view as 'cards'|'new'|'decks'|'reviews'}/>}
  {view==='mistakes'&&<Mistakes/>}{view==='history'&&<ExamHistory/>}{view==='progress'&&<StudyProgress/>}{view==='saved'&&<Saved/>}
- </div></main></div><Toaster/></div>;
+  </div><Toaster/></main>;
 }
