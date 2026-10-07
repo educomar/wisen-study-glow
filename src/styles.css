@@ -235,14 +235,14 @@ html { scroll-behavior: smooth; }
 
 /* Student experience: selected balanced paper design, isolated from public and team. */
 .study-theme {
- --background: oklch(0.967804 0.008720 84.5736); --foreground: oklch(0.272740 0.043270 248.914);
- --card: oklch(0.988580 0.004109 91.4459); --card-foreground: var(--foreground);
+ --background: oklch(0.9678058965 0.0085886791 84.572721); --foreground: oklch(0.270505318 0.0435161831 249.714679);
+ --card: oklch(0.9880186288 0.0041034333 91.445526); --card-foreground: var(--foreground);
  --popover: var(--card); --popover-foreground: var(--foreground);
- --primary: oklch(0.489676 0.078553 194.864); --primary-foreground: oklch(0.988580 0.004109 91.4459);
+ --primary: oklch(0.4887970917 0.0803603298 194.844962); --primary-foreground: oklch(0.9880186288 0.0041034333 91.445526);
  --secondary: color-mix(in oklab,var(--primary) 10%,var(--background)); --secondary-foreground: var(--primary);
  --accent: var(--secondary); --accent-foreground: var(--foreground);
  --muted: oklch(0.929 0.011 84); --muted-foreground: oklch(0.53 0.035 249);
- --border: oklch(0.887662 0.018272 88.0813); --input: var(--border); --ring: var(--primary);
+ --border: oklch(0.8887466068 0.0183543405 89.367931); --input: var(--border); --ring: var(--primary);
  --sidebar: var(--card); --sidebar-foreground: var(--foreground); --sidebar-accent: var(--secondary); --sidebar-accent-foreground: var(--primary); --sidebar-border:var(--border); --sidebar-ring:var(--ring);
  --task-questions: oklch(0.57 0.12 250); --task-must: oklch(0.56 0.12 65); --task-kapsules: oklch(0.56 0.13 310);
  --study-shadow: 0 2px 8px color-mix(in oklab,var(--foreground) 4%,transparent);
@@ -285,3 +285,8 @@ html { scroll-behavior: smooth; }
 @media(max-width:1023px){.study-room-height [data-page]{scroll-margin-top:1rem;}.study-room-height section>div.relative.flex-1.overflow-y-auto{max-height:65dvh;}.study-room-height>div{min-height:0;}}
 @media(max-width:640px){.dashboard-card{padding:20px;}.study-theme h1{font-size:26px;}.study-theme input,.study-theme textarea,.study-theme select{max-width:100%;}}
 @media(prefers-reduced-motion:reduce){.study-theme *{scroll-behavior:auto;transition-duration:0s;animation-duration:0s;}}
+
+.student-tool-height{height:calc(100dvh - 200px);min-height:550px;}
+.student-tool-height>div>div.min-h-0>section{height:100%;}
+.student-tool-height>section{max-width:1000px;}
+@media(max-width:767px){.student-tool-height{height:calc(100dvh - 190px);min-height:500px;}}

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { BookOpen, ChevronRight } from 'lucide-react';
 import { badge, useSession } from '@/lib/profile';
 import { StudentSections, kapsuleItems, progressItems, practiceItems } from '@/components/app/StudentSections';
-import { CourseReader } from '@/components/app/Workspace';
+import { CourseReader } from '@/components/app/CourseReader';
 import { WisenChat } from '@/components/app/WisenChat';
 import { QBank } from '@/components/app/QBank';
 import { Exam } from '@/components/app/Exam';
