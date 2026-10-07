@@ -124,11 +124,11 @@ export function Saved() {
                     <button onClick={() => update((st) => ({ ...st, notes: st.notes.filter((x) => x.id !== n.id) }))} aria-label="Delete note" className="text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
                   </div>
                   <p dir="auto" className="mt-2 whitespace-pre-line">{n.text}</p>
-                  {n.page ? <button onClick={() => openPage(n.page!)} className="mt-2 rounded-md border border-border px-2 py-0.5 font-mono text-[11px] text-primary hover:bg-accent">Open page {n.page}</button> : null}
+                  {n.page ? <button onClick={() => openPage(n.page ?? 1)} className="mt-2 rounded-md border border-border px-2 py-0.5 font-mono text-[11px] text-primary hover:bg-accent">Open page {n.page}</button> : null}
                 </div>
               ))}
             </div>
-          ) : <p className="text-sm text-muted-foreground">Select text in the Parallel Workspace and choose “Save note”, or save a Wisen AI answer.</p>}
+          ) : <p className="text-sm text-muted-foreground">No notes saved yet.</p>}
         </div>
       )}
     </div>

@@ -1,23 +1,20 @@
 import { Link } from '@tanstack/react-router';
-import { Moon, Sun, UserRound } from 'lucide-react';
+import { BookOpen, ChartNoAxesColumn, ChevronDown, Home, Layers, ListChecks, LogIn, Moon, Sun, UserRound, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useSession } from '@/lib/profile';
-import { Logo } from '@/components/site/Logo';
 import { useTheme } from '@/components/site/theme';
 import { Button } from '@/components/ui/button';
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { ProfileDialog } from './ProfileDialog';
+import { practiceItems } from './StudentSections';
 import type { StudyView } from './study-navigation';
-export function StudentNav({ home = false, view }: { home?: boolean; view?: StudyView }) {
- const { dark, toggle } = useTheme();
- const { user, profile, setProfile } = useSession();
- const [editing, setEditing] = useState(false);
- const items = [{ label: 'Study Room', view: 'workspace', active: ['workspace','ai'] }, { label:'Practice',view:'qbank',active:['qbank','faculty','past','exam','custom','history','mistakes'] }, {label:'Kapsules',view:'cards',active:['cards','new','decks','reviews']},{label:'Progress',view:'progress',active:['progress','saved']}] as const;
- return <>
- <header className="study-nav grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border py-4 sm:flex sm:justify-between">
-  <div className="flex min-w-0 items-center gap-8"><Link to="/home" aria-label="Wisen home"><Logo className="h-8 w-auto" /></Link><nav className="hidden items-center gap-6 text-sm font-medium md:flex"><Link to="/home" className={home ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}>Home</Link>{items.map(i => <Link key={i.label} to="/app" search={{view:i.view}} className={!home && i.active.some(v=>v===view) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}>{i.label}</Link>)}</nav></div>
-  <div className="flex shrink-0 items-center gap-2"><Button size="icon" variant="ghost" onClick={toggle} aria-label="Toggle theme">{dark ? <Sun /> : <Moon />}</Button>{user && profile ? <Button size="icon" onClick={()=>setEditing(true)} aria-label="Profile settings" className="rounded-full">{(profile.full_name || "").charAt(0).toUpperCase() || <UserRound />}</Button> : <Button asChild variant="outline" size="sm"><Link to="/login">Log in</Link></Button>}</div>
- </header>
- <nav className="flex gap-5 overflow-x-auto border-b border-border py-3 text-xs md:hidden"><Link to="/home" className={home ? 'text-primary' : 'text-muted-foreground'}>Home</Link>{items.map(i=><Link key={i.label} to="/app" search={{view:i.view}} className="shrink-0 text-muted-foreground">{i.label}</Link>)}</nav>
- {user && profile && <ProfileDialog open={editing} onOpenChange={setEditing} user={user} profile={profile} onSaved={setProfile} />}
- </>;
+export function StudentNav({home=false,view}:{home?:boolean;view?:StudyView}) {
+ const {dark,toggle}=useTheme(),{user,profile,setProfile}=useSession();
+ const {state,isMobile,setOpenMobile}=useSidebar();
+ const [editing,setEditing]=useState(false),[expanded,setExpanded]=useState<boolean|null>(null);
+ const activePractice=!home&&practiceItems.some(([v])=>v===view);
+ const collapsed=state==='collapsed'&&!isMobile;
+ const close=()=>setOpenMobile(false);
+ const items=[{label:'My Courses',view:'courses',icon:BookOpen,active:view==='courses'},{label:'Wisen AI',view:'ai',icon:Zap,active:view==='ai'},{label:'Practice',view:'faculty',icon:ListChecks,active:activePractice},{label:'Kapsules',view:'cards',icon:Layers,active:['cards','new','decks','reviews'].some(v=>v===view)},{label:'Progress',view:'progress',icon:ChartNoAxesColumn,active:['progress','saved'].some(v=>v===view)}] as const;
+ return <><Sidebar collapsible="icon" className="student-sidebar study-theme"><SidebarHeader className="px-6 py-7"><Link to="/home" onClick={close} className="text-2xl font-bold text-primary" aria-label="Wisen home">{collapsed?'W':'Wisen'}</Link></SidebarHeader><SidebarContent className="px-4"><nav aria-label="Student navigation"><SidebarMenu><SidebarMenuItem><SidebarMenuButton asChild isActive={home} tooltip="Home"><Link to="/home" onClick={close} aria-current={home?'page':undefined}><Home/><span>Home</span></Link></SidebarMenuButton></SidebarMenuItem>{items.map(item=><SidebarMenuItem key={item.label}><SidebarMenuButton asChild isActive={!home&&item.active} tooltip={item.label}><Link to="/app" search={{view:item.view}} onClick={close} aria-current={!home&&item.active?'page':undefined}><item.icon/><span>{item.label}</span></Link></SidebarMenuButton>{item.label==='Practice'&&!collapsed&&<><Button variant="ghost" size="icon" className="absolute right-1 top-1 size-8" aria-label="Expand practice" aria-expanded={expanded??activePractice} onClick={()=>setExpanded(!(expanded??activePractice))}><ChevronDown className="size-4"/></Button>{(expanded??activePractice)&&<ul className="my-2 ml-5 space-y-1 border-l border-border pl-3">{practiceItems.map(([v,label])=><li key={v}><Link to="/app" search={{view:v}} onClick={close} aria-current={!home&&view===v?'page':undefined} className={`block rounded-md px-3 py-2 text-base ${!home&&view===v?'bg-primary/10 font-medium text-primary':'text-muted-foreground hover:bg-accent hover:text-foreground'}`}>{label}</Link></li>)}</ul>}</>}</SidebarMenuItem>)}</SidebarMenu></nav></SidebarContent><SidebarFooter className="gap-2 border-t border-border p-4"><Button variant="ghost" onClick={toggle} className="justify-start" aria-label="Toggle theme">{dark?<Sun/>:<Moon/>}{!collapsed&&(dark?'Light mode':'Dark mode')}</Button>{user&&profile?<Button variant="ghost" className="justify-start" onClick={()=>setEditing(true)} aria-label="Profile settings"><UserRound/>{!collapsed&&<span className="truncate">{profile.full_name||'Profile'}</span>}</Button>:<Button variant="ghost" asChild><Link to="/login"><LogIn/>{!collapsed&&'Log in'}</Link></Button>}</SidebarFooter></Sidebar>{user&&profile&&<ProfileDialog open={editing} onOpenChange={setEditing} user={user} profile={profile} onSaved={setProfile}/>}</>;
 }

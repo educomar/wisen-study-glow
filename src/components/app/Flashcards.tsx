@@ -112,7 +112,7 @@ export function Flashcards({ view = "cards" }: { view?: "cards" | "new" | "decks
       {manual && <form className="mb-5 space-y-3 border-b border-border pb-5" onSubmit={e=>{e.preventDefault();addCard(front.trim(),back.trim(),"",deckName.trim() || "My Deck");setManual(false);setFront("");setBack("");void flushStudentData().catch(()=>toast.error("Please try saving again."));toast("Kapsule created");}}><input required aria-label="Deck name" placeholder="Deck name" value={deckName} onChange={e=>setDeckName(e.target.value)} className="study-input w-full"/><textarea required aria-label="Kapsule question" placeholder="Question" value={front} onChange={e=>setFront(e.target.value)} className="study-input w-full"/><textarea required aria-label="Kapsule answer" placeholder="Answer" value={back} onChange={e=>setBack(e.target.value)} className="study-input w-full"/><Button type="submit" disabled={!front.trim() || !back.trim()}>Save Kapsule</Button></form>}
       {view === "reviews" ? <div><h2 className="mb-4 font-bold">Review History</h2>{s.reviewHistory.length ? s.reviewHistory.map(r=><div key={r.id} className="flex justify-between gap-4 border-b border-border py-3 text-sm"><span>{r.topic}<span className="block text-xs text-muted-foreground">{new Date(r.t).toLocaleString()}</span></span><span className="text-primary">{r.rating}</span></div>) : <p className="text-sm text-muted-foreground">No reviews yet</p>}</div> : view === "decks" ? <div className="grid gap-4 sm:grid-cols-2">{[...new Set(all.map(c=>c.topic))].map(t=><div className="dashboard-card" key={t}><h2 className="font-bold">{t}</h2><p className="text-sm text-muted-foreground">{all.filter(c=>c.topic===t).length} Kapsules · {all.filter(c=>c.topic===t && (s.cards[c.id]?.due??0)<=now).length} due</p><Button onClick={()=>{setTopic(t);window.dispatchEvent(new CustomEvent('wisen-review-deck'));}}>Review deck</Button></div>)}{!all.length && <p className="text-sm text-muted-foreground">No decks yet</p>}</div> : <>
 
-      <div className="mb-4 space-y-3 rounded-xl border border-primary/30 bg-card p-4">
+      {view === "new" && <div className="mb-4 space-y-3 rounded-xl border border-primary/30 bg-card p-4">
         <p className="flex items-center gap-2 text-sm font-semibold"><Wand2 className="size-4 text-primary" /> Generate Kapsules with Wisen AI</p>
         {!signedIn ? <p className="text-sm text-muted-foreground">Sign in to generate Kapsules from your faculty courses.</p> : <>
           <div className="inline-flex gap-1 rounded-lg border border-border p-1 text-xs">
@@ -124,8 +124,8 @@ export function Flashcards({ view = "cards" }: { view?: "cards" | "new" | "decks
             {aiBusy && <span className="text-xs text-muted-foreground">{aiBusy}</span>}
           </div>
         </>}
-      </div>
-      <div className="mb-4 rounded-xl border border-border bg-card p-3">
+      </div>}
+      {view === "new" && <div className="mb-4 rounded-xl border border-border bg-card p-3">
         <div className="flex flex-wrap items-center gap-2">
           <select aria-label="Deck" value={f.source} onChange={(e) => setF({ source: e.target.value as FlashSession["source"], cardId: null, flipped: false })} className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary">
             <option value="all">All cards</option>
@@ -139,7 +139,7 @@ export function Flashcards({ view = "cards" }: { view?: "cards" | "new" | "decks
           <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => fileRef.current?.click()}>{busy ? <Loader2 className="animate-spin" /> : <FileUp />} Upload new</Button>
         </div>
         {busy && <p className="mt-2 font-mono text-xs text-muted-foreground">{busy.name} · {["Parsing pages…", "Indexing medical content", "Ready to study"][busy.i]} {busy.total ? `${busy.done}/${busy.total}` : ""}</p>}
-      </div>
+      </div>}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-lg font-semibold">{due.length} cards due today <span className="text-sm font-normal text-muted-foreground">· {f.reviewed} reviewed</span></p>
         <div className="flex gap-2 font-mono text-xs">

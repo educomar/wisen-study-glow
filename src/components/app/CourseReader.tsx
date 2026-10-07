@@ -9,7 +9,7 @@ import { clearJump, sampleDoc, setDoc, setPage, setSubject, uploadPdf, useDoc, t
 import { sentences } from "./grounded";
 import { PdfPage } from "./PdfPage";
 import { addCard, addNote, log } from "./store";
-import { WisenChat } from "./WisenChat";
+import { setTab } from "./store";
 import { Button } from "@/components/ui/button";
 
 const SUBJECTS = ["Embryology", "Anatomy", "Histology", "Pathology", "Cardiology", "Pharmacology", "Physiology"];
@@ -26,7 +26,7 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
   return <svg viewBox="0 0 300 110" className={c}><rect x="140" y="10" width="20" height="90" rx="8" fill="currentColor" opacity=".3" />{[0, 1, 2, 3, 4].map((i) => <g key={i}><rect x="100" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /><rect x="170" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /></g>)}<text x="210" y="60" fontSize="10" fill="currentColor">Somite pairs</text></svg>;
 }
 
-export function Workspace({ context }: { context?: string | undefined }) {
+export function CourseReader() {
   const { doc, page, jump, restoring } = useDoc();
   const subject = doc.subject;
   const [sel, setSel] = useState<{ text: string; page: number; x: number; y: number } | null>(null);
@@ -34,7 +34,8 @@ export function Workspace({ context }: { context?: string | undefined }) {
   const [err, setErr] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
   const [drag, setDrag] = useState(false);
-  const [showCourses, setShowCourses] = useState(false);
+  const [showCourses, setShowCourses] = useState(true);
+  const [reading, setReading] = useState(false);
   const { tree, signedIn } = useCurriculum();
   const readerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -64,6 +65,7 @@ export function Workspace({ context }: { context?: string | undefined }) {
 
   // Jump requests (citations, restored reading position) — wait until the reader is visible and laid out.
   useEffect(() => {
+    if (jump != null) { setReading(true); setShowCourses(false); }
     if (jump == null || width === 0) return;
     let tries = 0, raf = 0;
     const tick = () => {
@@ -99,7 +101,7 @@ export function Workspace({ context }: { context?: string | undefined }) {
     } else if (a === "Save note") {
       addNote(sel.text, doc.subject, doc.title, sel.page);
       toast("Saved to high-yield notes");
-    } else void ask(a, sel.text, label, sel.page);
+    } else { void ask(a, sel.text, label, sel.page); setTab("ai"); }
     setSel(null);
     window.getSelection()?.removeAllRanges();
   };
@@ -111,6 +113,7 @@ export function Workspace({ context }: { context?: string | undefined }) {
     if (fileRef.current) fileRef.current.value = "";
     if (r.error) return setErr(r.error);
     if (r.warning) setErr(r.warning);
+    setReading(true);setShowCourses(false);
     pushMsgs({ role: "ai", text: `Now grounded in “${f.name.replace(/\.pdf$/i, "")}” (${subj}). Select any text or ask a question — I'll cite the page.`, cite: 1 });
   }
 
@@ -129,11 +132,12 @@ export function Workspace({ context }: { context?: string | undefined }) {
   }
 
   const isSample = !!doc.sample;
+  const pdf = doc.pdf;
   const subjectOptions = tree && tree.length ? tree.map((t) => t.name) : SUBJECTS;
 
   return (
     <div className="flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
         <Button size="sm" variant={showCourses ? "default" : "outline"} onClick={() => setShowCourses(!showCourses)}><Library /> My courses</Button>
         <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
           <FileText className="size-4 shrink-0 text-primary" />
@@ -145,17 +149,17 @@ export function Workspace({ context }: { context?: string | undefined }) {
         <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
         <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp /> Upload PDF</Button>
       </div>
-      {showCourses && <div className="max-h-80 overflow-y-auto rounded-xl border border-border bg-card"><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
+      {showCourses && <div className="max-h-[65dvh] overflow-y-auto rounded-lg border border-border bg-card"><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
       {err && <div role="alert" className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"><AlertCircle className="size-4 shrink-0" /><span className="flex-1">{err}</span><button onClick={() => setErr(null)} aria-label="Dismiss"><X className="size-4" /></button></div>}
 
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
+      <div className={`min-h-0 flex-1 ${reading ? "" : "hidden"}`}>
         <section onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }} className={`relative flex min-h-[28rem] flex-col overflow-hidden rounded-xl border bg-card ${drag ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
           <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary">{doc.subject} · {isSample ? `${lecture.faculty}` : "Course file"}</p>
-            <span className="font-mono text-xs text-muted-foreground">Page {page} / {isSample ? doc.pages.at(-1)!.pageNumber : doc.pages.length}</span>
+            <span className="font-mono text-xs text-muted-foreground">Page {page} / {isSample ? (doc.pages.at(-1)?.pageNumber ?? 1) : doc.pages.length}</span>
           </header>
           {drag && <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-background/80 text-sm font-semibold text-primary">Drop your PDF to upload</div>}
-          <div ref={readerRef} onMouseUp={onMouseUp} className="relative flex-1 overflow-y-auto bg-muted/30 p-5">
+          <div ref={readerRef} onMouseUp={onMouseUp} className="relative max-h-[72dvh] flex-1 overflow-y-auto bg-muted/30 p-5">
             {sel && (
               <div className="absolute z-20 flex w-max max-w-[22rem] -translate-x-1/2 -translate-y-[112%] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl" style={{ left: Math.min(Math.max(170, sel.x), (readerRef.current?.clientWidth ?? 400) - 170), top: sel.y }} onMouseUp={(e) => e.stopPropagation()}>
                 {ACTIONS.map(([l, Icon]) => (
@@ -163,8 +167,8 @@ export function Workspace({ context }: { context?: string | undefined }) {
                 ))}
               </div>
             )}
-            {!isSample && doc.pdf ? (
-              <div className="space-y-5">{width > 0 && doc.pages.map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={doc.pdf!} n={p.pageNumber} width={width} />)}</div>
+            {!isSample && pdf ? (
+              <div className="space-y-5">{width > 0 && doc.pages.map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={pdf} n={p.pageNumber} width={width} />)}</div>
             ) : (
               <div className="space-y-5">
                 {lecture.slides.map((s) => (
@@ -182,7 +186,7 @@ export function Workspace({ context }: { context?: string | undefined }) {
           </div>
         </section>
 
-        <WisenChat context={context} />
+
       </div>
 
       {stage && (

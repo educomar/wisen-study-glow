@@ -20,7 +20,7 @@ function load() {
 }
 function greeting(): AiMsg {
   const { doc } = getDoc();
-  return { role: "ai", text: `Hi! I'm Wisen AI. I'm grounded in “${doc.title}” and the UFAS1 knowledge base. Ask in English, Français, العربية or Darija — or select text in the Parallel Workspace.`, cite: doc.pages[0]?.pageNumber ?? 1 };
+  return { role: "ai", text: `Hi! I'm Wisen AI. I'm grounded in “${doc.title}” and the UFAS1 knowledge base. Ask in English, Français, العربية or Darija — or attach a course file.`, cite: doc.pages[0]?.pageNumber ?? 1 };
 }
 function emit() {
   try { localStorage.setItem(KEY, JSON.stringify(msgs.slice(-60))); } catch {}

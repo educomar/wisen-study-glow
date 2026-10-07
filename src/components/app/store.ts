@@ -22,7 +22,7 @@ export type ExamSession = {
   endsAt: number;
   usedSec: number;
 };
-export type Tab = "qbank" | "ai" | "workspace" | "cards" | "exam" | "progress" | "saved";
+export type Tab = "qbank" | "ai" | "courses" | "cards" | "exam" | "progress" | "saved";
 
 export type AppState = {
   tab: Tab;

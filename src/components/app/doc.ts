@@ -18,7 +18,7 @@ export const sampleDoc: Doc = {
 };
 
 type DocState = { doc: Doc; page: number; jump: number | null; restoring: boolean };
-let st: DocState = { doc: sampleDoc, page: sampleDoc.pages[0]!.pageNumber, jump: null, restoring: false };
+let st: DocState = { doc: sampleDoc, page: sampleDoc.pages[0]?.pageNumber ?? 1, jump: null, restoring: false };
 let started = false;
 const ls = new Set<() => void>();
 const emit = (patch: Partial<DocState>) => { st = { ...st, ...patch }; ls.forEach((l) => l()); };
@@ -71,8 +71,8 @@ export function setDoc(doc: Doc) { emit({ doc, page: doc.pages[0]?.pageNumber ??
 export function setPage(page: number) { if (page !== st.page) { emit({ page }); saveMeta(); } }
 export function setSubject(subject: string) { emit({ doc: { ...st.doc, subject } }); saveMeta(); }
 export function clearJump() { emit({ jump: null }); }
-/** Open the Parallel Workspace on a given page. */
-export function openPage(page: number) { setTab("workspace"); emit({ jump: page }); }
+/** Open a cited page in the standalone course reader. */
+export function openPage(page: number) { setTab("courses"); emit({ jump: page }); }
 
 /** Validate, parse and index a PDF, then make it the active document shared by every tool. */
 export async function uploadPdf(f: File, subject: string, onStage: (s: Stage | null) => void): Promise<{ error?: string; warning?: string }> {
