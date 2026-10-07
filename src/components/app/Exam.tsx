@@ -152,7 +152,7 @@ export function Exam() {
             {weak.map(([t, v]) => (
               <div key={t} className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                 <span className="flex-1">{v.subject} · {t} — {Math.round((v.c / v.n) * 100)}%</span>
-                <Button size="sm" variant="outline" onClick={() => setTab("workspace")}>Review Lecture — 5 min</Button>
+                <Button size="sm" variant="outline" onClick={() => setTab("courses")}>Review Lecture — 5 min</Button>
                 <Button size="sm" onClick={() => practice(v.subject, t)}>Start targeted practice</Button>
               </div>
             ))}
