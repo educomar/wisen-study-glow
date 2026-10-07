@@ -2,6 +2,7 @@ import { ChevronRight, NotebookPen, Target, Trash2, TrendingUp } from "lucide-re
 import { useState } from "react";
 
 import { seedCards } from "./data";
+import { useAi } from "./ai-store";
 import { openPage } from "./doc";
 import { allQuestions, QuestionView } from "./QBank";
 import { practice, update, useAppState } from "./store";
@@ -82,9 +83,10 @@ const FILTERS = ["All", "Questions", "Kapsules", "Notes"] as const;
 
 export function Saved() {
   const s = useAppState();
+  const ai = useAi();
   const [f, setF] = useState<(typeof FILTERS)[number]>("All");
   const bq = allQuestions(s).filter((q) => s.bookmarks.includes(q.id));
-  const cards = [...seedCards, ...s.customCards].filter((c) => s.savedCards.includes(c.id) || s.customCards.includes(c));
+  const cards = [...seedCards, ...s.customCards, ...ai.cards].filter((c) => s.savedCards.includes(c.id) || s.customCards.includes(c));
   const show = (k: string) => f === "All" || f === k;
   return (
     <div className="mx-auto max-w-3xl space-y-6">

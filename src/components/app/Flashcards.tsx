@@ -11,7 +11,7 @@ import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker
 import { generateFlashcards } from "@/lib/ai/study.functions";
 import { getDoc, uploadPdf, useDoc, type Doc, type Stage } from "./doc";
 import { sentences } from "./grounded";
-import { addCard, log, toggle, update, useAppState, type FlashSession } from "./store";
+import { addCard, flushStudentData, log, toggle, update, useAppState, type FlashSession } from "./store";
 import { Button } from "@/components/ui/button";
 
 const ratings = [
@@ -80,13 +80,14 @@ export function Flashcards({ view = "cards" }: { view?: "cards" | "new" | "decks
   const counts = { New: deck.filter((c) => !s.cards[c.id]).length, Learning: deck.filter((c) => s.cards[c.id]?.status === "learning").length, Review: deck.filter((c) => s.cards[c.id]?.status === "review").length };
   const saved = card ? s.savedCards.includes(card.id) : false;
 
-  const rate = (r: (typeof ratings)[number]) => {
+  const rate = async (r: (typeof ratings)[number]) => {
     if (!card) return;
     const next = due.filter((c) => c.id !== card.id)[0];
     const box = r.l === "Again" ? 1 : r.l === "Hard" ? Math.max(1, (s.cards[card.id]?.box ?? 1) - 1) : Math.min(5, (s.cards[card.id]?.box ?? 0) + (r.l === "Easy" ? 2 : 1));
     const interval = r.l === "Again" ? 60e3 : r.l === "Hard" ? 6 * 60e3 : 864e5 * ([0, 1, 2, 4, 8, 16][box] ?? 1);
     update((st) => ({ ...st, cards: { ...st.cards, [card.id]: { due: Date.now() + interval, status: r.st, box } }, reviewHistory: [{ id: crypto.randomUUID(), cardId: card.id, topic: card.topic, rating: r.l, t: Date.now() }, ...st.reviewHistory].slice(0, 2000), flash: { ...st.flash, cardId: next?.id ?? null, flipped: false, reviewed: st.flash.reviewed + 1 } }));
-    if (due.length === 1) log("Finished today's flashcard queue");
+    if (due.length === 1) log("Finished today's Kapsule queue");
+    try { await flushStudentData(); } catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); }
   };
 
   const generate = (d: Doc) => {
@@ -148,7 +149,7 @@ export function Flashcards({ view = "cards" }: { view?: "cards" | "new" | "decks
       {card ? (
         <>
           <div className="relative">
-            <button onClick={() => setF({ cardId: card.id, flipped: !flipped })} className="group block min-h-80 w-full [perspective:1200px]" aria-label="Flip card">
+            <button onClick={() => setF({ cardId: card.id, flipped: !flipped })} className="group block h-96 w-full [perspective:1200px]" aria-label="Flip card">
               <div className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] ${flipped ? "[transform:rotateY(180deg)]" : ""}`}>
                 <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg border border-border bg-card p-8 text-center [backface-visibility:hidden]">
                   <span className="mb-4 font-mono text-[11px] uppercase text-primary">{card.topic}</span>
