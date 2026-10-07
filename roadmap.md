@@ -14,3 +14,11 @@
 - [x] Remove control beside My courses; Biophysics S1/S2 French/English labels
 - [x] Flashcards by subject / unit / file, saved to account
 - [x] AI EMD exam from course files + past EMD style
+
+## Personal dashboard and study environment
+- [ ] Approve visual direction based on the supplied Viomin references.
+- [ ] Build /home with real personal metrics, saved topics, manual weekly planner, summaries and focus session.
+- [ ] Organize /app into Study Room, Practice, Kapsules and Progress with dashboard deep links.
+- [ ] Add mistakes retry and conversion, Kapsules decks and review history, and EMD navigation.
+- [ ] Replace visible Flashcards terminology throughout the platform with Kapsules.
+- [ ] Persist new personal data with user ownership and verify connected signed-in workflows.
