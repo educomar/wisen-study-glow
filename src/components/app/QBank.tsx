@@ -1,4 +1,4 @@
-import { AlertTriangle, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, FileText, Layers, Loader2, RotateCcw, Sparkles as Wand, X } from "lucide-react";
+import { Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, FileText, Layers, ListChecks, Loader2, RotateCcw, Sparkles as Wand, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,13 +12,13 @@ import { Inline } from "./RichText";
 import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
 import { generateQuestions } from "@/lib/ai/study.functions";
 import { remoteQuestions } from "./remote";
-import { addCard, getState, log, practice, recordQuestion, setTab, toggle, update, useAppState, type AppState, type QSession } from "./store";
+import { addCard, getState, log, recordQuestion, setTab, toggle, update, useAppState, type AppState, type QSession } from "./store";
 import { Button } from "@/components/ui/button";
 
 export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions, ...remoteQuestions(), ...aiQuestions()];
 const letters = (q: Question) => q.options.map((_, k) => k).filter((k) => isCorrectOption(q, k)).map((k) => String.fromCharCode(65 + k)).join(", ");
 
-const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary";
+const sel = "h-11 min-w-0 w-full rounded-md border border-input bg-card px-3 text-base outline-none focus:border-primary";
 const fmt = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
 export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: { q: Question; picked?: number | null; onPick?: (k: number) => void; onNext?: (() => void) | undefined; onPrev?: (() => void) | undefined }) {
@@ -109,6 +109,8 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
   return pool.filter((q) => (f.subject === "All" || q.subject === f.subject) && (f.lesson === "All" || q.topic === f.lesson) && (f.difficulty === "All" || q.difficulty === f.difficulty));
 }
 
+function ListChecksIcon(){return <span className="grid size-16 place-items-center rounded-full bg-background text-muted-foreground"><ListChecks className="size-7"/></span>;}
+
 export function QBank(props: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
   if (props.source === "past") return <PastEmds />;
   if (props.source === "faculty") return <Practice {...props} />;
@@ -171,7 +173,7 @@ function PastEmds() {
   const [opening, setOpening] = useState<string | null>(null);
   const open = async (f: CurFile, subject: string) => {
     setOpening(f.id);
-    try { const r = await uploadPdf(await fetchCurriculumFile(f), subject, () => undefined); if (r.error) toast.error(r.error); else setTab("workspace"); }
+    try { const r = await uploadPdf(await fetchCurriculumFile(f), subject, () => undefined); if (r.error) toast.error(r.error); else openPage(1); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't open this file."); } finally { setOpening(null); }
   };
   const subs = (tree ?? []).filter((x) => x.emds.length);
@@ -191,7 +193,7 @@ function PastEmds() {
   );
 }
 
-function Practice({ context, defaultSubject, source }: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
+function Practice({ defaultSubject, source }: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
   const s = useAppState();
   const ai = useAi();
   const faculty = remoteQuestions();
@@ -220,56 +222,41 @@ function Practice({ context, defaultSubject, source }: { context?: string | unde
   const subjects = [...new Set(pool.map((q) => q.subject))];
   const lessons = [...new Set(pool.filter((q) => session.subject === "All" || q.subject === session.subject).map((q) => q.topic))];
   const list = session.order.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
-  const q = list[Math.min(session.i, list.length - 1)];
   const answered = Object.keys(session.answers).filter((id) => session.order.includes(id));
   const correct = answered.filter((id) => pool.find((x) => x.id === id)?.answer === session.answers[id]).length;
   const elapsed = Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000));
 
-  const stats = Object.entries(s.attempts).map(([t, a]) => ({ t, pct: Math.round((a.correct / a.total) * 100), n: a.total, subject: pool.find((x) => x.topic === t)?.subject ?? "Course" })).sort((a, b) => a.pct - b.pct);
-  const weak = stats[0];
+  const {tree}=useCurriculum();
+  const [unit,setUnit]=useState('All');
+  const [types,setTypes]=useState({scq:true,mcq:true});
+  const curriculumSubject=tree?.find(x=>x.name===session.subject);
+  const units=curriculumSubject?.units??[];
+  const selectedUnit=units.find(x=>x.name===unit);
+  const unitLessons=selectedUnit?.lessons.map(l=>l.name);
+  const allowed=(item:Question)=>(!unitLessons||unitLessons.includes(item.topic))&&((item as AiQuestion).multi?types.mcq:types.scq);
+  const visibleList=list.filter(allowed);
+  const current=visibleList[Math.min(session.i,visibleList.length-1)];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_17rem]">
-      <div className="min-w-0 space-y-3">
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
-          <select aria-label="Subject" value={session.subject} onChange={(e) => setFilter({ subject: e.target.value })} className={sel}><option value="All">All subjects</option>{subjects.map((x) => <option key={x}>{x}</option>)}</select>
-          <select aria-label="Lesson" value={session.lesson} onChange={(e) => setFilter({ lesson: e.target.value })} className={sel}><option value="All">All lessons</option>{lessons.map((x) => <option key={x}>{x}</option>)}</select>
-          <select aria-label="Difficulty" value={session.difficulty} onChange={(e) => setFilter({ difficulty: e.target.value })} className={sel}>{["All", "Easy", "Medium", "Hard"].map((x) => <option key={x} value={x}>{x === "All" ? "Any difficulty" : x}</option>)}</select>
-          <span className="ml-auto flex items-center gap-1.5 font-mono text-sm"><Clock className="size-4 text-primary" />{fmt(elapsed)}</span>
+    <div className="max-w-4xl space-y-6">
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-8">
+        <div className="mb-8 grid gap-6 sm:grid-cols-3">
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Subject</span><select aria-label="Subject" value={session.subject} onChange={e=>{setUnit('All');setFilter({subject:e.target.value});}} className={sel}><option value="All">All subjects</option>{[...new Set([...(tree?.map(x=>x.name)??[]),...subjects])].map(x=><option key={x}>{x}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Unit</span><select aria-label="Unit" value={unit} onChange={e=>{setUnit(e.target.value);setI(0);setFilter({lesson:'All'});}} className={sel}><option value="All">All units</option>{units.map(x=><option key={x.id}>{x.name}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Lesson</span><select aria-label="Lesson" value={session.lesson} onChange={e=>setFilter({lesson:e.target.value})} className={sel}><option value="All">All lessons</option>{[...new Set([...(selectedUnit?.lessons.map(x=>x.name)??[]),...lessons.filter(x=>!unitLessons||unitLessons.includes(x))])].map(x=><option key={x}>{x}</option>)}</select></label>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <p className="font-mono text-muted-foreground">{list.length ? `Question ${Math.min(session.i, list.length - 1) + 1} of ${list.length}` : "No questions"} · {answered.length} answered · {correct} correct{context && ` · ${context}`}</p>
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setFilter({})}><RotateCcw /> New session</Button>
-          </div>
+        <div className="flex flex-wrap items-center gap-6 border-b border-border pb-6">
+          <label className="flex items-center gap-2"><input type="checkbox" aria-label="Single Choice (SCQ)" className="size-4 accent-primary" checked={types.scq} onChange={e=>{setTypes({...types,scq:e.target.checked});setI(0);}}/>Single Choice (SCQ)</label>
+          <label className="flex items-center gap-2"><input type="checkbox" aria-label="Multiple Choice (MCQ)" className="size-4 accent-primary" checked={types.mcq} onChange={e=>{setTypes({...types,mcq:e.target.checked});setI(0);}}/>Multiple Choice (MCQ)</label>
+          <label className="ml-auto flex items-center gap-2 text-sm"><span className="text-muted-foreground">Difficulty</span><select aria-label="Difficulty" value={session.difficulty} onChange={e=>setFilter({difficulty:e.target.value})} className="h-11 rounded-md border border-input bg-card px-3">{['All','Easy','Medium','Hard'].map(x=><option key={x}>{x}</option>)}</select></label>
         </div>
-        {q ? (
-          <QuestionView key={q.id} q={q} picked={session.answers[q.id] ?? null} onPick={(k) => update((st) => ({ ...st, qbank: st.qbank && { ...st.qbank, answers: { ...st.qbank.answers, [q.id]: k } } }))} onPrev={session.i > 0 ? () => setI(session.i - 1) : undefined} onNext={session.i < list.length - 1 ? () => setI(session.i + 1) : undefined} />
-        ) : (
-          <div className="rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">No questions match these filters yet. Try another subject, lesson or difficulty.</div>
-        )}
+        {!current&&<div className="flex flex-col items-center py-16 text-center"><ListChecksIcon/><h2 className="mt-4 text-lg font-medium">No questions found</h2><p className="mt-1 max-w-xs text-muted-foreground">No questions available for this selection.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><span className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium">0 Questions Available</span><Button disabled>Start Practice</Button></div></div>}
+        {current&&<div className="flex flex-wrap items-center justify-between gap-3 pt-6 text-sm"><span className="text-muted-foreground">Question {Math.min(session.i,visibleList.length-1)+1} of {visibleList.length} · {answered.length} answered · {correct} correct</span><span className="flex items-center gap-2"><Clock className="size-4 text-primary"/>{fmt(elapsed)}<Button size="sm" variant="ghost" onClick={()=>setFilter({})}><RotateCcw/>New session</Button></span></div>}
+      </div>
+      {current&&<QuestionView key={current.id} q={current} picked={session.answers[current.id]??null} onPick={k=>update(st=>({...st,qbank:st.qbank&&{...st.qbank,answers:{...st.qbank.answers,[current.id]:k}}}))} onPrev={session.i>0?()=>setI(session.i-1):undefined} onNext={session.i<visibleList.length-1?()=>setI(session.i+1):undefined}/>}
         {list.length > 0 && session.i === list.length - 1 && answered.length === list.length && (
           <div className="rounded-xl border border-primary/40 bg-primary/5 p-4 text-sm">Session complete — {correct}/{list.length} correct ({Math.round((correct / list.length) * 100)}%) in {fmt(elapsed)}. <button className="font-semibold text-primary underline-offset-2 hover:underline" onClick={() => setFilter({})}>Start a new session</button></div>
         )}
-      </div>
-      <aside className="space-y-3">
-        {weak && weak.pct < 65 && (
-          <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
-            <p className="flex items-center gap-2 font-semibold"><AlertTriangle className="size-4 text-destructive" /> Weak area detected</p>
-            <p className="mt-1 text-muted-foreground">{weak.subject}: {weak.t} — {weak.pct}% accuracy</p>
-            <Button size="sm" className="mt-3 w-full" onClick={() => practice(weak.subject, weak.t)}>Practice this weak area</Button>
-          </div>
-        )}
-        <div className="rounded-xl border border-border bg-card p-4 text-sm">
-          <p className="mb-3 font-semibold">Performance by lesson</p>
-          {stats.map((a) => (
-            <button key={a.t} onClick={() => practice(a.subject, a.t)} className="mb-2 block w-full rounded-md p-1 text-left hover:bg-accent">
-              <div className="flex justify-between text-xs"><span>{a.t}</span><span className="font-mono">{a.pct}%</span></div>
-              <div className="mt-1 h-1.5 rounded-full bg-muted"><div className={`h-full rounded-full ${a.pct < 65 ? "bg-destructive/80" : "bg-primary"}`} style={{ width: `${a.pct}%` }} /></div>
-            </button>
-          ))}
-        </div>
-      </aside>
     </div>
   );
 }
