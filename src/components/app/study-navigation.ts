@@ -1,4 +1,4 @@
-export const studyViews = ['workspace', 'ai', 'qbank', 'faculty', 'past', 'exam', 'custom', 'history', 'mistakes', 'cards', 'new', 'decks', 'reviews', 'progress', 'saved'] as const;
+export const studyViews = ['courses', 'ai', 'qbank', 'faculty', 'past', 'exam', 'history', 'mistakes', 'cards', 'new', 'decks', 'reviews', 'progress', 'saved'] as const;
 export type StudyView = typeof studyViews[number];
 export function studySearch(search: Record<string, unknown>): { view?: StudyView; query?: string } {
  const view = studyViews.find(v => v === search['view']);
