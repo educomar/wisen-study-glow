@@ -1,3 +1,4 @@
+/// <reference types="bun" />
 import { describe, expect, test } from 'bun:test';
 import { exploreCurriculum, unitSemester } from './curriculum-explorer';
 import type { Tree } from './Curriculum';

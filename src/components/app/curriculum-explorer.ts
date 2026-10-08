@@ -24,8 +24,9 @@ export function exploreCurriculum(tree: Tree, query: string, semester: Semester)
       const units = subject.units.flatMap(unit => {
         const assigned = unitSemester(unit.name);
         if (assigned ? assigned !== s : !subjectSemesters(subject.name).includes(s)) return [];
-        const lessons = unit.lessons.filter(lesson => matches(subject.name, unit.name, lesson.name, ...lesson.files.map(f => f.file_name)));
-        return lessons.length || matches(subject.name, unit.name) ? [{ ...unit, lessons }] : [];
+        const alias = Object.entries(knowledge.modules).find(([name, module]) => normalizeCurriculumText(name) === normalizeCurriculumText(subject.name) || ('english' in module && normalizeCurriculumText(module.english) === normalizeCurriculumText(subject.name)))?.[0] ?? '';
+        const lessons = unit.lessons.filter(lesson => matches(subject.name, alias, unit.name, lesson.name, ...lesson.files.map(f => f.file_name)));
+        return lessons.length || matches(subject.name, alias, unit.name) ? [{ ...unit, lessons }] : [];
       });
       return units.length ? [{ ...subject, units }] : [];
     }),
