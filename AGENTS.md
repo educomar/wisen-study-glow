@@ -26,3 +26,4 @@
 - ReferenceShell wraps /dashboard, /roadmap, /sheets, /flashcards, /qbank and legacy /app with one horizontal navigation and a browser canvas medical backdrop; the page tools reuse existing authorized generation and persistence functions to keep student data ownership intact.
 - Course files use a standalone CourseReader, with citations opening the courses view and AI actions opening the separate chat; never reintroduce the removed parallel layout or duplicate exam destination.
 - General weakness and lesson-performance analytics live in StudyProgress; QBank shows only scope, practice and current-session results.
+- Roadmap derives semester groups and search results in the browser from the authorized curriculum tree and existing academic knowledge; annual content is shared across semesters and academic totals deduplicate IDs, avoiding duplicated counts or invented assignments.
