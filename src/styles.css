@@ -378,7 +378,7 @@ html { scroll-behavior: smooth; }
 .reference-theme .text-sm {font-size:14px;}
 .reference-theme .text-xs {font-size:12px;}
 .reference-theme .student-tool-height {height:calc(100dvh - 260px);}
-@media(min-width:1360px){.reference-nav,.reference-dashboard{max-width:944px;}.reference-dashboard{padding:72px 24px 40px;}}
+@media(min-width:1360px){.reference-nav,.reference-dashboard{max-width:1600px;}.reference-dashboard{padding:32px 32px 40px;}}
 @media(max-width:1100px){.reference-nav{gap:14px;}.reference-links{gap:14px;}.reference-links a{font-size:12px;}.reference-metrics{grid-template-columns:repeat(3,minmax(0,1fr));}.reference-momentum{grid-column:1/-1;}.reference-metric strong span{display:block;}}
 @media(max-width:800px){.reference-nav{padding:0 20px;}.reference-menu{display:inline-flex;}.reference-links{display:none;position:absolute;top:60px;left:0;right:0;background:var(--card);padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px 24px;}.reference-links.is-open{display:flex;}.reference-links a{padding:10px 0;font-size:14px;}.reference-dashboard{padding:36px 20px;}.reference-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.reference-intro h1{max-width:450px;}.reference-session{display:none;}.reference-metric{gap:8px;padding:10px;}.reference-metric strong{font-size:20px;}.reference-metric strong span{font-size:11px;}}
 @media(max-width:520px){.reference-theme .reference-intro h1{font-size:28px;}.reference-banner{flex-wrap:wrap;padding:14px;gap:10px;}.reference-banner>div{flex-basis:calc(100% - 48px);}.reference-banner>a{margin-left:44px;}.reference-banner>button{margin-left:auto;}.reference-metrics{grid-template-columns:1fr;}.reference-metric strong span{display:inline;font-size:13px;}.reference-progress{padding:16px;}.reference-tool-grid{grid-template-columns:1fr;}.reference-tool{min-height:224px;}.reference-tool h3{font-size:17px;}.reference-tool>p{font-size:14px;}.reference-tool-eyebrow{font-size:10px;}.reference-tool-footer{font-size:12px;}.reference-tip{align-items:flex-start;}.reference-brand{font-size:21px;}.reference-workspace{padding:28px 16px;}}
@@ -480,3 +480,122 @@ html { scroll-behavior: smooth; }
 .roadmap-lesson>small{margin-left:auto;color:var(--muted-foreground);font-size:10px;white-space:nowrap;}
 @media(max-width:800px){.reference-page{padding-top:36px;}.tool-config-layout{grid-template-columns:250px minmax(0,1fr);gap:24px;}.tool-segment{flex-wrap:wrap;}.tool-page-heading h1{font-size:36px;}}
 @media(max-width:600px){.reference-theme .tool-page-heading h1{font-size:34px;}.tool-config-layout{grid-template-columns:1fr;gap:28px;}.tool-config-layout>aside{display:grid;grid-template-columns:1fr;}.tool-config{padding:20px;}.sheet-steps{grid-template-columns:1fr;}.sheet-steps strong{font-size:13px;}.sheet-steps p{font-size:12px;}.sheet-options{gap:8px;}.sheet-options>button:last-child{flex:1;}.sheet-account{margin-top:24px;}.roadmap-subject-title{flex-wrap:wrap;}.roadmap-subject-title h2{font-size:22px;}.roadmap-lesson{align-items:flex-start;}.roadmap-lesson>small{max-width:70px;white-space:normal;}}
+
+/* Roomier study layouts: shared scale, without changing public or team pages. */
+.reference-theme{font-size:16px;}
+.reference-nav{max-width:1600px;min-height:76px;gap:20px;}
+.reference-brand{min-width:0;flex-shrink:0;}
+.reference-logo{height:52px;width:150px;object-fit:contain;}
+.reference-links{gap:24px;}
+.reference-links a{font-size:15px;padding:26px 0 22px;}
+.reference-signin{font-size:14px;min-height:40px;}
+.reference-nav>div{flex-shrink:0;}
+.reference-page,.reference-dashboard,.reference-workspace{width:100%;max-width:1600px;padding:30px 32px 40px;}
+.sheets-page{max-width:1280px;}
+.tool-page-heading{margin-bottom:24px;}
+.tool-kicker{font-size:12px;}
+.reference-theme .tool-page-heading h1,.reference-theme .sheets-page h1{font-size:48px;margin-bottom:12px;}
+.tool-page-heading>p{font-size:17px;max-width:850px;line-height:1.6;}
+.tool-stepper{font-size:14px;gap:18px;margin:22px 0;}
+.tool-stepper>span{padding:9px 14px;}
+.tool-config-layout{grid-template-columns:minmax(320px,0.95fr) minmax(0,1.65fr);gap:28px;}
+.tool-config{padding:24px;margin-bottom:16px;}
+.tool-config h2,.tool-preview h2{font-size:30px;margin-bottom:20px;}
+.tool-search{min-height:48px;padding:12px 14px;}
+.tool-search input,.tool-material textarea{font-size:15px;}
+.tool-search>svg{width:18px;height:18px;}
+.popular-topics>button{padding:10px 0;gap:12px;}
+.popular-topics>button>span{width:40px;height:40px;font-size:12px;}
+.popular-topics strong{font-size:15px;}
+.popular-topics small{font-size:13px;}
+.tool-field>span,.tool-ground{font-size:15px;}
+.tool-segment>button{height:38px;font-size:13px;padding:8px 12px;}
+.tool-material select{font-size:15px;height:44px;min-height:44px;}
+.tool-material textarea{min-height:130px;padding:14px;}
+.tool-config>button,.tool-generate{font-size:15px;min-height:44px;}
+.tool-preview-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;}
+.tool-preview-heading h2{min-width:0;margin-bottom:0;}
+.tool-preview-heading>span,.preview-card .reference-eyebrow{font-size:12px;}
+.preview-card{height:auto;min-height:390px;padding:36px;}
+.preview-card>p{font-size:30px;line-height:1.5;margin:22px 0;}
+.preview-card>small{font-size:14px;}
+.preview-ratings{gap:12px;margin-top:18px;}
+.preview-ratings>button{height:66px;font-size:15px;}
+.preview-ratings small{font-size:12px;}
+.sheet-composer{padding:22px;}
+.sheet-composer>textarea{min-height:180px;font-size:17px;line-height:1.6;}
+.sheet-options{gap:10px;padding-top:16px;}
+.sheet-options select,.sheet-options>span,.sheet-options>label{max-width:180px;font-size:13px;padding:9px 12px;}
+.sheet-options>button:last-child{font-size:15px;min-height:44px;}
+.sheet-account{margin:22px 0;font-size:15px;padding:16px;}
+.sheet-account>span{min-width:0;}
+.sheet-account button,.sheet-account a{font-size:14px;}
+.sheet-topics{margin-bottom:24px;}
+.sheet-topics>span{font-size:12px;}
+.sheet-topics button{font-size:13px;height:36px;padding:0 14px;}
+.sheet-steps{gap:18px;}
+.sheet-steps>div{padding:22px;gap:12px;min-width:0;}
+.sheet-steps strong{font-size:16px;}
+.sheet-steps p{font-size:14px;}
+.sheet-result{font-size:17px;}
+.tool-signin{padding:36px;gap:18px;}
+.tool-signin strong{font-size:20px;}
+.tool-signin p{font-size:16px;}
+.tool-signin>a{max-width:480px;min-height:48px;}
+.reference-theme .reference-intro h1{font-size:42px;}
+.reference-intro>div{min-width:0;}
+.reference-intro p{font-size:17px;}
+.reference-eyebrow{font-size:12px;}
+.reference-session strong,.reference-banner p{font-size:15px;}
+.reference-session span{font-size:12px;}
+.reference-banner strong{font-size:17px;}
+.reference-theme .reference-banner button,.reference-theme .reference-banner a{font-size:14px;}
+.reference-progress h2,.reference-tools-heading h2{font-size:13px;}
+.reference-tools-heading p,.reference-momentum,.reference-tip{font-size:15px;}
+.reference-tool-grid{gap:20px;}
+.reference-tool{padding:26px;min-height:300px;}
+.reference-tool h3{font-size:23px;}
+.reference-tool>p{font-size:16px;}
+.reference-tool-eyebrow{font-size:12px;}
+.reference-tool-footer{font-size:13px;}
+.roadmap-subject-title h2{font-size:30px;}
+.roadmap-unit h3,.roadmap-lesson{font-size:16px;}
+.roadmap-subject-title>span,.roadmap-lesson>small{font-size:13px;}
+@media(max-width:1100px){
+ .reference-nav{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;}
+ .reference-menu{display:inline-flex;}
+ .reference-links{display:none;position:absolute;top:76px;left:0;right:0;background:var(--card);padding:16px 24px;border-bottom:1px solid var(--border);gap:10px 26px;flex-wrap:wrap;}
+ .reference-links.is-open{display:flex;}
+ .reference-links a{padding:12px 0;font-size:16px;}
+ .reference-page,.reference-dashboard,.reference-workspace{padding:24px;}
+ .tool-config-layout{grid-template-columns:minmax(280px,0.95fr) minmax(0,1.45fr);gap:22px;}
+ .preview-card{padding:26px;min-height:360px;}
+ .preview-card>p{font-size:26px;}
+ .reference-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:700px){
+ .reference-page,.reference-dashboard,.reference-workspace{padding:22px 16px 32px;}
+ .reference-theme .tool-page-heading h1,.reference-theme .sheets-page h1,.reference-theme .reference-intro h1{font-size:34px;}
+ .tool-config-layout{grid-template-columns:1fr;gap:24px;}
+ .tool-config{padding:20px;}
+ .preview-card{min-height:320px;padding:24px;}
+ .preview-card>p{font-size:26px;}
+ .sheet-steps{grid-template-columns:1fr;}
+ .sheet-composer{padding:16px;}
+ .sheet-options>button:last-child{flex:0 0 auto;}
+ .reference-tools-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;}
+ .reference-tools-heading>div{min-width:0;}
+ .reference-tool{padding:22px;}
+}
+@media(max-width:520px){
+ .reference-nav{padding:0 16px;}
+ .reference-logo{height:46px;width:120px;}
+ .reference-tool-grid{grid-template-columns:1fr;}
+ .preview-ratings{gap:6px;}
+ .preview-ratings>button{font-size:14px;}
+ .tool-stepper{gap:8px;font-size:12px;}
+ .tool-stepper>span{padding:8px;}
+ .sheet-options select,.sheet-options>span,.sheet-options>label{font-size:12px;padding:8px;}
+ .sheet-account{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;}
+ .sheet-account>a{grid-column:2;justify-self:start;}
+}
