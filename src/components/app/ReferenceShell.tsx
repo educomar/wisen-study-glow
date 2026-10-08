@@ -28,7 +28,7 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
         <Link to="/app" search={{}} className="reference-brand" aria-label="Wisen dashboard"><Sparkles className="size-6 text-primary"/><span>Wisen<span className="text-primary italic"> AI</span></span><span className="reference-beta">STUDY</span></Link>
         <nav className={`reference-links ${menu ? 'is-open' : ''}`} aria-label="Study navigation">
           <Link to="/home" onClick={() => setMenu(false)}>Home</Link>
-          {links.map(item => <Link key={item.label} to="/app" search={{ view: item.view }} aria-current={item.active ? 'page' : undefined} onClick={() => setMenu(false)}>{item.label}</Link>)}
+          {links.map(item => <Link key={item.label} to="/app" search={item.view ? { view: item.view } : {}} aria-current={item.active ? 'page' : undefined} onClick={() => setMenu(false)}>{item.label}</Link>)}
         </nav>
         <div className="flex items-center gap-1">
           {user && profile ? <Button variant="ghost" size="icon" aria-label="Profile settings" title="Profile settings" onClick={() => setEditing(true)}><UserRound/></Button> : <Button className="reference-signin" asChild><Link to="/login"><LogIn/>Sign in</Link></Button>}
