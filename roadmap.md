@@ -1,5 +1,10 @@
 # Roadmap
 
+## Study page scale and branding — October 8
+- [ ] Expand study containers, cards, typography and controls while reducing excess margins.
+- [ ] Replace the text brand with the supplied theme-aware logo and add subtle flowing background motion.
+- [ ] Verify layouts, logo switching and animation across screen sizes.
+
 ## Complete reference platform — October 8
 - [x] Remove the old /home dashboard and redirect existing links to the new dashboard.
 - [x] Build reference-style Dashboard, Roadmap, Sheets, Kapsules and QBank pages with shared navigation and existing Wisen data.

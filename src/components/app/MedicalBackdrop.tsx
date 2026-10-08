@@ -25,6 +25,20 @@ export function MedicalBackdrop() {
       ctx.lineWidth = 1;
       const t = reduced.matches ? 0 : time / 18000;
       const line = (points: number[][]) => { ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x ?? 0, y ?? 0) : ctx.moveTo(x ?? 0, y ?? 0)); ctx.stroke(); };
+      // Broad, slowly drifting contour lines keep the paper quietly flowing.
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      for (let band = 0; band < 4; band++) {
+        ctx.beginPath();
+        for (let x = -40; x <= w + 40; x += 12) {
+          const y = h * (0.25 + band * 0.2)
+            + Math.sin(x / 260 + t * 1.6 + band * 0.7) * 42
+            + Math.cos(x / 470 - t + band) * 24;
+          if (x === -40) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
       ctx.save();
       ctx.translate(w * 0.86, h * 0.64 + Math.sin(t) * 12);
       ctx.rotate(Math.sin(t * 0.5) * 0.025);
@@ -35,12 +49,12 @@ export function MedicalBackdrop() {
       ctx.beginPath(); ctx.arc(146, 184, 17, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
       // Slowly turning DNA double helix near the left margin.
-      ctx.save(); ctx.translate(w * 0.07, h * 0.35); ctx.rotate(-0.3);
+      ctx.save(); ctx.translate(w * 0.07 + Math.sin(t * 0.6) * 9, h * 0.35 + Math.cos(t * 0.8) * 14); ctx.rotate(-0.3 + Math.sin(t * 0.4) * 0.035);
       const a: number[][] = [], b: number[][] = [];
       for (let i = 0; i < 260; i += 4) { const x = Math.sin(i / 29 + t) * 34; a.push([x, i]); b.push([-x, i]); if (i % 20 === 0) line([[x, i], [-x, i]]); }
       line(a); line(b); ctx.restore();
       // ECG trace with a travelling highlighted segment.
-      ctx.save(); ctx.translate(w * 0.53, h * 0.83); line([[-180, 0], [-100, 0], [-83, -12], [-69, 0], [-43, 0], [-30, 18], [-14, -58], [0, 29], [16, 0], [54, 0], [69, -16], [87, 0], [170, 0]]); ctx.restore();
+      ctx.save(); ctx.translate(w * 0.53 + Math.sin(t * 0.5) * 12, h * 0.83 + Math.cos(t * 0.7) * 8); line([[-180, 0], [-100, 0], [-83, -12], [-69, 0], [-43, 0], [-30, 18], [-14, -58], [0, 29], [16, 0], [54, 0], [69, -16], [87, 0], [170, 0]]); ctx.restore();
       for (let i = 0; i < 70; i++) {
         const x = w * 0.68 + Math.sin(i * 12.989 + t * 0.22) * 130;
         const y = h * 0.16 + Math.cos(i * 7.17 + t * 0.17) * 125;

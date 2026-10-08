@@ -1,8 +1,9 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { LogIn, Menu, Moon, Sun, UserRound, X, Sparkles } from 'lucide-react';
+import { LogIn, Menu, Moon, Sun, UserRound, X } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/site/theme';
+import { Logo } from '@/components/site/Logo';
 import { useSession } from '@/lib/profile';
 import { ProfileDialog } from './ProfileDialog';
 import { studySearch } from './study-navigation';
@@ -39,7 +40,7 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
   return <div className="study-theme reference-theme min-h-dvh bg-background text-foreground">
     <header className="reference-header">
       <div className="reference-nav">
-        <Link to="/dashboard" className="reference-brand" aria-label="Wisen dashboard"><Sparkles className="size-6 text-primary"/><span>Wisen<span className="text-primary italic"> AI</span></span><span className="reference-beta">STUDY</span></Link>
+        <Link to="/dashboard" className="reference-brand" aria-label="Wisen dashboard"><Logo className="reference-logo"/></Link>
         <nav className={`reference-links ${menu ? 'is-open' : ''}`} aria-label="Study navigation">
           {links.map(item => <Link key={item.label} to={item.path} aria-current={item.active ? 'page' : undefined} onClick={() => setMenu(false)}>{item.label}</Link>)}
           <Link to="/app" search={{view:'courses'}} aria-current={view==='courses'?'page':undefined} onClick={() => setMenu(false)}>Library</Link>
