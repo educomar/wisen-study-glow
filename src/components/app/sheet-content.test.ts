@@ -4,10 +4,10 @@ import { parseSheetCards, sheetSuggestions, sourcePages, splitTeaser } from './s
 
 describe('Study Sheet rules', () => {
   test('defaults to UFAS1 Year 1 Medicine topics', () => {
-    deepStrictEqual(sheetSuggestions(null, null).map(t => t.topic), ['Le Fémur', 'Plexus Brachial', 'Gastrulation & Neurulation', 'Première semaine', 'Tissu Épithélial', 'Structure des Protéines']);
+    deepStrictEqual(sheetSuggestions(null, null).map(t => t.topic), ['Femur', 'Brachial Plexus', 'Gastrulation & Neurulation', 'First Week of Development', 'Epithelial Tissue', 'Protein Structure', 'Ionizing Radiation']);
   });
   test('other study years use actual authorized lectures rather than first-year topics', () => {
-    deepStrictEqual(sheetSuggestions({ academic_year: 3, department: 'Medicine' }, [{ id: 's', name: 'Cardiologie', emds: [], units: [{ id: 'u', name: 'Cours', lessons: [{ id: 'l', name: 'Insuffisance cardiaque', files: [] }] }] }]), [{ topic: 'Insuffisance cardiaque', subject: 'Cardiologie' }]);
+    deepStrictEqual(sheetSuggestions({ academic_year: 3, department: 'Medicine' }, [{ id: 's', name: 'Cardiologie', emds: [], units: [{ id: 'u', name: 'Cours', lessons: [{ id: 'l', name: 'Insuffisance cardiaque', files: [] }] }] }]), [{ topic: 'Heart Failure', subject: 'Cardiology' }]);
   });
   test('embedded Kapsules retain the exact generated answers', () => {
     deepStrictEqual(parseSheetCards('Q: Where?\nA: In the femur.\n\nQ: When?\nA: During week three.'), [{ front: 'Where?', back: 'In the femur.' }, { front: 'When?', back: 'During week three.' }]);

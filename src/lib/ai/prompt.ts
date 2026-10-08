@@ -10,6 +10,7 @@ export type WisenRequest = {
   excerpts: { page: number; text: string }[];
   history: { role: "user" | "assistant"; text: string }[];
   image?: string | undefined;
+  outputLanguage?: 'english' | undefined;
 };
 
 const LANG_RULE: Record<Lang, string> = {
@@ -36,6 +37,7 @@ const TASK: Record<string, string> = {
 
 export function prepare(req: WisenRequest): { route: Route; kb: KbChunk[]; system: string; user: string } {
   const route = routeRequest(req.message, { action: req.action, hasImage: !!req.image });
+  if (req.outputLanguage) route.lang = req.outputLanguage;
   const { chunks, ufasCue } = retrieveKb(req.message + " " + (req.action === "Ask" ? "" : req.subject));
   const kb = ufasCue || req.action === "Ask" ? chunks : [];
   const m = MODELS[route.primary];
@@ -43,7 +45,9 @@ export function prepare(req: WisenRequest): { route: Route; kb: KbChunk[]; syste
   const system = [
     `You are Wisen AI, the study companion of 1st-year medical students at the Faculté de Médecine, Université Ferhat Abbas Sétif 1 (UFAS1). You are one unified assistant; never mention model names, routing or technical details.`,
     `Active expertise profile: ${m.profile}`,
-    `Language: ${LANG_RULE[route.lang]} Understand Arabic, Algerian Darija (Arabic script or Latin/Arabizi like "wach", "kifach", "3lach"), French and English.`,
+    req.outputLanguage === 'english'
+      ? 'Language: Respond exclusively in English, regardless of the topic, source material or student language. Translate all medical terms, headings, tags, mnemonics, questions and answers into English. Do not add French translations in parentheses. Preserve proper names and source identifiers only.'
+      : `Language: ${LANG_RULE[route.lang]} Understand Arabic, Algerian Darija (Arabic script or Latin/Arabizi like "wach", "kifach", "3lach"), French and English.`,
     `Rules:
 - Ground answers in the course excerpts and UFAS1 knowledge below when relevant; otherwise use sound, standard medical knowledge for a 1st-year student.
 - UFAS1 excerpts are labelled [academic] or [student_experience]. Anything from [student_experience] MUST be introduced with "${EXP_PHRASE[route.lang]}" and never presented as an official faculty rule.
