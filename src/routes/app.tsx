@@ -28,7 +28,7 @@ function AppShell(){const search=Route.useSearch(),nav=useNavigate();useRemoteQu
   if (!search.view) return <><StudyDashboard/><Toaster/></>;
   return <main className="reference-workspace"><header className="mb-8"><Link to="/app" search={{}} className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground"><ChevronRight className="size-4 rotate-180"/>Dashboard</Link><h1>{label}</h1></header><StudentSections view={view}/>{practiceItems.some(([v])=>v===view)&&<nav aria-label="Practice views" className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">{practiceItems.map(([v,l])=><Link key={v} to="/app" search={{view:v}} aria-current={view===v?'page':undefined} className={`rounded-md px-3 py-2 text-sm ${view===v?'bg-secondary text-primary':'text-muted-foreground hover:bg-accent'}`}>{l}</Link>)}</nav>}<div className={view==='courses'||view==='ai'?'student-tool-height':''}>
   {view==='courses'&&<CourseReader/>}{view==='ai'&&<WisenChat context={ctx} initialQuery={search.query}/>}
-{(view==='qbank'||view==='faculty'||view==='past')&&<QBank key={view} context={ctx} source={view==='qbank'?'ai':view==='faculty'?'faculty':'past'}/>}
+{(view==='qbank'||view==='faculty'||view==='past')&&<QBank key={view} context={ctx} defaultSubject={search.subject} defaultLesson={search.lesson} source={view==='qbank'?'ai':view==='faculty'?'faculty':'past'}/>}
   {view==='exam'&&<Exam/>}
  {(['cards','new','decks','reviews'] as StudyView[]).includes(view)&&<Flashcards view={view as 'cards'|'new'|'decks'|'reviews'}/>}
  {view==='mistakes'&&<Mistakes/>}{view==='history'&&<ExamHistory/>}{view==='progress'&&<StudyProgress/>}{view==='saved'&&<Saved/>}

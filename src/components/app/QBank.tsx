@@ -111,7 +111,7 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
 
 function ListChecksIcon(){return <span className="grid size-16 place-items-center rounded-full bg-background text-muted-foreground"><ListChecks className="size-7"/></span>;}
 
-export function QBank(props: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
+export function QBank(props: { context?: string | undefined; defaultSubject?: string | undefined; defaultLesson?: string | undefined; source?: "ai" | "faculty" | "past" }) {
   if (props.source === "past") return <PastEmds />;
   if (props.source === "faculty") return <Practice {...props} />;
   if (props.source === "ai") return <div className="space-y-4"><AiGenerator /><Practice {...props} /></div>;
@@ -193,7 +193,7 @@ function PastEmds() {
   );
 }
 
-export function Practice({ defaultSubject, source }: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
+export function Practice({ defaultSubject, defaultLesson, source }: { context?: string | undefined; defaultSubject?: string | undefined; defaultLesson?: string | undefined; source?: "ai" | "faculty" | "past" }) {
   const s = useAppState();
   const ai = useAi();
   const faculty = remoteQuestions();
@@ -201,7 +201,9 @@ export function Practice({ defaultSubject, source }: { context?: string | undefi
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
 
-  const session: QSession = s.qbank ?? { subject: defaultSubject ?? "All", lesson: "All", difficulty: "All", order: [], i: 0, answers: {}, startedAt: Date.now() };
+  const [linkedScope, setLinkedScope] = useState(!!defaultSubject || !!defaultLesson);
+  const storedSession: QSession = s.qbank ?? { subject: defaultSubject ?? "All", lesson: defaultLesson ?? "All", difficulty: "All", order: [], i: 0, answers: {}, startedAt: Date.now() };
+  const session = linkedScope ? { ...storedSession, subject: defaultSubject ?? storedSession.subject, lesson: defaultLesson ?? storedSession.lesson } : storedSession;
   // Build the question order lazily when filters change (targeted practice sets order: []).
   useEffect(() => {
     const cur = getState().qbank;
@@ -213,6 +215,7 @@ export function Practice({ defaultSubject, source }: { context?: string | undefi
   }, [s.qbank, pool]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setFilter = (patch: Partial<QSession>) => {
+    setLinkedScope(false);
     const f = { ...session, ...patch };
     if (patch.subject) f.lesson = "All";
     update((st) => ({ ...st, qbank: { ...f, order: shuffle(filtered(pool, f)).map((q) => q.id), i: 0, answers: {}, startedAt: Date.now() } }));
@@ -221,7 +224,7 @@ export function Practice({ defaultSubject, source }: { context?: string | undefi
 
   const subjects = [...new Set(pool.map((q) => q.subject))];
   const lessons = [...new Set(pool.filter((q) => session.subject === "All" || q.subject === session.subject).map((q) => q.topic))];
-  const list = session.order.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
+  const list = linkedScope ? filtered(pool, session) : session.order.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
   const answered = Object.keys(session.answers).filter((id) => session.order.includes(id));
   const correct = answered.filter((id) => pool.find((x) => x.id === id)?.answer === session.answers[id]).length;
   const elapsed = Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000));
