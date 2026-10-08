@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ClipboardList, FileText, GraduationCap, Layers, Loader2, LogIn, Timer, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -327,13 +327,16 @@ export function EmdQBank() {
   poolRef = ai;
   const e = useAppState().exam;
   const [view, setView] = useState<"hub" | "past" | "sim">("hub");
+  // A finished exam stays in the persisted state; only show the debrief when the exam was actually run during this visit, so /qbank always opens on the hub. An in-progress exam still resumes.
+  const [sawRun, setSawRun] = useState(false);
+  useEffect(() => { if (e.phase === "run") setSawRun(true); }, [e.phase]);
   const examQs = useMemo(() => e.qids.map((id) => ai.find((q) => q.id === id)).filter((q): q is AiQuestion => !!q), [e.qids, ai]);
   const realActive = (e.phase === "run" || e.phase === "done") && examQs.length > 0;
   if (!user) return <main className="reference-page emd-page"><div className="tool-signin"><span className="reference-tool-icon"><LogIn /></span><strong>Sign in to practise EMDs</strong><p>Your exams and results are saved to your account.</p><Button asChild><Link to="/login"><LogIn />Sign in</Link></Button></div></main>;
   if (realActive && e.phase === "run") return <RealExam qs={examQs} />;
   return (
     <main className="reference-page emd-page">
-      {realActive && e.phase === "done" ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : (
+      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : (
         <>
           <header className="tool-page-heading"><span className="tool-kicker">QBANK · FACULTY OF MEDICINE SÉTIF 1</span><h1>Train for the <em>EMD.</em></h1><p>Practise real past exams, or sit a full UFAS1 simulation.</p></header>
           <div className="emd-choices">
