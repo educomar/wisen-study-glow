@@ -73,13 +73,15 @@ export function StudySheets() {
     setSheet(draft); setMaterial([]); window.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       setStage('Reading your course material…');
-      const sources: SheetSource[] = notes.trim() ? [{ name: 'Attached course notes', text: notes.slice(0, 38000) }] : (await extractMaterial(resolved.files, 3, (n, total) => setStage(`Reading faculty lectures · ${n}/${total}`))).map(m => ({ ...m, fileId: resolved.files.find(f => f.file_name === m.name)?.id }));
+      const extracted: SheetSource[] = notes.trim() ? [{ name: 'Attached course notes', text: notes.slice(0, 38000) }] : (await extractMaterial(resolved.files, 3, (n, total) => setStage(`Reading faculty lectures · ${n}/${total}`))).map(m => ({ ...m, fileId: resolved.files.find(f => f.file_name === m.name)?.id }));
+      const perSource = Math.floor(37500 / Math.max(1, extracted.length));
+      const sources = extracted.map(s => ({ ...s, text: s.text.slice(0, perSource) }));
       if (!sources.length) throw new Error('No readable faculty passages were found. Attach a readable lecture or choose another file.');
       if (stopped.current) return;
       setPrepared(2); setMaterial(sources);
       draft.sources = sources.map(s => ({ name: s.name, fileId: s.fileId, pages: sourcePages(s.text) }));
       setSheet({ ...draft });
-      const attachment = { name: sources.map(s => s.name).join(', ').slice(0, 200), text: sources.map(s => `FILE: ${s.name}\n${s.text}`).join('\n\n').slice(0, 39000) };
+      const attachment = { name: sources.map(s => s.name).join(', ').slice(0, 200), text: sources.map(s => `FILE: ${s.name.slice(0, 200)}\n${s.text}`).join('\n\n') };
       for (const section of sheetSections) {
         if (stopped.current) return;
         setStage(`Writing ${section.title}…`);

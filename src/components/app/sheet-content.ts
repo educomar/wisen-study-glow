@@ -11,11 +11,11 @@ export const sheetSections = [
 ] as const;
 export type SheetSectionId = typeof sheetSections[number]['id'];
 export type SheetCard = { front: string; back: string };
-export type SheetSource = { name: string; text: string; fileId?: string };
+export type SheetSource = { name: string; text: string; fileId?: string | undefined };
 export type StudySheetData = {
   id: string; topic: string; subject: string; level: string; focus: string;
   sections: Partial<Record<SheetSectionId, string>>; teaser: string;
-  cards: SheetCard[]; sources: { name: string; fileId?: string; pages: string[] }[];
+  cards: SheetCard[]; sources: { name: string; fileId?: string | undefined; pages: string[] }[];
   complete: boolean; cardsAdded: boolean;
 };
 const firstYearTopics = [
