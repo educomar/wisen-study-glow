@@ -13,7 +13,7 @@ import { englishSheetLabel } from './sheet-content';
 import { kapsuleRatings, kapsuleRetention, scheduleKapsule, type KapsuleRating } from './kapsule-review';
 import { addCard, flushStudentData, log, toggle, update, useAppState } from './store';
 
-export function Flashcards({ view = 'cards' }: { view?: 'cards' | 'new' | 'decks' | 'reviews' }) {
+export function Flashcards({ view = 'cards', initialDeck }: { view?: 'cards' | 'new' | 'decks' | 'reviews'; initialDeck?: string }) {
   const s = useAppState();
   const ai = useAi();
   const { tree, signedIn } = useCurriculum();
@@ -46,6 +46,7 @@ export function Flashcards({ view = 'cards' }: { view?: 'cards' | 'new' | 'decks
   const lecture = lectures.find(l => l.id === lectureId);
   const resetSession = () => setSession({ ratings: [], subject: '', lesson: '' });
   const changeDeck = (name: string) => { setDeck(name); resetSession(); update(st => ({ ...st, flash: { ...st.flash, cardId: null, flipped: false } })); };
+  useEffect(() => { if (initialDeck && all.some(card => englishSheetLabel(card.topic) === initialDeck)) changeDeck(initialDeck); }, [initialDeck, all.length]);
   const changeTab = (next: typeof tab) => { setTab(next); setFocus(false); resetSession(); };
   const flip = useCallback(() => { if (card) update(st => ({ ...st, flash: { ...st.flash, cardId: card.id, flipped: !flipped } })); }, [card, flipped]);
   const rate = useCallback(async (rating: KapsuleRating) => {
