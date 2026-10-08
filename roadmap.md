@@ -1,5 +1,9 @@
 # Roadmap
 
+## /app reference rebuild — October 8
+- [ ] Replace the /app entry screen and navigation with the exact StudyBuddy dashboard composition, adapted to Wisen.
+- [ ] Preserve all study destinations, saved data and account controls; verify navigation, themes and page health.
+
 - [x] Replace the circular faculty badge with a prominent responsive rectangular photo card.
 - [x] Update all four evidence cards with the supplied exact copy.
 - [x] Verify light/dark desktop and mobile layouts and preview health.
