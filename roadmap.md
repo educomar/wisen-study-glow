@@ -1,5 +1,10 @@
 # Roadmap
 
+## Academic Roadmap explorer — October 8
+- [x] Add live curriculum search, semester filters, academic counts and expandable medical-icon subject rows.
+- [x] Connect lesson materials and scoped question practice; exclude all personal progress indicators.
+- [x] Test semester/search rules, signed-in lesson actions and both themes without overflow.
+
 ## Study page scale and branding — October 8
 - [x] Expand study containers, cards, typography and controls while reducing excess margins.
 - [x] Replace the text brand with the supplied theme-aware logo and add subtle flowing background motion.

@@ -466,18 +466,59 @@ html { scroll-behavior: smooth; }
 .preview-ratings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:16px;}
 .preview-ratings>button{height:50px;display:flex;flex-direction:column;font-size:11px;gap:2px;background:var(--secondary);border:none;box-shadow:none;}
 .preview-ratings small{font-size:9px;}
-.roadmap-summary{display:flex;align-items:center;gap:10px;color:var(--muted-foreground);font-size:13px;margin:24px 0;}
-.roadmap-summary strong{font-size:26px;color:var(--foreground);}
-.roadmap-summary svg{width:20px;color:var(--primary);}
-.roadmap-subject{border:1px solid var(--border);border-radius:8px;background:var(--card);margin-bottom:14px;overflow:hidden;}
-.roadmap-subject-title{width:100%;height:auto;padding:20px;justify-content:start;white-space:normal;text-align:left;}
-.roadmap-subject-title h2{font-family:var(--tool-serif);font-size:25px;}
-.roadmap-subject-title>span{margin-left:auto;font-size:12px;color:var(--muted-foreground);}
-.roadmap-unit{padding:0 20px 20px;}
-.roadmap-unit h3{font-size:13px;color:var(--primary);margin:8px 0;}
-.roadmap-lesson{display:flex;align-items:center;gap:10px;padding:13px 0;border-top:1px solid var(--border);font-size:13px;}
-.roadmap-lesson>svg{width:14px;height:14px;flex-shrink:0;color:var(--muted-foreground);}
-.roadmap-lesson>small{margin-left:auto;color:var(--muted-foreground);font-size:10px;white-space:nowrap;}
+.curriculum-page{font-family:"DM Sans",sans-serif;}
+.reference-theme .curriculum-page .tool-page-heading h1{font-family:"DM Sans",sans-serif;font-weight:650;}
+.curriculum-search{display:flex;align-items:center;gap:16px;min-height:66px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 20px;}
+.curriculum-search>svg{width:24px;height:24px;color:var(--primary);flex-shrink:0;}
+.curriculum-search input{height:48px;border:none;box-shadow:none;padding:0;font-size:18px;min-width:0;}
+.curriculum-search input:focus-visible{box-shadow:none;outline:none;}
+.curriculum-search:focus-within{outline:2px solid var(--ring);outline-offset:3px;}
+.curriculum-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:22px 0 28px;}
+.curriculum-filters{display:flex;flex-wrap:wrap;gap:8px;}
+.curriculum-filters button{border-radius:24px;height:44px;font-size:15px;padding:0 20px;box-shadow:none;}
+.curriculum-counts{display:flex;align-items:center;gap:22px;flex-wrap:wrap;color:var(--muted-foreground);font-size:15px;}
+.curriculum-counts>span{display:flex;align-items:center;gap:7px;white-space:nowrap;}
+.curriculum-counts svg{width:18px;height:18px;}
+.curriculum-semester{margin-top:28px;}
+.curriculum-group-heading{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.curriculum-group-heading h2{font-family:inherit;font-size:22px;font-weight:600;}
+.curriculum-group-heading>span{font-size:14px;color:var(--muted-foreground);}
+.curriculum-subjects{border-top:1px solid var(--border);}
+.curriculum-subject{border-bottom:1px solid var(--border);background:var(--card);}
+.curriculum-subject-toggle{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto 20px;width:100%;height:auto;min-height:98px;padding:20px;gap:20px;white-space:normal;text-align:left;border-radius:0;}
+.curriculum-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:8px;color:var(--primary);background:var(--secondary);}
+.curriculum-icon svg{width:27px;height:27px;}
+.curriculum-subject:nth-child(3n+2) .curriculum-icon{background:var(--reference-gold);color:var(--foreground);}
+.curriculum-subject:nth-child(3n) .curriculum-icon{background:var(--muted);color:var(--primary);}
+.curriculum-subject-name{font-size:21px;line-height:1.4;font-weight:600;overflow-wrap:anywhere;}
+.curriculum-semester-tag{font-size:12px;font-weight:500;color:var(--primary);background:var(--secondary);border-radius:4px;padding:5px 9px;white-space:nowrap;}
+.curriculum-subject-count{color:var(--muted-foreground);font-size:14px;font-weight:400;white-space:nowrap;}
+.curriculum-chevron{width:20px;height:20px;color:var(--muted-foreground);transition:transform .2s;}
+.curriculum-chevron.is-open{transform:rotate(180deg);}
+.curriculum-units{padding:0 24px 16px 92px;}
+.curriculum-unit{border-left:1px solid var(--border);padding:12px 0 12px 20px;}
+.curriculum-unit h4{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600;line-height:1.5;padding-bottom:12px;overflow-wrap:anywhere;}
+.curriculum-unit h4>svg{width:18px;height:18px;flex-shrink:0;color:var(--primary);}
+.curriculum-unit h4>span{margin-left:auto;font-size:13px;font-weight:400;color:var(--muted-foreground);white-space:nowrap;}
+.curriculum-lesson{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--border);}
+.curriculum-lesson-name{display:flex;align-items:center;gap:10px;min-width:0;font-size:16px;line-height:1.5;}
+.curriculum-lesson-name>svg{width:17px;height:17px;flex-shrink:0;color:var(--muted-foreground);}
+.curriculum-lesson-name>span{overflow-wrap:anywhere;}
+.curriculum-lesson-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.curriculum-lesson-actions button{min-height:40px;font-size:14px;box-shadow:none;}
+.curriculum-lesson-actions button>svg{width:16px;height:16px;}
+.curriculum-no-file{font-size:13px;color:var(--muted-foreground);margin-right:8px;}
+.curriculum-file-menu{position:relative;font-size:14px;}
+.curriculum-file-menu summary{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:6px;padding:10px 12px;cursor:pointer;list-style:none;}
+.curriculum-file-menu summary::-webkit-details-marker{display:none;}
+.curriculum-file-menu summary>svg{width:16px;height:16px;}
+.curriculum-file-menu[open]>div{position:absolute;right:0;top:calc(100% + 5px);z-index:10;width:320px;max-width:75vw;background:var(--popover);border:1px solid var(--border);border-radius:6px;padding:6px;}
+.curriculum-file-menu button{width:100%;height:auto;text-align:left;justify-content:flex-start;white-space:normal;overflow-wrap:anywhere;}
+.curriculum-empty{display:flex;align-items:center;flex-direction:column;gap:16px;padding:56px 16px;color:var(--muted-foreground);}
+.curriculum-empty h2{font-size:22px;color:var(--foreground);}
+.curriculum-error{display:flex;justify-content:space-between;align-items:center;gap:16px;border:1px solid var(--destructive);color:var(--destructive);padding:12px 16px;border-radius:6px;}
+@media(max-width:800px){.curriculum-subject-toggle{grid-template-columns:46px minmax(0,1fr) 20px;gap:10px 14px;padding:18px 16px;}.curriculum-icon{grid-row:1/3;width:46px;height:46px;}.curriculum-subject-name{font-size:19px;}.curriculum-chevron{grid-column:3;grid-row:1/3;}.curriculum-semester-tag{grid-column:2;grid-row:2;justify-self:start;}.curriculum-subject-count{grid-column:2;grid-row:3;}.curriculum-units{padding:0 18px 12px 30px;}.curriculum-lesson{flex-wrap:wrap;}.curriculum-lesson-actions{margin-left:27px;flex-wrap:wrap;}.curriculum-search{padding:8px 14px;gap:10px;}.curriculum-search input{font-size:16px;}.curriculum-unit h4{flex-wrap:wrap;}.curriculum-unit h4>span{margin-left:28px;}.curriculum-counts{gap:16px;font-size:14px;}.curriculum-filters button{padding:0 14px;font-size:14px;}}
+@media(prefers-reduced-motion:reduce){.curriculum-chevron{transition:none;}}
 @media(max-width:800px){.reference-page{padding-top:36px;}.tool-config-layout{grid-template-columns:250px minmax(0,1fr);gap:24px;}.tool-segment{flex-wrap:wrap;}.tool-page-heading h1{font-size:36px;}}
 @media(max-width:600px){.reference-theme .tool-page-heading h1{font-size:34px;}.tool-config-layout{grid-template-columns:1fr;gap:28px;}.tool-config-layout>aside{display:grid;grid-template-columns:1fr;}.tool-config{padding:20px;}.sheet-steps{grid-template-columns:1fr;}.sheet-steps strong{font-size:13px;}.sheet-steps p{font-size:12px;}.sheet-options{gap:8px;}.sheet-options>button:last-child{flex:1;}.sheet-account{margin-top:24px;}.roadmap-subject-title{flex-wrap:wrap;}.roadmap-subject-title h2{font-size:22px;}.roadmap-lesson{align-items:flex-start;}.roadmap-lesson>small{max-width:70px;white-space:normal;}}
 

@@ -1,9 +1,62 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ChevronDown, Circle, BookOpen, CheckCircle2 } from 'lucide-react';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { Activity, Atom, Bone, BookOpen, ChevronDown, Dna, FileText, FlaskConical, GraduationCap, HeartPulse, Layers, ListChecks, Loader2, Microscope, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useCurriculum } from '@/components/app/Curriculum';
-import { useAppState } from '@/components/app/store';
+import { Input } from '@/components/ui/input';
+import { fetchCurriculumFile, useCurriculum, type CurFile } from '@/components/app/Curriculum';
+import { update } from '@/components/app/store';
+import { openPage, uploadPdf } from '@/components/app/doc';
+import { exploreCurriculum, normalizeCurriculumText, type Semester } from '@/components/app/curriculum-explorer';
 import { studyMeta } from '@/lib/study-meta';
-export const Route=createFileRoute('/roadmap')({head:()=>studyMeta('Curriculum Roadmap','Explore your medical curriculum by subject and see which lessons you have practiced.'),component:Roadmap});
-function Roadmap(){const {tree,signedIn}=useCurriculum();const s=useAppState();const [open,setOpen]=useState<string|null>(null);const total=tree?.reduce((n,x)=>n+x.units.reduce((m,u)=>m+u.lessons.length,0),0)??0;const covered=Object.keys(s.attempts).filter(k=>(s.attempts[k]?.total??0)>0);return <main className="reference-page"><header className="tool-page-heading"><span className="tool-kicker">CURRICULUM</span><h1>Roadmap</h1><p>Every high-yield topic, by subject — and which ones you’ve already covered.</p></header><div className="roadmap-summary"><BookOpen/><strong>{covered.length}</strong><span>of {total} lessons practiced · {tree?.length??0} subjects</span></div>{!signedIn?<div className="tool-signin"><strong>Sign in to see your curriculum</strong><p>Your roadmap follows your faculty, department and academic year.</p><Button asChild><Link to="/login">Sign in</Link></Button></div>:tree?.map((subject,i)=><section className="roadmap-subject" key={subject.id}><Button variant="ghost" className="roadmap-subject-title" aria-expanded={open===subject.id||(!open&&i===0)} onClick={()=>setOpen(open===subject.id?'closed':subject.id)}><h2>{subject.name}</h2><span>{subject.units.flatMap(u=>u.lessons).filter(l=>covered.includes(l.name)).length} of {subject.units.flatMap(u=>u.lessons).length} covered</span><ChevronDown/></Button>{(open===subject.id||(!open&&i===0))&&<div>{subject.units.map(u=><div key={u.id} className="roadmap-unit"><h3>{u.name}</h3>{u.lessons.map(l=><Link key={l.id} to="/sheets" className="roadmap-lesson">{covered.includes(l.name)?<CheckCircle2 className="text-primary"/>:<Circle/>}<span>{l.name}</span><small>{covered.includes(l.name)?'Practiced':'Not started'}</small></Link>)}</div>)}</div>}</section>)}</main>;}
+export const Route = createFileRoute('/roadmap')({ head: () => studyMeta('Curriculum Roadmap', 'Explore your medical modules, units and lessons by semester. Find lecture material and subject questions.'), component: Roadmap });
+function subjectIcon(name: string) {
+  const n = normalizeCurriculumText(name);
+  if (/anatom/.test(n)) return Bone;
+  if (/physiolog/.test(n)) return HeartPulse;
+  if (/embry|genet/.test(n)) return Dna;
+  if (/histo|cyto/.test(n)) return Microscope;
+  if (/biochim|biochem|chimi|chem/.test(n)) return FlaskConical;
+  if (/biophys/.test(n)) return Atom;
+  if (/stat|informat/.test(n)) return Activity;
+  return GraduationCap;
+}
+function Roadmap() {
+  const { tree, signedIn } = useCurriculum();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [semester, setSemester] = useState<Semester>('all');
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [opening, setOpening] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const { groups, counts } = exploreCurriculum(tree ?? [], query, semester);
+  const toggle = (key: string) => setExpanded(previous => { const next = new Set(previous); if (next.has(key)) next.delete(key); else next.add(key); return next; });
+  async function openMaterial(file: CurFile) {
+    setOpening(file.id); setError('');
+    try {
+      const result = await uploadPdf(await fetchCurriculumFile(file), file.subject, () => undefined);
+      if (result.error) throw new Error(result.error);
+      await navigate({ to: '/app', search: { view: 'courses' } });
+      openPage(1);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not open this lecture. Please try again.'); }
+    finally { setOpening(null); }
+  }
+  function practice(subject: string, lesson: string) {
+    update(s => ({ ...s, qbank: { subject, lesson, difficulty: 'All', order: [], i: 0, answers: {}, startedAt: Date.now() } }));
+    void navigate({ to: '/app', search: { view: 'faculty', subject, lesson } });
+  }
+  return <main className="reference-page curriculum-page">
+    <header className="tool-page-heading"><span className="tool-kicker">ACADEMIC CURRICULUM</span><h1>Roadmap</h1></header>
+    <div className="curriculum-search"><Search aria-hidden="true"/><Input aria-label="Search curriculum" placeholder="Search subjects, units, lessons or keywords…" value={query} onChange={e => setQuery(e.target.value)}/>{query && <Button variant="ghost" size="icon" aria-label="Clear search" onClick={() => setQuery('')}><X/></Button>}</div>
+    <div className="curriculum-toolbar"><div className="curriculum-filters" aria-label="Semester filters">{([['all', 'All Modules'], ['1', 'Semester 1'], ['2', 'Semester 2']] as const).map(([value, label]) => <Button key={value} variant={semester === value ? 'default' : 'outline'} aria-pressed={semester === value} onClick={() => setSemester(value)}>{label}</Button>)}</div><div className="curriculum-counts" aria-live="polite"><span><GraduationCap/>{counts.modules} modules</span><span><Layers/>{counts.units} units</span><span><BookOpen/>{counts.lessons} lessons</span></div></div>
+    {error && <div role="alert" className="curriculum-error">{error}<Button variant="ghost" size="icon" aria-label="Dismiss error" onClick={() => setError('')}><X/></Button></div>}
+    {!tree ? <div role="status" className="curriculum-empty"><Loader2 className="animate-spin"/>Loading curriculum…</div> : !signedIn ? <div className="tool-signin"><strong>Sign in to see your curriculum</strong><Button asChild><Link to="/login">Sign in</Link></Button></div> : !counts.modules ? <div className="curriculum-empty"><Search/><h2>{query ? 'No matching lessons' : 'No modules available'}</h2>{query && <Button variant="outline" onClick={() => { setQuery(''); setSemester('all'); }}>Clear filters</Button>}</div> : groups.filter(group => group.subjects.length).map(group => <section className="curriculum-semester" key={group.semester} aria-labelledby={`semester-${group.semester}`}>
+      <div className="curriculum-group-heading"><h2 id={`semester-${group.semester}`}>Semester {group.semester}</h2><span>{group.subjects.length} modules</span></div>
+      <div className="curriculum-subjects">{group.subjects.map(subject => {
+        const key = `${group.semester}-${subject.id}`; const isOpen = expanded.has(key) || !!query.trim(); const Icon = subjectIcon(subject.name);
+        return <article key={key} className="curriculum-subject"><h3><Button variant="ghost" className="curriculum-subject-toggle" aria-expanded={isOpen} aria-controls={`content-${key}`} onClick={() => { if (query.trim()) setQuery(''); toggle(key); }}><span className="curriculum-icon"><Icon/></span><span className="curriculum-subject-name">{subject.name}</span><span className="curriculum-semester-tag">Semester {group.semester}</span><span className="curriculum-subject-count">{subject.units.length} units · {subject.units.reduce((n, u) => n + u.lessons.length, 0)} lessons</span><ChevronDown className={isOpen ? 'curriculum-chevron is-open' : 'curriculum-chevron'}/></Button></h3>
+          {isOpen && <div id={`content-${key}`} className="curriculum-units">{subject.units.map(unit => <section key={unit.id} className="curriculum-unit"><h4><Layers/>{unit.name}<span>{unit.lessons.length} lessons</span></h4><ul>{unit.lessons.map(lesson => <li key={lesson.id} className="curriculum-lesson"><div className="curriculum-lesson-name"><FileText/><span>{lesson.name}</span></div><div className="curriculum-lesson-actions">{lesson.files.length === 1 && lesson.files[0] ? <Button variant="outline" disabled={opening !== null} onClick={() => void openMaterial(lesson.files[0] as CurFile)} aria-label={`Open lecture: ${lesson.name}`}>{opening === lesson.files[0].id ? <Loader2 className="animate-spin"/> : <BookOpen/>}Lecture</Button> : lesson.files.length > 1 ? <details className="curriculum-file-menu"><summary><BookOpen/>Lectures ({lesson.files.length})<ChevronDown/></summary><div>{lesson.files.map(file => <Button key={file.id} variant="ghost" disabled={opening !== null} onClick={() => void openMaterial(file)}>{opening === file.id ? <Loader2 className="animate-spin"/> : <FileText/>}{file.file_name}</Button>)}</div></details> : <span className="curriculum-no-file">No lecture file</span>}<Button variant="ghost" onClick={() => practice(subject.name, lesson.name)} aria-label={`Practice questions: ${lesson.name}`}><ListChecks/>Practice</Button></div></li>)}</ul></section>)}</div>}
+        </article>;
+      })}</div>
+    </section>)}
+  </main>;
+}

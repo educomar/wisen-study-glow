@@ -111,13 +111,13 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
 
 function ListChecksIcon(){return <span className="grid size-16 place-items-center rounded-full bg-background text-muted-foreground"><ListChecks className="size-7"/></span>;}
 
-export function QBank(props: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
+export function QBank(props: { context?: string | undefined; defaultSubject?: string | undefined; defaultLesson?: string | undefined; source?: "ai" | "faculty" | "past" }) {
   if (props.source === "past") return <PastEmds />;
   if (props.source === "faculty") return <Practice {...props} />;
   if (props.source === "ai") return <div className="space-y-4"><AiGenerator /><Practice {...props} /></div>;
   return <LegacyQBank {...props} />;
 }
-function LegacyQBank(props: { context?: string | undefined; defaultSubject?: string }) {
+function LegacyQBank(props: { context?: string | undefined; defaultSubject?: string | undefined }) {
   const [tab, setTabQ] = useState<"ai" | "emd">("ai");
   const t = (k: typeof tab, l: string) => <button onClick={() => setTabQ(k)} className={`rounded-md px-3 py-1.5 text-sm font-medium ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>{l}</button>;
   return (
@@ -193,7 +193,7 @@ function PastEmds() {
   );
 }
 
-export function Practice({ defaultSubject, source }: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
+export function Practice({ defaultSubject, defaultLesson, source }: { context?: string | undefined; defaultSubject?: string | undefined; defaultLesson?: string | undefined; source?: "ai" | "faculty" | "past" }) {
   const s = useAppState();
   const ai = useAi();
   const faculty = remoteQuestions();
@@ -201,7 +201,9 @@ export function Practice({ defaultSubject, source }: { context?: string | undefi
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
 
-  const session: QSession = s.qbank ?? { subject: defaultSubject ?? "All", lesson: "All", difficulty: "All", order: [], i: 0, answers: {}, startedAt: Date.now() };
+  const [linkedScope, setLinkedScope] = useState(!!defaultSubject || !!defaultLesson);
+  const storedSession: QSession = s.qbank ?? { subject: defaultSubject ?? "All", lesson: defaultLesson ?? "All", difficulty: "All", order: [], i: 0, answers: {}, startedAt: Date.now() };
+  const session = linkedScope ? { ...storedSession, subject: defaultSubject ?? storedSession.subject, lesson: defaultLesson ?? storedSession.lesson } : storedSession;
   // Build the question order lazily when filters change (targeted practice sets order: []).
   useEffect(() => {
     const cur = getState().qbank;
@@ -213,6 +215,7 @@ export function Practice({ defaultSubject, source }: { context?: string | undefi
   }, [s.qbank, pool]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setFilter = (patch: Partial<QSession>) => {
+    setLinkedScope(false);
     const f = { ...session, ...patch };
     if (patch.subject) f.lesson = "All";
     update((st) => ({ ...st, qbank: { ...f, order: shuffle(filtered(pool, f)).map((q) => q.id), i: 0, answers: {}, startedAt: Date.now() } }));
@@ -221,7 +224,7 @@ export function Practice({ defaultSubject, source }: { context?: string | undefi
 
   const subjects = [...new Set(pool.map((q) => q.subject))];
   const lessons = [...new Set(pool.filter((q) => session.subject === "All" || q.subject === session.subject).map((q) => q.topic))];
-  const list = session.order.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
+  const list = linkedScope ? filtered(pool, session) : session.order.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
   const answered = Object.keys(session.answers).filter((id) => session.order.includes(id));
   const correct = answered.filter((id) => pool.find((x) => x.id === id)?.answer === session.answers[id]).length;
   const elapsed = Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000));
@@ -241,9 +244,9 @@ export function Practice({ defaultSubject, source }: { context?: string | undefi
     <div className="max-w-4xl space-y-6">
       <div className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-8">
         <div className="mb-8 grid gap-6 sm:grid-cols-3">
-          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Subject</span><select aria-label="Subject" value={session.subject} onChange={e=>{setUnit('All');setFilter({subject:e.target.value});}} className={sel}><option value="All">All subjects</option>{[...new Set([...(tree?.map(x=>x.name)??[]),...subjects])].map(x=><option key={x}>{x}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Subject</span><select aria-label="Subject" value={session.subject} onChange={e=>{setUnit('All');setFilter({subject:e.target.value});}} className={sel}><option value="All">All subjects</option>{[...new Set([...(session.subject !== 'All' ? [session.subject] : []),...(tree?.map(x=>x.name)??[]),...subjects])].map(x=><option key={x}>{x}</option>)}</select></label>
           <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Unit</span><select aria-label="Unit" value={unit} onChange={e=>{setUnit(e.target.value);setI(0);setFilter({lesson:'All'});}} className={sel}><option value="All">All units</option>{units.map(x=><option key={x.id}>{x.name}</option>)}</select></label>
-          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Lesson</span><select aria-label="Lesson" value={session.lesson} onChange={e=>setFilter({lesson:e.target.value})} className={sel}><option value="All">All lessons</option>{[...new Set([...(selectedUnit?.lessons.map(x=>x.name)??[]),...lessons.filter(x=>!unitLessons||unitLessons.includes(x))])].map(x=><option key={x}>{x}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Lesson</span><select aria-label="Lesson" value={session.lesson} onChange={e=>setFilter({lesson:e.target.value})} className={sel}><option value="All">All lessons</option>{[...new Set([...(session.lesson !== 'All' ? [session.lesson] : []),...(selectedUnit ? selectedUnit.lessons : units.flatMap(x=>x.lessons)).map(x=>x.name),...lessons.filter(x=>!unitLessons||unitLessons.includes(x))])].map(x=><option key={x}>{x}</option>)}</select></label>
         </div>
         <div className="flex flex-wrap items-center gap-6 border-b border-border pb-6">
           <label className="flex items-center gap-2"><input type="checkbox" aria-label="Single Choice (SCQ)" className="size-4 accent-primary" checked={types.scq} onChange={e=>{setTypes({...types,scq:e.target.checked});setI(0);}}/>Single Choice (SCQ)</label>
