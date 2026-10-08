@@ -1,5 +1,10 @@
 # Roadmap
 
+## Active Kapsules Hub — October 8
+- [ ] Replace the old configuration/preview layout with real deck counts, filters, manual creation and curriculum AI generation.
+- [ ] Add focused live review, keyboard controls, queue summary and preserved decks/history.
+- [ ] Verify scheduling rules, signed-in creation/review/persistence, AI generation and mobile layout.
+
 ## English-only Study Sheets — October 8
 - [x] Translate sheet labels, suggestions, tags and course selection display without changing shared curriculum records.
 - [x] Require English generated content from all source languages; twelve tests pass and signed-in generation from French notes produced six English sections and saved successfully with no browser errors.
