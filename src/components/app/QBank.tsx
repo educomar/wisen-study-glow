@@ -193,7 +193,7 @@ function PastEmds() {
   );
 }
 
-function Practice({ defaultSubject, source }: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
+export function Practice({ defaultSubject, source }: { context?: string | undefined; defaultSubject?: string; source?: "ai" | "faculty" | "past" }) {
   const s = useAppState();
   const ai = useAi();
   const faculty = remoteQuestions();
