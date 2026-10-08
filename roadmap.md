@@ -1,5 +1,10 @@
 # Roadmap
 
+## Structured Study Sheets — October 8
+- [x] Rebuild composer and sectioned reader with profile-based topics and faculty material selection.
+- [x] Add real section generation progress, skeletons, pretesting, sticky navigation and embedded Kapsules.
+- [x] Connect saved sheets/cards, topic QBank, PDF/Word export and sharing; verify signed-in six-section generation, exact card saving, reload, sharing, exports, dark/phone layouts and ten passing tests.
+
 ## Academic Roadmap explorer — October 8
 - [x] Add live curriculum search, semester filters, academic counts and expandable medical-icon subject rows.
 - [x] Connect lesson materials and scoped question practice; exclude all personal progress indicators.
