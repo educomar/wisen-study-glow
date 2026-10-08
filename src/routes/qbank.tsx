@@ -1,4 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ReferenceStudyTool } from '@/components/app/ReferenceStudyTools';
+import { EmdQBank } from '@/components/app/EmdQBank';
 import { studyMeta } from '@/lib/study-meta';
-export const Route=createFileRoute('/qbank')({head:()=>studyMeta('QBank','Generate original medical practice questions grounded in your own academic material.'),component:()=> <ReferenceStudyTool kind="qbank"/>});
+export const Route=createFileRoute('/qbank')({head:()=>studyMeta('QBank · EMD Practice','Practise past UFAS1 EMDs and sit timed EMD simulations with a QCM answer grid and a /20 debrief.'),component:EmdQBank});

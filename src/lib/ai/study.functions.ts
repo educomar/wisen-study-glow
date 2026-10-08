@@ -69,3 +69,25 @@ Return JSON only: {"cards":[{"front":"...","back":"...","tip":"short high-yield 
     if (error) throw new Error("Couldn't save the Kapsules.");
     return saved;
   });
+
+/** Transcribe a previous-year EMD from its file text into practice questions (never invented). */
+export const transcribePastEmd = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ subject: z.string().max(120), year: z.string().max(40), file: z.object({ name: z.string().max(200), text: z.string().max(60000) }) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const system = `You are Wisen AI. You receive the text of an OFFICIAL previous-year EMD exam from the Faculty of Medicine, Université Ferhat Abbas Sétif 1. Transcribe its questions faithfully: keep each stem and its options exactly as written (fix only obvious OCR spacing). Never invent, add or merge questions; skip any question whose options are unreadable. If the document contains an answer key, use it. Otherwise determine the correct option(s) from established medical knowledge. For each question write an explanation of why the correct option(s) are right AND why each distractor fails. Write explanations in English. ${NOTATION}
+Return JSON only: {"questions":[{"stem":"...","options":["..."],"answers":[0-based indices],"explanation":"...","keyFromDocument":true}]}`;
+    const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: `EMD file: ${data.file.name}\n\n${data.file.text}` }], { json: true });
+    if (!r.ok) throw new Error(r.error === "credits" ? "Wisen AI is out of credits right now." : r.error === "busy" ? "Wisen AI is busy — try again in a minute." : "Wisen AI couldn't read this EMD. Try again.");
+    const parsed = parseJson<{ questions?: (RawQ & { keyFromDocument?: boolean })[] }>(r.text);
+    const rows = (parsed?.questions ?? []).flatMap((q) => {
+      const options = (q.options ?? []).map(String).filter(Boolean).slice(0, 6);
+      const answers = [...new Set((q.answers ?? []).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < options.length))];
+      if (!q.stem || options.length < 2 || !answers.length) return [];
+      return [{ user_id: context.userId, qtype: answers.length > 1 ? "MCQ" : "SCQ", subject: data.subject, unit: data.year, lesson: "", difficulty: "Medium", stem: String(q.stem), options, answers, explanation: String(q.explanation ?? "") + (q.keyFromDocument ? "" : "\n\n_Answer determined by Wisen AI — no official key was found in this file._"), source: data.file.name, origin: "past" }];
+    });
+    if (!rows.length) throw new Error("No readable questions were found in this EMD file.");
+    const { data: saved, error } = await context.supabase.from("ai_questions").insert(rows).select("*");
+    if (error) throw new Error("Couldn't save the EMD questions.");
+    return saved;
+  });

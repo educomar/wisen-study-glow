@@ -1,0 +1,347 @@
+import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ClipboardList, FileText, GraduationCap, Layers, Loader2, LogIn, Timer, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Logo } from "@/components/site/Logo";
+import { generateQuestions, transcribePastEmd } from "@/lib/ai/study.functions";
+import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
+import { useCurriculum, type CurFile } from "./Curriculum";
+import type { Question } from "./data";
+import { emdYear, isPicked, scoreOn20, toggleOption } from "./emd-exam";
+import { Inline, RichText } from "./RichText";
+import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
+import { addCard, getState, log, recordQuestion, update, useAppState, type ExamSession } from "./store";
+import { useSession } from "@/lib/profile";
+
+const L = ["A", "B", "C", "D", "E", "F"];
+const fmt = (sec: number) => `${String(Math.floor(sec / 3600)).padStart(2, "0")}:${String(Math.floor((sec % 3600) / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+const multiOf = (q: Question) => !!(q as AiQuestion).multi;
+const correctText = (q: Question) => q.options.map((o, k) => (isCorrectOption(q, k) ? `${L[k]}. ${o}` : "")).filter(Boolean).join(" · ");
+const saveKapsule = (q: Question) => addCard(q.stem, correctText(q), q.why, q.subject, q.source);
+const setE = (patch: Partial<ExamSession>) => update((st) => ({ ...st, exam: { ...st.exam, ...patch } }));
+
+/* ---------- shared pieces ---------- */
+function Grille({ qs, answers, i, flags, onJump, onToggle, reveal }: { qs: Question[]; answers: (number | null)[]; i: number; flags?: boolean[]; onJump: (k: number) => void; onToggle?: (qi: number, k: number) => void; reveal?: (qi: number) => boolean }) {
+  return (
+    <aside className="emd-grille" aria-label="QCM answer grid">
+      <header><h2>Grille QCM</h2><p>Select answers from the grid or the question. Click a number to jump to it.</p></header>
+      <div className="emd-grille-table" role="table">
+        <div className="emd-grille-row emd-grille-head" role="row"><span>Q</span>{L.slice(0, 5).map((x) => <span key={x}>{x}</span>)}</div>
+        {qs.map((q, qi) => {
+          const shown = reveal?.(qi);
+          return (
+            <div key={q.id} role="row" className={`emd-grille-row ${qi === i ? "is-current" : ""}`}>
+              <button type="button" className="emd-grille-num" onClick={() => onJump(qi)} aria-label={`Go to question ${qi + 1}`}>{flags?.[qi] && <Bookmark className="size-3" />}{String(qi + 1).padStart(2, "0")}</button>
+              {L.slice(0, 5).map((_, k) => {
+                if (k >= q.options.length) return <span key={k} />;
+                const on = isPicked(answers[qi] ?? null, k, multiOf(q));
+                const cls = shown ? (isCorrectOption(q, k) ? "is-right" : on ? "is-wrong" : "") : on ? "is-on" : "";
+                return <button key={k} type="button" disabled={!onToggle || shown} className={`emd-cell ${cls}`} aria-label={`Question ${qi + 1} option ${L[k]}`} aria-pressed={on} onClick={() => onToggle?.(qi, k)} />;
+              })}
+            </div>
+          );
+        })}
+      </div>
+      <footer><span><i className="emd-cell" />Unanswered</span><span><i className="emd-cell is-on" />Answered</span><span><i className="emd-key-current" />Current</span><span><Bookmark className="size-3" />Marked</span></footer>
+    </aside>
+  );
+}
+
+function QuestionPane({ q, n, total, picked, onToggle, reveal }: { q: Question; n: number; total: number; picked: number | null; onToggle?: (k: number) => void; reveal?: boolean }) {
+  const multi = multiOf(q);
+  return (
+    <div className="emd-question">
+      <div className="emd-question-top"><span className="emd-tag">{q.subject}</span><span className="emd-count">Q <b>{String(n).padStart(2, "0")}</b> / {total}</span></div>
+      <h2>Question {String(n).padStart(2, "0")}</h2>
+      <p className="emd-stem"><Inline text={q.stem} /></p>
+      <p className="emd-hint">{multi ? "Select every correct proposition." : "Select one answer."}</p>
+      <ol className="emd-options">
+        {q.options.map((o, k) => {
+          const on = isPicked(picked, k, multi);
+          const cls = reveal ? (isCorrectOption(q, k) ? "is-right" : on ? "is-wrong" : "") : on ? "is-on" : "";
+          return (
+            <li key={k}><button type="button" disabled={!onToggle || reveal} className={`emd-option ${cls}`} aria-pressed={on} onClick={() => onToggle?.(k)}>
+              <span className="emd-letter">{L[k]}</span><span><Inline text={o} /></span>
+              {reveal && isCorrectOption(q, k) && <Check className="ml-auto size-4" />}{reveal && on && !isCorrectOption(q, k) && <X className="ml-auto size-4" />}
+            </button></li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+function Explanation({ q, picked }: { q: Question; picked: number | null }) {
+  const ok = picked !== null && picked === q.answer;
+  return (
+    <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
+      <p className="font-semibold">{ok ? "Correct" : picked === null ? "Not answered" : "Incorrect"} — answer: {correctText(q)}</p>
+      <div className="mt-2 text-sm"><RichText text={q.why || "No explanation available."} /></div>
+      {q.source && <p className="mt-2 text-xs text-muted-foreground">Source: {q.source}</p>}
+      <Button size="sm" variant="outline" className="mt-3" onClick={() => { saveKapsule(q); toast.success("Saved as Kapsule"); }}><Layers /> Save as Kapsule</Button>
+    </div>
+  );
+}
+
+/* ---------- instant-feedback practice (Past EMDs + Practice Mode) ---------- */
+function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; onExit: () => void }) {
+  const [i, setI] = useState(0);
+  const [answers, setAnswers] = useState<(number | null)[]>(() => qs.map(() => null));
+  const [checked, setChecked] = useState<boolean[]>(() => qs.map(() => false));
+  const q = qs[i];
+  if (!q) return null;
+  const toggle = (qi: number, k: number) => !checked[qi] && setAnswers((a) => a.map((x, j) => (j === qi ? toggleOption(x, k, multiOf(qs[qi]!)) : x)));
+  const check = () => { recordQuestion(q, answers[i] ?? null); setChecked((c) => c.map((x, j) => (j === i ? true : x))); };
+  const done = checked.filter(Boolean).length;
+  const { correct } = scoreOn20(qs.map((x, k) => ({ answer: x.answer, picked: checked[k] ? answers[k] ?? null : -1 })));
+  return (
+    <div className="emd-run">
+      <div className="emd-run-bar"><Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft /> Back</Button><strong>{title}</strong><span>{done}/{qs.length} checked · {correct} correct</span></div>
+      <div className="emd-panes">
+        <Grille qs={qs} answers={answers} i={i} onJump={setI} onToggle={toggle} reveal={(k) => checked[k]!} />
+        <section className="emd-main">
+          <QuestionPane q={q} n={i + 1} total={qs.length} picked={answers[i] ?? null} onToggle={(k) => toggle(i, k)} reveal={!!checked[i]} />
+          {checked[i] && <Explanation q={q} picked={answers[i] ?? null} />}
+          <div className="emd-actions">
+            <Button variant="outline" disabled={!i} onClick={() => setI(i - 1)}><ArrowLeft /> Previous</Button>
+            {!checked[i] ? <Button disabled={answers[i] === null} onClick={check}>Submit answer</Button> : <Button disabled={i === qs.length - 1} onClick={() => setI(i + 1)}>Next <ArrowRight /></Button>}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Past EMDs ---------- */
+function PastEmds({ onBack }: { onBack: () => void }) {
+  const { tree } = useCurriculum();
+  const { qs: ai } = useAi();
+  const [mod, setMod] = useState("");
+  const [year, setYear] = useState("All");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [run, setRun] = useState<{ title: string; qs: Question[] } | null>(null);
+  const transcribe = useServerFn(transcribePastEmd);
+  const mods = (tree ?? []).filter((s) => s.emds.length);
+  const files = (mods.find((m) => m.name === mod)?.emds ?? (mod ? [] : mods.flatMap((m) => m.emds))).map((f) => ({ ...f, year: emdYear(f.file_name, f.date) }));
+  const years = [...new Set(files.map((f) => f.year))].sort().reverse();
+  const shown = files.filter((f) => year === "All" || f.year === year);
+  const open = async (f: CurFile & { year: string }) => {
+    const cached = ai.filter((q) => q.origin === "past" && q.source === f.file_name);
+    if (cached.length) { setRun({ title: `${f.subject} · ${f.year}`, qs: cached }); return; }
+    try {
+      setBusy(f.id);
+      const [m] = await extractMaterial([f], 1);
+      if (!m) throw new Error("This EMD has no readable text (it may be scanned).");
+      const rows = await transcribe({ data: { subject: f.subject, year: f.year, file: m } });
+      await reloadAi();
+      setRun({ title: `${f.subject} · ${f.year}`, qs: rows.map((r) => ({ id: `ai-${r.id}`, subject: r.subject, topic: r.subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: r.qtype === "MCQ" ? (r.answers as number[]).reduce((a, b) => a | (1 << b), 0) : (r.answers as number[])[0]!, why: r.explanation, distractors: [], slide: 0, source: r.source, multi: r.qtype === "MCQ", origin: "past", unit: r.unit })) });
+      log(`Past EMD opened · ${f.subject} ${f.year}`);
+    } catch (e) { toast.error((e as Error).message || "Couldn't open this EMD."); } finally { setBusy(null); }
+  };
+  if (run) return <PracticeRunner qs={run.qs} title={run.title} onExit={() => setRun(null)} />;
+  return (
+    <section className="emd-section">
+      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft /> QBank</Button>
+      <h2 className="emd-h2">Past EMDs</h2>
+      <p className="emd-sub">Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.</p>
+      <div className="emd-filters">
+        <select aria-label="Module" value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); }}><option value="">All modules</option>{mods.map((m) => <option key={m.id}>{m.name}</option>)}</select>
+        <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? "All years" : y}</button>)}</div>
+      </div>
+      {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" /> Loading…</p> : !shown.length ? (
+        <p className="emd-empty">No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.</p>
+      ) : (
+        <div className="emd-file-grid">{shown.map((f) => (
+          <button key={f.id} type="button" className="emd-file" disabled={!!busy} onClick={() => void open(f)}>
+            <FileText /><span><strong>{f.subject}</strong><small>{f.year} · {f.file_name}</small></span>
+            {busy === f.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}
+          </button>
+        ))}</div>
+      )}
+    </section>
+  );
+}
+
+/* ---------- EMD Simulator ---------- */
+function submitExam() {
+  const st = getState(); const e = st.exam;
+  if (e.phase !== "run") return;
+  const pool = getPool();
+  const qs = e.qids.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
+  qs.forEach((q, k) => recordQuestion(q, e.answers[k] ?? null));
+  const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
+  const used = Math.min(e.minutes * 60, Math.round((Date.now() - (e.endsAt - e.minutes * 60e3)) / 1000));
+  log(`EMD Simulator · ${e.subject} — ${r.on20}/20`);
+  update((s) => ({ ...s, exam: { ...s.exam, phase: "done", usedSec: used }, examHistory: [{ t: Date.now(), subject: e.subject, score: r.correct, total: qs.length }, ...s.examHistory].slice(0, 20) }));
+}
+let poolRef: Question[] = [];
+const getPool = () => poolRef;
+
+function Simulator({ onBack }: { onBack: () => void }) {
+  const { tree } = useCurriculum();
+  const [sc, setSc] = useState<Scope>(emptyScope);
+  const [mode, setMode] = useState<"practice" | "real">("practice");
+  const [count, setCount] = useState(20);
+  const [minutes, setMinutes] = useState(60);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [practiceQs, setPracticeQs] = useState<{ title: string; qs: Question[] } | null>(null);
+  const gen = useServerFn(generateQuestions);
+  const go = async () => {
+    const r = resolveScope(tree, sc);
+    if (!r.files.length) { toast.error("No course files in this selection yet."); return; }
+    try {
+      setBusy("Reading your course files…");
+      const material = await extractMaterial(r.files, sc.f ? 1 : 6, (d, n) => setBusy(`Reading course files ${d}/${n}…`));
+      if (!material.length) throw new Error("These files have no readable text (they may be scanned).");
+      setBusy("Studying previous-year EMDs for style…");
+      const pastEmds = (await extractMaterial(r.emds, 3)).map((p) => ({ name: p.name, text: p.text.slice(0, 30000) }));
+      setBusy("Wisen AI is building your EMD…");
+      const rows = await gen({ data: { mode: "exam", qtype: "MCQ", difficulty: "Medium", count, subject: r.subject, unit: r.unit, lesson: r.lesson, material, pastEmds } });
+      await reloadAi();
+      const ids = rows.map((x) => `ai-${x.id}`);
+      if (mode === "real") {
+        setE({ subject: r.subject, phase: "run", qids: ids, answers: ids.map(() => null), flags: ids.map(() => false), i: 0, minutes, count, endsAt: Date.now() + minutes * 60e3, usedSec: 0 });
+      } else {
+        const set = new Set(ids);
+        setPracticeQs({ title: `Practice · ${r.label}`, qs: poolRef.filter((q) => set.has(q.id)) });
+      }
+    } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setBusy(null); }
+  };
+  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={practiceQs.title} onExit={() => setPracticeQs(null)} />;
+  return (
+    <section className="emd-section">
+      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft /> QBank</Button>
+      <h2 className="emd-h2">EMD Simulator <small>UFAS1 Simulation</small></h2>
+      <p className="emd-sub">Original QCM questions from your selected course files, modelled on previous-year EMD style — never copied from them.</p>
+      <div className="emd-modes">
+        {([["practice", GraduationCap, "Practice Mode", "Untimed. Answer one by one; the correct answer and Wisen AI explanation appear after each submission."], ["real", Timer, "Real Exam", "Strict timed simulation with the QCM grille. No answers or hints until you submit."]] as const).map(([k, Icon, t, d]) => (
+          <button key={k} type="button" className={`emd-mode ${mode === k ? "is-on" : ""}`} onClick={() => setMode(k)}><Icon /><strong>{t}</strong><span>{d}</span></button>
+        ))}
+      </div>
+      <div className="emd-setup">
+        <ScopePicker tree={tree} value={sc} onChange={setSc} />
+        <div className="emd-setup-row">
+          <span>Questions</span><div className="emd-pills">{[10, 20, 30].map((n) => <button key={n} type="button" className={n === count ? "is-on" : ""} onClick={() => { setCount(n); setMinutes(n * 3); }}>{n}</button>)}</div>
+          {mode === "real" && <><span>Duration</span><select aria-label="Duration" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>{[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m} min</option>)}</select></>}
+        </div>
+        <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {busy}</> : mode === "real" ? "Generate & start Real Exam" : "Generate & start practice"}</Button>
+      </div>
+    </section>
+  );
+}
+
+function RealExam({ qs }: { qs: Question[] }) {
+  const e = useAppState().exam;
+  const [, tick] = useState(0);
+  const [review, setReview] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const onTick = useCallback(() => { tick((n) => n + 1); const c = getState().exam; if (c.phase === "run" && Date.now() >= c.endsAt) submitExam(); }, []);
+  useEffect(() => { const t = setInterval(onTick, 1000); return () => clearInterval(t); }, [onTick]);
+  const q = qs[e.i];
+  if (!q) return null;
+  const left = Math.max(0, Math.round((e.endsAt - Date.now()) / 1000));
+  const answered = e.answers.filter((a) => a !== null).length;
+  const marked = e.flags.filter(Boolean).length;
+  const toggle = (qi: number, k: number) => setE({ answers: e.answers.map((a, j) => (j === qi ? toggleOption(a, k, multiOf(qs[qi]!)) : a)) });
+  const pending = qs.map((_, k) => k).filter((k) => e.flags[k] || e.answers[k] === null);
+  return (
+    <div className="emd-real">
+      <header className="emd-real-head">
+        <div className="flex items-center gap-4"><Logo className="h-8 w-auto" /><span className="emd-divider" /><strong>EMD Simulator</strong></div>
+        <div className="emd-real-stats">
+          <span className="emd-progress"><b>{answered}</b> / {qs.length}<i><em style={{ width: `${(answered / qs.length) * 100}%` }} /></i></span>
+          <span className={`emd-timer ${left < 300 ? "is-low" : ""}`}><Timer className="size-4" />{fmt(left)}</span>
+          <span className="emd-marked"><Bookmark className="size-4" />{marked} marked</span>
+        </div>
+      </header>
+      <div className="emd-panes">
+        <Grille qs={qs} answers={e.answers} i={e.i} flags={e.flags} onJump={(k) => setE({ i: k })} onToggle={toggle} />
+        <section className="emd-main">
+          <QuestionPane q={q} n={e.i + 1} total={qs.length} picked={e.answers[e.i] ?? null} onToggle={(k) => toggle(e.i, k)} />
+          <div className="emd-actions">
+            <Button variant="outline" disabled={!e.i} onClick={() => setE({ i: e.i - 1 })}><ArrowLeft /> Previous</Button>
+            <Button variant={e.flags[e.i] ? "default" : "outline"} onClick={() => setE({ flags: e.flags.map((f, j) => (j === e.i ? !f : f)) })}>{e.flags[e.i] ? <BookmarkCheck /> : <Bookmark />}{e.flags[e.i] ? "Marked" : "Mark for review"}</Button>
+            <Button variant="outline" disabled={e.i === qs.length - 1} onClick={() => setE({ i: e.i + 1 })}>Next <ArrowRight /></Button>
+          </div>
+          <div className="emd-footer-bar">
+            <Button variant="outline" onClick={() => setReview(true)}><ClipboardList /> Review Exam</Button>
+            <Button size="lg" onClick={() => setConfirm(true)}>Submit Exam <ArrowRight /></Button>
+          </div>
+        </section>
+      </div>
+      <Dialog open={review} onOpenChange={setReview}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Review exam</DialogTitle><DialogDescription>{answered} answered · {qs.length - answered} unanswered · {marked} marked</DialogDescription></DialogHeader>
+          {pending.length ? <div className="emd-review-list">{pending.map((k) => (
+            <button key={k} type="button" onClick={() => { setE({ i: k }); setReview(false); }}><b>Q{String(k + 1).padStart(2, "0")}</b><span>{e.answers[k] === null ? "Unanswered" : "Answered"}</span>{e.flags[k] && <Bookmark className="size-4" />}</button>
+          ))}</div> : <p className="text-sm text-muted-foreground">Every question is answered and none are marked.</p>}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirm} onOpenChange={setConfirm}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Submit your exam?</DialogTitle><DialogDescription>{qs.length - answered ? `${qs.length - answered} question(s) are still unanswered. ` : ""}You can't change your answers after submitting.</DialogDescription></DialogHeader>
+          <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setConfirm(false)}>Keep working</Button><Button onClick={() => { setConfirm(false); submitExam(); }}>Submit Exam</Button></div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Debrief({ qs }: { qs: Question[] }) {
+  const e = useAppState().exam;
+  const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
+  const mods: Record<string, { c: number; n: number }> = {};
+  qs.forEach((q, k) => { const key = q.topic && q.topic !== q.subject ? `${q.subject} · ${q.topic}` : q.subject; const m = (mods[key] ??= { c: 0, n: 0 }); m.n++; if (e.answers[k] === q.answer) m.c++; });
+  const wrong = qs.filter((q, k) => e.answers[k] !== q.answer);
+  return (
+    <section className="emd-section">
+      <div className="emd-score-grid">
+        {[["Score", `${r.on20} / 20`], ["Accuracy", `${r.accuracy}%`], ["Correct", `${r.correct} / ${r.total}`], ["Time used", fmt(e.usedSec)]].map(([k, v]) => <div key={k}><span>{k}</span><strong>{v}</strong></div>)}
+      </div>
+      <div className="emd-card"><h3>Breakdown by module</h3>{Object.entries(mods).map(([k, v]) => (
+        <div key={k} className="emd-bar"><div><span>{k}</span><b>{v.c}/{v.n}</b></div><i><em style={{ width: `${(v.c / v.n) * 100}%` }} /></i></div>
+      ))}</div>
+      <div className="emd-card">
+        <div className="flex flex-wrap items-center justify-between gap-2"><h3>Correction key</h3><Button variant="outline" disabled={!wrong.length} onClick={() => { wrong.forEach(saveKapsule); toast.success(`${wrong.length} mistakes saved to Kapsules`); }}><Layers /> Save mistakes to Kapsules</Button></div>
+        {qs.map((q, k) => (
+          <details key={q.id} className="emd-key" open={e.answers[k] !== q.answer}>
+            <summary><span className={e.answers[k] === q.answer ? "text-primary" : "text-destructive"}>{e.answers[k] === q.answer ? <Check className="size-4" /> : <X className="size-4" />}</span><b>Q{String(k + 1).padStart(2, "0")}</b><Inline text={q.stem} /></summary>
+            <QuestionPane q={q} n={k + 1} total={qs.length} picked={e.answers[k] ?? null} reveal />
+            <Explanation q={q} picked={e.answers[k] ?? null} />
+          </details>
+        ))}
+      </div>
+      <Button variant="outline" onClick={() => setE({ phase: "setup" })}>New simulation</Button>
+    </section>
+  );
+}
+
+/* ---------- page ---------- */
+export function EmdQBank() {
+  const { user } = useSession();
+  const { qs: ai } = useAi();
+  poolRef = ai;
+  const e = useAppState().exam;
+  const [view, setView] = useState<"hub" | "past" | "sim">("hub");
+  const examQs = useMemo(() => e.qids.map((id) => ai.find((q) => q.id === id)).filter((q): q is AiQuestion => !!q), [e.qids, ai]);
+  const realActive = (e.phase === "run" || e.phase === "done") && examQs.length > 0;
+  if (!user) return <main className="reference-page emd-page"><div className="tool-signin"><span className="reference-tool-icon"><LogIn /></span><strong>Sign in to practise EMDs</strong><p>Your exams and results are saved to your account.</p><Button asChild><Link to="/login"><LogIn />Sign in</Link></Button></div></main>;
+  if (realActive && e.phase === "run") return <RealExam qs={examQs} />;
+  return (
+    <main className="reference-page emd-page">
+      {realActive && e.phase === "done" ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : (
+        <>
+          <header className="tool-page-heading"><span className="tool-kicker">QBANK · FACULTY OF MEDICINE SÉTIF 1</span><h1>Train for the <em>EMD.</em></h1><p>Practise real past exams, or sit a full UFAS1 simulation.</p></header>
+          <div className="emd-choices">
+            <button type="button" className="emd-choice" onClick={() => setView("past")}><FileText /><strong>Past EMDs</strong><span>Previous years' official faculty exams by module and academic year, with instant feedback, explanations and Save as Kapsule.</span><em>Open past EMDs <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("sim")}><Timer /><strong>EMD Simulator</strong><span>UFAS1 Simulation in Practice Mode (untimed, explained) or Real Exam (timed QCM grille, debrief out of 20).</span><em>Start a simulation <ArrowRight /></em></button>
+          </div>
+        </>
+      )}
+    </main>
+  );
+}
