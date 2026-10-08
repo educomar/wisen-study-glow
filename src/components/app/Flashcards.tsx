@@ -13,7 +13,7 @@ import { englishSheetLabel } from './sheet-content';
 import { kapsuleRatings, kapsuleRetention, scheduleKapsule, type KapsuleRating } from './kapsule-review';
 import { addCard, flushStudentData, log, toggle, update, useAppState } from './store';
 
-export function Flashcards({ view = 'cards', initialDeck }: { view?: 'cards' | 'new' | 'decks' | 'reviews'; initialDeck?: string }) {
+export function Flashcards({ view = 'cards', initialDeck }: { view?: 'cards' | 'new' | 'decks' | 'reviews'; initialDeck?: string | undefined }) {
   const s = useAppState();
   const ai = useAi();
   const { tree, signedIn } = useCurriculum();

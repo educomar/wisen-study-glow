@@ -19,7 +19,7 @@ const icons = [BookOpen, Stethoscope, List, Lightbulb, TriangleAlert, Layers];
 const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const savedPrefix = 'WISEN_SHEET_V1\n';
 
-export function StudySheets({ initialSheetId }: { initialSheetId?: string }) {
+export function StudySheets({ initialSheetId }: { initialSheetId?: string | undefined }) {
   const { user, profile } = useSession();
   const { tree } = useCurriculum();
   const state = useAppState();
