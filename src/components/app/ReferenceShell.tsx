@@ -1,11 +1,12 @@
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { LogIn, Menu, Moon, Sun, UserRound, X, Sparkles } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/site/theme';
 import { useSession } from '@/lib/profile';
 import { ProfileDialog } from './ProfileDialog';
 import { studySearch } from './study-navigation';
+import { Toaster } from '@/components/ui/sonner';
 import { MedicalBackdrop } from './MedicalBackdrop';
 
 export function ReferenceShell({ children }: { children: ReactNode }) {
@@ -14,6 +15,19 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const location = useRouterState({ select: s => s.location });
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.pathname === '/app') return;
+    const open = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const target = studySearch({ view: event.detail }).view;
+      if (target) void navigate({ to: '/app', search: { view: target } });
+    };
+    const review = () => { void navigate({ to: '/app', search: { view: 'cards' } }); };
+    window.addEventListener('wisen-open-tool', open);
+    window.addEventListener('wisen-review-deck', review);
+    return () => { window.removeEventListener('wisen-open-tool', open); window.removeEventListener('wisen-review-deck', review); };
+  }, [location.pathname, navigate]);
   const view = studySearch(location.search as Record<string, unknown>).view;
   const links = [
     { label: 'Dashboard', path: '/dashboard', active: location.pathname === '/dashboard' || (location.pathname === '/app' && !view) },
@@ -40,6 +54,7 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
     <div className="reference-background" aria-hidden="true"/>
     <MedicalBackdrop/>
     <div className="reference-content">{children}</div>
+    {location.pathname !== '/app' && <Toaster/>}
     {user && profile && <ProfileDialog open={editing} onOpenChange={setEditing} user={user} profile={profile} onSaved={setProfile}/>}
   </div>;
 }
