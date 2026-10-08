@@ -445,7 +445,7 @@ html { scroll-behavior: smooth; }
 .popular-topics small{display:block;font-size:10px;color:var(--muted-foreground);font-weight:400;}
 .tool-field{margin-bottom:18px;}
 .tool-field>span{display:block;font-size:11px;font-weight:600;margin-bottom:7px;}
-.tool-segment{display:inline-flex;max-width:100%;align-items:center;gap:2px;border:1px solid var(--border);border-radius:8px;background:var(--muted);padding:3px;}
+.tool-segment{display:inline-flex;flex-wrap:wrap;max-width:100%;align-items:center;gap:4px;border:1px solid var(--border);border-radius:8px;background:var(--muted);padding:3px;}
 .tool-segment>button{padding:5px 9px;height:29px;min-width:0;font-size:10px;box-shadow:none;}
 .tool-segment>button[data-state=active]{background:var(--foreground);}
 .tool-ground{display:flex;align-items:center;gap:7px;font-size:12px;margin:20px 0;}

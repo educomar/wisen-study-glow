@@ -25,7 +25,7 @@ export function StudyDashboard() {
     { view: '/sheets', title: 'Study Sheet', eyebrow: 'RECOMMENDED STARTING POINT', description: 'Generate a high-yield, exam-ready study sheet from your medical course material.', footer: `${state.notes.filter(n=>n.source==='Study Sheet').length} saved sheets`, icon: FileText },
     { view: '/flashcards', title: 'Kapsules', eyebrow: 'STUDY TOOL', description: 'Build a spaced-repetition deck from your courses and review until it sticks.', footer: user ? `${due} due today · ${cards.length + state.customCards.length} Kapsules` : 'Sign in to track', icon: Layers },
     { view: '/qbank', title: 'QBank', eyebrow: 'STUDY TOOL', description: 'Practice faculty questions, generate new questions, and prepare for your next EMD.', footer: `${questions} questions this week`, icon: FlaskConical },
-    { view: '/roadmap', title: 'Clinical Cases', eyebrow: 'NEXT ON THE ROADMAP', description: 'Clinical case practice, examination and management in one focused learning flow.', footer: 'On the roadmap', icon: BookOpen },
+    { view: '/roadmap', title: 'Roadmap', eyebrow: 'YOUR CURRICULUM', description: 'Explore your medical subjects and lessons, and keep track of what you have practiced.', footer: 'Explore your curriculum', icon: BookOpen },
   ] as const;
   return <main className="reference-dashboard">
     <section className="reference-intro">
