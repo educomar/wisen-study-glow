@@ -1,187 +1,128 @@
-import { Bookmark, BookmarkCheck, FileText, FileUp, Loader2, RotateCcw, Wand2 } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { Link, useNavigate } from '@tanstack/react-router';
+import { useServerFn } from '@tanstack/react-start';
+import { ArrowRight, Bookmark, BookmarkCheck, Check, History, Layers, Loader2, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { generateFlashcards } from '@/lib/ai/study.functions';
+import { extractMaterial, reloadAi, useAi } from './ai-store';
+import { useCurriculum } from './Curriculum';
+import { Inline } from './RichText';
+import { englishSheetLabel } from './sheet-content';
+import { kapsuleRatings, kapsuleRetention, scheduleKapsule, type KapsuleRating } from './kapsule-review';
+import { addCard, flushStudentData, log, toggle, update, useAppState } from './store';
 
-import { extractMaterial, reloadAi, useAi } from "./ai-store";
-import { useCurriculum } from "./Curriculum";
-import { seedCards, type Card } from "./data";
-import { Inline } from "./RichText";
-import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
-import { generateFlashcards } from "@/lib/ai/study.functions";
-import { getDoc, uploadPdf, useDoc, type Doc, type Stage } from "./doc";
-import { sentences } from "./grounded";
-import { addCard, flushStudentData, log, toggle, update, useAppState, type FlashSession } from "./store";
-import { Button } from "@/components/ui/button";
-
-const ratings = [
-  { l: "Again", t: "<1m", ms: 60e3, st: "learning" },
-  { l: "Hard", t: "6m", ms: 6 * 60e3, st: "learning" },
-  { l: "Good", t: "1d", ms: 864e5, st: "review" },
-  { l: "Easy", t: "4d", ms: 4 * 864e5, st: "review" },
-] as const;
-
-/** Cloze-style cards from the document's own sentences, with page references. */
-function cardsFrom(doc: Doc, max = 10): Card[] {
-  const out: Card[] = [];
-  for (const p of doc.pages) {
-    for (const s of sentences(p.text).slice(0, 3)) {
-      const term = (s.match(/[A-Za-zÀ-ÿ-]{7,}/g) ?? []).sort((a, b) => b.length - a.length)[0];
-      if (!term) continue;
-      out.push({ id: `f${Date.now()}${out.length}`, topic: doc.sample ? "Neurulation" : doc.subject, source: doc.title, front: s.replace(term, "_____"), back: term, tip: `${doc.title} · Page ${p.pageNumber}` });
-      if (out.length >= max) return out;
-      break;
-    }
-  }
-  return out;
-}
-
-export function Flashcards({ view = "cards" }: { view?: "cards" | "new" | "decks" | "reviews" }) {
+export function Flashcards({ view = 'cards' }: { view?: 'cards' | 'new' | 'decks' | 'reviews' }) {
   const s = useAppState();
-  const { doc } = useDoc();
-  const [busy, setBusy] = useState<Stage | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const f = s.flash;
-  const setF = (patch: Partial<FlashSession>) => update((st) => ({ ...st, flash: { ...st.flash, ...patch } }));
-
   const ai = useAi();
   const { tree, signedIn } = useCurriculum();
-  const [sc, setSc] = useState<Scope>(emptyScope);
-  const [mode, setMode] = useState<"subject" | "unit" | "file">("unit");
-  const [aiBusy, setAiBusy] = useState<string | null>(null);
-  const genCards = useServerFn(generateFlashcards);
-  const all = useMemo(() => [...s.customCards, ...ai.cards], [s.customCards, ai.cards]);
-  const [topic, setTopic] = useState("All");
+  const navigate = useNavigate();
+  const generateCards = useServerFn(generateFlashcards);
+  const [tab, setTab] = useState(view);
+  const [deck, setDeck] = useState('All Decks');
   const [manual, setManual] = useState(false);
-  const [front, setFront] = useState(""), [back, setBack] = useState(""), [deckName, setDeckName] = useState("");
+  const [front, setFront] = useState(''), [back, setBack] = useState(''), [deckName, setDeckName] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [moduleId, setModuleId] = useState(''), [lectureId, setLectureId] = useState('');
+  const [count, setCount] = useState(12);
+  const [busy, setBusy] = useState(''), [error, setError] = useState('');
+  const [focus, setFocus] = useState(false);
+  const [session, setSession] = useState<{ ratings: KapsuleRating[]; subject: string; lesson: string }>({ ratings: [], subject: '', lesson: '' });
+  const [now, setNow] = useState(0);
+  const ratingLock = useRef(false);
+  useEffect(() => setTab(view), [view]);
+  useEffect(() => { setNow(Date.now()); const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, []);
+  const all = useMemo(() => [...s.customCards, ...ai.cards], [s.customCards, ai.cards]);
+  const decks = useMemo(() => [...new Set([...(tree ?? []).map(m => englishSheetLabel(m.name)), ...all.map(c => englishSheetLabel(c.topic))])], [tree, all]);
+  const selected = all.filter(c => deck === 'All Decks' || englishSheetLabel(c.topic) === deck);
+  const due = selected.filter(c => (s.cards[c.id]?.due ?? 0) <= now && (tab !== 'new' || !s.cards[c.id]));
+  const card = due.find(c => c.id === s.flash.cardId) ?? due[0];
+  const flipped = Boolean(card && s.flash.cardId === card.id && s.flash.flipped);
+  const stats = { due: selected.filter(c => (s.cards[c.id]?.due ?? 0) <= now).length, new: selected.filter(c => !s.cards[c.id]).length, mastered: selected.filter(c => (s.cards[c.id]?.box ?? 0) >= 4).length };
+  const facultyModule = tree?.find(m => m.id === moduleId);
+  const lectures = facultyModule?.units.flatMap(u => u.lessons.filter(l => l.files.length).map(l => ({ ...l, unit: u.name }))) ?? [];
+  const lecture = lectures.find(l => l.id === lectureId);
+  const resetSession = () => setSession({ ratings: [], subject: '', lesson: '' });
+  const changeDeck = (name: string) => { setDeck(name); resetSession(); update(st => ({ ...st, flash: { ...st.flash, cardId: null, flipped: false } })); };
+  const changeTab = (next: typeof tab) => { setTab(next); setFocus(false); resetSession(); };
+  const flip = useCallback(() => { if (card) update(st => ({ ...st, flash: { ...st.flash, cardId: card.id, flipped: !flipped } })); }, [card, flipped]);
+  const rate = useCallback(async (rating: KapsuleRating) => {
+    if (!card || !flipped || ratingLock.current) return;
+    ratingLock.current = true;
+    setSaving(true);
+    const time = Date.now();
+    const next = due.find(c => c.id !== card.id);
+    update(st => ({ ...st, cards: { ...st.cards, [card.id]: scheduleKapsule(rating, st.cards[card.id], time) }, reviewHistory: [{ id: crypto.randomUUID(), cardId: card.id, topic: card.topic, rating, t: time }, ...st.reviewHistory].slice(0, 2000), flash: { ...st.flash, cardId: next?.id ?? null, flipped: false, reviewed: st.flash.reviewed + 1 } }));
+    setSession(prev => ({ ratings: [...prev.ratings, rating], subject: card.topic, lesson: card.source ?? '' }));
+    setNow(time);
+    if (!next) log('Finished today’s Kapsule queue');
+    try { await flushStudentData(); } catch (e) { toast.error(e instanceof Error ? e.message : 'Your review could not be saved.'); }
+    finally { ratingLock.current = false; setSaving(false); }
+  }, [card, flipped, due]);
+  useEffect(() => {
+    if (manual || aiOpen || (tab !== 'cards' && tab !== 'new')) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target;
+      if (target instanceof HTMLElement && (target.closest('input,textarea,select,button,[contenteditable="true"],[role="dialog"]'))) return;
+      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      if (e.key === 'Escape') { setFocus(false); return; }
+      if (card && (e.code === 'Space' || e.key === 'Enter')) { e.preventDefault(); flip(); }
+      const rating = kapsuleRatings[Number(e.key) - 1];
+      if (rating && flipped && /^[1-4]$/.test(e.key)) { e.preventDefault(); void rate(rating); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [manual, aiOpen, tab, card, flipped, flip, rate]);
+  const saveManual = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!front.trim() || !back.trim() || !deckName.trim() || !signedIn) return;
+    setSaving(true);
+    addCard(front.trim(), back.trim(), '', deckName.trim());
+    changeDeck(englishSheetLabel(deckName.trim())); setTab('cards'); setNow(Date.now());
+    setFront(''); setBack(''); setManual(false); resetSession();
+    try { await flushStudentData(); toast.success('Kapsule saved to your deck'); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Your Kapsule could not be saved.'); }
+    finally { setSaving(false); }
+  };
   const runAi = async () => {
-    const r = resolveScope(tree, mode === "subject" ? { ...emptyScope, s: sc.s } : mode === "unit" ? { ...sc, f: "" } : sc);
-    if (mode !== "subject" && !sc.u) { toast.error("Choose a chapter / unit."); return; }
-    if (mode === "file" && !sc.f) { toast.error("Choose a file."); return; }
-    if (!r.files.length) { toast.error("No course files in this selection yet."); return; }
+    if (!facultyModule || !lecture || !signedIn || busy) return;
+    setError('');
     try {
-      setAiBusy("Reading course files…");
-      const material = await extractMaterial(r.files, mode === "file" ? 1 : 6, (d, n) => setAiBusy(`Reading course files ${d}/${n}…`));
-      if (!material.length) { toast.error("These files have no readable text (they may be scanned or not PDFs)."); return; }
-      setAiBusy("Wisen AI is writing your Kapsules…");
-      const rows = await genCards({ data: { subject: r.subject, scope: r.label, count: mode === "subject" ? 20 : 12, material } });
+      setBusy('Reading lecture material…');
+      const material = await extractMaterial(lecture.files, 6, (done, total) => setBusy(`Reading lecture material ${done}/${total}…`));
+      if (!material.length) throw new Error('This lecture has no readable text. Choose another lecture.');
+      setBusy('Writing your Kapsules…');
+      const rows = await generateCards({ data: { subject: facultyModule.name, scope: lecture.name, count, outputLanguage: 'English', material } });
       await reloadAi();
-      update((st) => ({ ...st, flash: { ...st.flash, source: "ai", cardId: rows[0] ? `aic-${rows[0].id}` : null, flipped: false } }));
-      log(`Wisen AI generated ${rows.length} Kapsules · ${r.label}`);
-      toast(`${rows.length} Kapsules generated and saved to your account`);
-    } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setAiBusy(null); }
+      changeDeck(englishSheetLabel(facultyModule.name)); setTab('cards'); setNow(Date.now());
+      update(st => ({ ...st, flash: { ...st.flash, source: 'all', cardId: rows[0] ? `aic-${rows[0].id}` : null, flipped: false } }));
+      log(`Generated ${rows.length} Kapsules · ${englishSheetLabel(lecture.name)}`);
+      setAiOpen(false); toast.success(`${rows.length} Kapsules saved — ready to study`);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Generation failed.'); }
+    finally { setBusy(''); }
   };
-  const sourceDeck = f.source === "ai" ? ai.cards : f.source === "doc" ? all.filter((c) => c.source === doc.title || (doc.sample && !c.source && seedCards.includes(c))) : f.source === "saved" ? all.filter((c) => s.savedCards.includes(c.id)) : all;
-  const deck = sourceDeck.filter(c => (topic === "All" || c.topic === topic) && (view !== "new" || !s.cards[c.id]));
-  const now = Date.now();
-  const due = deck.filter((c) => (s.cards[c.id]?.due ?? 0) <= now);
-  const card = due.find((c) => c.id === f.cardId) ?? due[0];
-  const flipped = f.flipped && card?.id === f.cardId;
-  const counts = { New: deck.filter((c) => !s.cards[c.id]).length, Learning: deck.filter((c) => s.cards[c.id]?.status === "learning").length, Review: deck.filter((c) => s.cards[c.id]?.status === "review").length };
-  const saved = card ? s.savedCards.includes(card.id) : false;
+  const goPractice = () => { void navigate({ to: '/app', search: { view: 'qbank', subject: session.subject || 'All', lesson: session.lesson || 'All' } }); };
+  const retention = kapsuleRetention(session.ratings);
+  const nextDue = selected.map(c => s.cards[c.id]?.due).filter((t): t is number => typeof t === 'number' && t > now).sort((a, b) => a - b)[0];
 
-  const rate = async (r: (typeof ratings)[number]) => {
-    if (!card) return;
-    const next = due.filter((c) => c.id !== card.id)[0];
-    const box = r.l === "Again" ? 1 : r.l === "Hard" ? Math.max(1, (s.cards[card.id]?.box ?? 1) - 1) : Math.min(5, (s.cards[card.id]?.box ?? 0) + (r.l === "Easy" ? 2 : 1));
-    const interval = r.l === "Again" ? 60e3 : r.l === "Hard" ? 6 * 60e3 : 864e5 * ([0, 1, 2, 4, 8, 16][box] ?? 1);
-    update((st) => ({ ...st, cards: { ...st.cards, [card.id]: { due: Date.now() + interval, status: r.st, box } }, reviewHistory: [{ id: crypto.randomUUID(), cardId: card.id, topic: card.topic, rating: r.l, t: Date.now() }, ...st.reviewHistory].slice(0, 2000), flash: { ...st.flash, cardId: next?.id ?? null, flipped: false, reviewed: st.flash.reviewed + 1 } }));
-    if (due.length === 1) log("Finished today's Kapsule queue");
-    try { await flushStudentData(); } catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); }
-  };
-
-  const generate = (d: Doc) => {
-    const made = cardsFrom(d);
-    if (!made.length) { toast.error("Not enough readable text to build Kapsules."); return; }
-    update((st) => ({ ...st, customCards: [...st.customCards, ...made], flash: { ...st.flash, source: "doc", cardId: made[0]?.id ?? null, flipped: false } }));
-    log(`Generated ${made.length} Kapsules from ${d.title}`);
-    toast(`${made.length} Kapsules generated from “${d.title}”`);
-  };
-
-  const onFile = async (file?: File) => {
-    if (!file) return;
-    const r = await uploadPdf(file, doc.subject, setBusy);
-    if (fileRef.current) fileRef.current.value = "";
-    if (r.error) { toast.error(r.error); return; }
-    generate(getDoc().doc);
-  };
-
-  return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><select aria-label="Kapsule topic" className="study-input" value={topic} onChange={e=>setTopic(e.target.value)}><option>All</option>{[...new Set(all.map(c=>c.topic))].map(t=><option key={t}>{t}</option>)}</select><Button variant="outline" onClick={()=>setManual(!manual)}>Create Kapsule</Button></div>
-      {manual && <form className="mb-5 space-y-3 border-b border-border pb-5" onSubmit={e=>{e.preventDefault();addCard(front.trim(),back.trim(),"",deckName.trim() || "My Deck");setManual(false);setFront("");setBack("");void flushStudentData().catch(()=>toast.error("Please try saving again."));toast("Kapsule created");}}><input required aria-label="Deck name" placeholder="Deck name" value={deckName} onChange={e=>setDeckName(e.target.value)} className="study-input w-full"/><textarea required aria-label="Kapsule question" placeholder="Question" value={front} onChange={e=>setFront(e.target.value)} className="study-input w-full"/><textarea required aria-label="Kapsule answer" placeholder="Answer" value={back} onChange={e=>setBack(e.target.value)} className="study-input w-full"/><Button type="submit" disabled={!front.trim() || !back.trim()}>Save Kapsule</Button></form>}
-      {view === "reviews" ? <div><h2 className="mb-4 font-bold">Review History</h2>{s.reviewHistory.length ? s.reviewHistory.map(r=><div key={r.id} className="flex justify-between gap-4 border-b border-border py-3 text-sm"><span>{r.topic}<span className="block text-xs text-muted-foreground">{new Date(r.t).toLocaleString()}</span></span><span className="text-primary">{r.rating}</span></div>) : <p className="text-sm text-muted-foreground">No reviews yet</p>}</div> : view === "decks" ? <div className="grid gap-4 sm:grid-cols-2">{[...new Set(all.map(c=>c.topic))].map(t=><div className="dashboard-card" key={t}><h2 className="font-bold">{t}</h2><p className="text-sm text-muted-foreground">{all.filter(c=>c.topic===t).length} Kapsules · {all.filter(c=>c.topic===t && (s.cards[c.id]?.due??0)<=now).length} due</p><Button onClick={()=>{setTopic(t);window.dispatchEvent(new CustomEvent('wisen-review-deck'));}}>Review deck</Button></div>)}{!all.length && <p className="text-sm text-muted-foreground">No decks yet</p>}</div> : <>
-
-      {view === "new" && <div className="mb-4 space-y-3 rounded-xl border border-primary/30 bg-card p-4">
-        <p className="flex items-center gap-2 text-sm font-semibold"><Wand2 className="size-4 text-primary" /> Generate Kapsules with Wisen AI</p>
-        {!signedIn ? <p className="text-sm text-muted-foreground">Sign in to generate Kapsules from your faculty courses.</p> : <>
-          <div className="inline-flex gap-1 rounded-lg border border-border p-1 text-xs">
-            {([["subject", "Entire subject"], ["unit", "Chapter / unit"], ["file", "Individual file"]] as const).map(([k, l]) => <button key={k} onClick={() => setMode(k)} className={`rounded-md px-2.5 py-1 ${mode === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>{l}</button>)}
-          </div>
-          <ScopePicker tree={tree} value={mode === "subject" ? { ...emptyScope, s: sc.s } : sc} onChange={setSc} fileLevel={mode === "file"} lessonLevel={mode !== "subject"} />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" disabled={!sc.s || !!aiBusy} onClick={() => void runAi()}>{aiBusy ? <Loader2 className="animate-spin" /> : <Wand2 />} Generate Kapsules</Button>
-            {aiBusy && <span className="text-xs text-muted-foreground">{aiBusy}</span>}
-          </div>
-        </>}
-      </div>}
-      {view === "new" && <div className="mb-4 rounded-xl border border-border bg-card p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <select aria-label="Deck" value={f.source} onChange={(e) => setF({ source: e.target.value as FlashSession["source"], cardId: null, flipped: false })} className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary">
-            <option value="all">All cards</option>
-            <option value="doc">Active document</option>
-            <option value="ai">Wisen AI cards</option>
-            <option value="saved">Saved cards</option>
-          </select>
-          <p className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-xs text-muted-foreground"><FileText className="size-3.5 shrink-0 text-primary" /><span className="truncate">{doc.title}</span></p>
-          <Button size="sm" variant="outline" onClick={() => generate(doc)}><Wand2 /> Generate from material</Button>
-          <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
-          <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => fileRef.current?.click()}>{busy ? <Loader2 className="animate-spin" /> : <FileUp />} Upload new</Button>
-        </div>
-        {busy && <p className="mt-2 font-mono text-xs text-muted-foreground">{busy.name} · {["Parsing pages…", "Indexing medical content", "Ready to study"][busy.i]} {busy.total ? `${busy.done}/${busy.total}` : ""}</p>}
-      </div>}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-lg font-semibold">{due.length} cards due today <span className="text-sm font-normal text-muted-foreground">· {f.reviewed} reviewed</span></p>
-        <div className="flex gap-2 font-mono text-xs">
-          {Object.entries(counts).map(([k, v]) => <span key={k} className="rounded-md border border-border px-2 py-1">{k} <b className="text-primary">{v}</b></span>)}
-        </div>
-      </div>
-      {card ? (
-        <>
-          <div className="relative">
-            <button onClick={() => setF({ cardId: card.id, flipped: !flipped })} className="group block h-96 w-full [perspective:1200px]" aria-label="Flip card">
-              <div className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] ${flipped ? "[transform:rotateY(180deg)]" : ""}`}>
-                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg border border-border bg-card p-8 text-center [backface-visibility:hidden]">
-                  <span className="mb-4 font-mono text-[11px] uppercase text-primary">{card.topic}</span>
-                  <p className="font-semibold text-xl"><Inline text={card.front} /></p>
-                  <span className="mt-6 text-xs text-muted-foreground">Tap to reveal answer</span>
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg border border-primary/40 bg-card p-8 text-center [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                  <p className="text-lg"><Inline text={card.back} /></p>
-                  <p className="mt-5 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">High-yield tip: <Inline text={card.tip} /></p>
-                </div>
-              </div>
-            </button>
-            <button onClick={() => { update((st) => ({ ...st, savedCards: toggle(st.savedCards, card.id) })); toast(saved ? "Card removed from saved" : "Card saved"); }} className="absolute right-3 top-3 rounded-md p-2 hover:bg-accent" aria-label={saved ? "Unsave card" : "Save card"}>
-              {saved ? <BookmarkCheck className="size-4 text-primary" /> : <Bookmark className="size-4" />}
-            </button>
-          </div>
-          <div className="mt-5 grid grid-cols-4 gap-2">
-            {ratings.map((r) => (
-              <Button key={r.l} variant={r.l === "Good" ? "default" : "outline"} disabled={!flipped} onClick={() => rate(r)} className="h-auto flex-col py-2">
-                <span>{r.l}</span><span className="font-mono text-[10px] opacity-70">{r.t}</span>
-              </Button>
-            ))}
-          </div>
-        </>
-      ) : (
-        <div className="rounded-lg border border-border bg-card p-10 text-center">
-          <p className="font-semibold text-xl">{deck.length ? "All caught up." : "No cards in this deck yet."}</p>
-          <p className="mt-2 text-sm text-muted-foreground">{deck.length ? "Come back later for your next reviews." : "Generate cards from your active document or upload a new PDF."}</p>
-          {deck.length > 0 && <Button variant="outline" className="mt-5" onClick={() => update((st) => ({ ...st, cards: {}, flash: { ...st.flash, cardId: null, flipped: false, reviewed: 0 } }))}><RotateCcw /> Reset deck</Button>}
-        </div>
-      )}
+  return <main className={`kapsules-hub ${focus ? 'kh-focused' : ''}`}>
+    {!focus && <>
+      <header className="kh-header"><div><span className="kh-eyebrow">ACTIVE RECALL · SPACED REPETITION</span><h1>Kapsules</h1><div className="kh-stats" aria-label="Deck statistics"><span><strong>{stats.due}</strong> Due Today</span><i>·</i><span><strong>{stats.new}</strong> New</span><i>·</i><span><strong>{stats.mastered}</strong> Mastered</span></div></div><div className="kh-actions"><Button variant="outline" onClick={() => { setManual(!manual); setDeckName(deck === 'All Decks' ? '' : deck); }}><Plus/>Quick New Card</Button><Button onClick={() => { setError(''); setAiOpen(true); }}><Sparkles/>Generate with AI</Button></div></header>
+      <nav className="kh-deck-filters" aria-label="Filter decks">{['All Decks', ...decks].map(name => <Button key={name} variant={deck === name ? 'default' : 'outline'} aria-pressed={deck === name} onClick={() => changeDeck(name)}>{name}</Button>)}</nav>
+      {manual && <section className="kh-manual"><div className="kh-section-heading"><h2>Quick New Card</h2><Button variant="ghost" size="icon" aria-label="Close new card form" onClick={() => setManual(false)}><X/></Button></div>{!signedIn ? <Button asChild><Link to="/login">Sign in to save Kapsules</Link></Button> : <form onSubmit={e => void saveManual(e)}><label>Question<textarea autoFocus required value={front} onChange={e => setFront(e.target.value)} placeholder="What do you want to remember?"/></label><label>Answer<textarea required value={back} onChange={e => setBack(e.target.value)} placeholder="A concise answer"/></label><label className="kh-manual-deck">Deck<input required list="kapsule-deck-names" value={deckName} onChange={e => setDeckName(e.target.value)} placeholder="Choose or name a deck"/><datalist id="kapsule-deck-names">{decks.map(d => <option key={d} value={d}/>)}</datalist></label><Button type="submit" disabled={saving || !front.trim() || !back.trim() || !deckName.trim()}>{saving ? <Loader2 className="animate-spin"/> : <Plus/>}Save Kapsule</Button></form>}</section>}
+      <nav className="kh-tabs" aria-label="Kapsule views">{([['cards', 'Due Today', Layers], ['new', 'New', Plus], ['decks', 'Decks', Layers], ['reviews', 'Review History', History]] as const).map(([key, label, Icon]) => <Button key={key} variant="ghost" aria-pressed={tab === key} className={tab === key ? 'is-active' : ''} onClick={() => changeTab(key)}><Icon/>{label}</Button>)}</nav>
     </>}
-    </div>
-  );
+    {tab === 'decks' ? <section className="kh-deck-grid">{decks.map(name => { const cards = all.filter(c => englishSheetLabel(c.topic) === name); return <article className="kh-deck" key={name}><span className="kh-deck-icon"><Layers/></span><h2>{name}</h2><p>{cards.length} Kapsules <span>· {cards.filter(c => (s.cards[c.id]?.due ?? 0) <= now).length} due</span></p><Button variant="outline" disabled={!cards.length} onClick={() => { changeDeck(name); setTab('cards'); }}>Review deck<ArrowRight/></Button></article>; })}{!decks.length && <p className="kh-empty-text">No decks yet.</p>}</section>
+    : tab === 'reviews' ? <section className="kh-history"><h2>Review History</h2>{s.reviewHistory.length ? [...s.reviewHistory].sort((a, b) => b.t - a.t).filter(r => deck === 'All Decks' || englishSheetLabel(r.topic) === deck).map(r => <div className="kh-history-row" key={r.id}><div><strong>{englishSheetLabel(r.topic)}</strong><span>{all.find(c => c.id === r.cardId)?.front ?? 'Kapsule review'}</span><time>{new Date(r.t).toLocaleString('en-GB')}</time></div><span className={`kh-history-rating kh-${r.rating.toLowerCase()}`}>{r.rating}</span></div>) : <p className="kh-empty-text">No reviews yet.</p>}</section>
+    : <section className="kh-study" aria-label="Active recall session">
+      <div className="kh-session-bar"><span>{deck === 'All Decks' ? 'Daily review' : deck} <i>·</i> {session.ratings.length} reviewed <i>·</i> {due.length} remaining</span><Button variant="ghost" size="icon" aria-label={focus ? 'Exit focus mode' : 'Enter focus mode'} title={focus ? 'Exit focus mode' : 'Focus mode'} onClick={() => setFocus(!focus)}>{focus ? <Minimize2/> : <Maximize2/>}</Button></div>
+      {!tree || !now ? <div className="kh-empty"><Loader2 className="animate-spin"/><h2>Loading your Kapsules…</h2></div> : card ? <>
+        <div className="kh-card-wrap"><Button variant="ghost" aria-label="Flip Kapsule" aria-pressed={flipped} onClick={flip} className="kh-flip"><div className={`kh-flip-inner ${flipped ? 'is-flipped' : ''}`}><div className="kh-card-face" aria-hidden={flipped}><span className="kh-eyebrow">{englishSheetLabel(card.topic)} · QUESTION</span><div className="kh-card-copy"><Inline text={card.front}/></div><span className="kh-card-foot">{card.source ? englishSheetLabel(card.source) : 'My Kapsules'}</span></div><div className="kh-card-face kh-card-back" aria-hidden={!flipped}><span className="kh-eyebrow">ANSWER</span><div className="kh-card-copy"><Inline text={card.back}/></div>{card.tip && <div className="kh-tip"><Inline text={card.tip}/></div>}</div></div></Button><Button variant="ghost" size="icon" className="kh-bookmark" aria-label={s.savedCards.includes(card.id) ? 'Unsave Kapsule' : 'Save Kapsule'} onClick={() => { update(st => ({ ...st, savedCards: toggle(st.savedCards, card.id) })); void flushStudentData().catch(e => toast.error(e instanceof Error ? e.message : 'Could not save bookmark.')); }}>{s.savedCards.includes(card.id) ? <BookmarkCheck/> : <Bookmark/>}</Button></div>
+        <div className="kh-ratings">{kapsuleRatings.map(r => { const dueAt = scheduleKapsule(r, s.cards[card.id], now).due - now; const label = r === 'Again' ? '<1m' : r === 'Hard' ? '6m' : `${Math.round(dueAt / 86400000)}d`; return <Button key={r} variant="outline" className={`kh-rating kh-${r.toLowerCase()}`} disabled={!flipped || saving} onClick={() => void rate(r)}><strong>{r}</strong><span>{label}</span></Button>; })}</div>
+      </> : <div className="kh-empty">{session.ratings.length ? <><span className="kh-complete-icon"><Check/></span><span className="kh-eyebrow">SESSION COMPLETE</span><h2>Good work. Let it settle.</h2><div className="kh-summary-stats"><div><strong>{session.ratings.length}</strong><span>Kapsules reviewed</span></div><div><strong>{retention}%</strong><span>Retention this session</span></div></div><p>Keep the momentum with related EMD practice.</p><Button onClick={goPractice}>Practice QBank<ArrowRight/></Button></> : <><span className="kh-complete-icon"><Layers/></span><h2>{all.length && selected.length ? tab === 'new' ? 'No new Kapsules in this deck.' : 'You’re all caught up.' : 'Your next study session starts here.'}</h2>{!signedIn ? <Button asChild><Link to="/login">Sign in to open your decks<ArrowRight/></Link></Button> : !selected.length ? <div className="kh-actions"><Button variant="outline" onClick={() => { setFocus(false); setManual(true); }}><Plus/>Quick New Card</Button><Button onClick={() => { setFocus(false); setError(''); setAiOpen(true); }}><Sparkles/>Generate with AI</Button></div> : <Button variant="outline" onClick={() => changeTab('decks')}>View decks<ArrowRight/></Button>}</>}{nextDue && <p className="kh-next-review">Next review: {new Date(nextDue).toLocaleString('en-GB')}</p>}</div>}
+    </section>}
+    <Dialog open={aiOpen} onOpenChange={open => { if (!busy) setAiOpen(open); }}><DialogContent className="kh-ai-dialog reference-theme study-theme" onEscapeKeyDown={e => { if (busy) e.preventDefault(); }} onPointerDownOutside={e => { if (busy) e.preventDefault(); }}><DialogHeader><DialogTitle>Generate Kapsules</DialogTitle><DialogDescription>{!signedIn ? 'Sign in to use your faculty lectures.' : 'Faculty lecture → your study deck'}</DialogDescription></DialogHeader>{!signedIn ? <Button asChild><Link to="/login">Sign in</Link></Button> : <form onSubmit={e => { e.preventDefault(); void runAi(); }}><label>Faculty Module<select aria-label="Faculty Module" required value={moduleId} disabled={!!busy || !tree} onChange={e => { setModuleId(e.target.value); setLectureId(''); }}><option value="">{tree ? 'Select a module' : 'Loading modules…'}</option>{tree?.map(m => <option key={m.id} value={m.id}>{englishSheetLabel(m.name)}</option>)}</select></label><label>Lecture<select aria-label="Lecture" required value={lectureId} disabled={!!busy || !moduleId} onChange={e => setLectureId(e.target.value)}><option value="">{moduleId && !lectures.length ? 'No lecture files available' : 'Select a lecture'}</option>{lectures.map(l => <option key={l.id} value={l.id}>{englishSheetLabel(l.name)}</option>)}</select></label><fieldset><legend>Card count</legend><div className="kh-counts">{[8, 12, 20].map(n => <Button key={n} type="button" disabled={!!busy} aria-pressed={count === n} variant={count === n ? 'default' : 'outline'} onClick={() => setCount(n)}>{n}</Button>)}</div></fieldset>{error && <p className="kh-error" role="alert">{error}</p>}{busy && <p role="status" className="kh-generation-status"><Loader2 className="animate-spin"/>{busy}</p>}<Button className="kh-generate" type="submit" disabled={!lecture || !!busy}>{busy ? <Loader2 className="animate-spin"/> : <Sparkles/>}{busy ? 'Generating…' : 'Generate'}</Button></form>}</DialogContent></Dialog>
+  </main>;
 }

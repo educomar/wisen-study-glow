@@ -54,11 +54,11 @@ Return JSON only: {"questions":[{"stem":"...","options":["..."],"answers":[0-bas
 
 export const generateFlashcards = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ subject: z.string().max(120), scope: z.string().max(300), count: z.number().int().min(4).max(30), material }).parse(d))
+  .inputValidator((d: unknown) => z.object({ subject: z.string().max(120), scope: z.string().max(300), count: z.number().int().min(4).max(30), outputLanguage: z.literal('English').optional(), material }).parse(d))
   .handler(async ({ data, context }) => {
     const per = Math.max(2000, Math.floor(90000 / data.material.length));
     const mat = data.material.map((m) => `### File: ${m.name}\n${m.text.slice(0, per)}`).join("\n\n");
-    const system = `You are Wisen AI, making active-recall Kapsules (active-recall cards) for 1st-year medical students (Faculty of Medicine, Sétif 1). ${STRICT} Cover the most important concepts, definitions, mechanisms, numbers and classic exam traps. Fronts are short questions or cloze prompts; backs are concise (1–3 lines). ${LANG} ${NOTATION}
+    const system = `You are Wisen AI, making active-recall Kapsules (active-recall cards) for 1st-year medical students (Faculty of Medicine, Sétif 1). ${STRICT} Cover the most important concepts, definitions, mechanisms, numbers and classic exam traps. Fronts are short questions or cloze prompts; backs are concise (1–3 lines). ${data.outputLanguage === 'English' ? 'Write every front, back and tip in English, even when the source material is in French or another language.' : LANG} ${NOTATION}
 Return JSON only: {"cards":[{"front":"...","back":"...","tip":"short high-yield tip or source (file/page)"}]}`;
     const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: `Make ${data.count} Kapsules (active-recall cards) for: ${data.scope}\n\nMATERIAL:\n${mat}` }], { json: true });
     if (!r.ok) throw new Error(r.error === "credits" ? "Wisen AI is out of credits right now." : r.error === "busy" ? "Wisen AI is busy — try again in a minute." : "Wisen AI couldn't generate Kapsules. Try again.");
