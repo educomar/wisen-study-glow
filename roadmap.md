@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Study page scale and branding — October 8
-- [ ] Expand study containers, cards, typography and controls while reducing excess margins.
-- [ ] Replace the text brand with the supplied theme-aware logo and add subtle flowing background motion.
-- [ ] Verify layouts, logo switching and animation across screen sizes.
+- [x] Expand study containers, cards, typography and controls while reducing excess margins.
+- [x] Replace the text brand with the supplied theme-aware logo and add subtle flowing background motion.
+- [x] Verify layouts at 390, 854, 1280 and 1920px; confirm logo loading, dark mode, live motion, reduced-motion behavior and no overflow or browser errors.
 
 ## Complete reference platform — October 8
 - [x] Remove the old /home dashboard and redirect existing links to the new dashboard.
