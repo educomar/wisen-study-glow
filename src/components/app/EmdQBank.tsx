@@ -336,7 +336,7 @@ export function EmdQBank() {
   if (realActive && e.phase === "run") return <RealExam qs={examQs} />;
   return (
     <main className="reference-page emd-page">
-      {realActive && e.phase === "done" ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : (
+      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : (
         <>
           <header className="tool-page-heading"><span className="tool-kicker">QBANK · FACULTY OF MEDICINE SÉTIF 1</span><h1>Train for the <em>EMD.</em></h1><p>Practise real past exams, or sit a full UFAS1 simulation.</p></header>
           <div className="emd-choices">
