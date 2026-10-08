@@ -11,7 +11,7 @@ import { generateQuestions, transcribePastEmd } from "@/lib/ai/study.functions";
 import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
 import { useCurriculum, type CurFile } from "./Curriculum";
 import type { Question } from "./data";
-import { emdYear, isPicked, scoreOn20, toggleOption } from "./emd-exam";
+import { emdYear, isPicked, scoreOn20, scoreWith, SCORING, toggleOption, type Scoring } from "./emd-exam";
 import { Inline, RichText } from "./RichText";
 import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
 import { addCard, getState, log, recordQuestion, update, useAppState, type ExamSession } from "./store";
@@ -174,8 +174,9 @@ function submitExam() {
   const qs = e.qids.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
   qs.forEach((q, k) => recordQuestion(q, e.answers[k] ?? null));
   const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
+  const off = scoreWith(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) })), e.scoring ?? "aon");
   const used = Math.min(e.minutes * 60, Math.round((Date.now() - (e.endsAt - e.minutes * 60e3)) / 1000));
-  log(`EMD Simulator · ${e.subject} — ${r.on20}/20`);
+  log(`EMD Simulator · ${e.subject} — ${off}/20`);
   update((s) => ({ ...s, exam: { ...s.exam, phase: "done", usedSec: used }, examHistory: [{ t: Date.now(), subject: e.subject, score: r.correct, total: qs.length }, ...s.examHistory].slice(0, 20) }));
 }
 let poolRef: Question[] = [];
@@ -187,6 +188,7 @@ function Simulator({ onBack }: { onBack: () => void }) {
   const [mode, setMode] = useState<"practice" | "real">("practice");
   const [count, setCount] = useState(20);
   const [minutes, setMinutes] = useState(60);
+  const [scoring, setScoring] = useState<Scoring>("aon");
   const [busy, setBusy] = useState<string | null>(null);
   const [practiceQs, setPracticeQs] = useState<{ title: string; qs: Question[] } | null>(null);
   const gen = useServerFn(generateQuestions);
@@ -204,7 +206,7 @@ function Simulator({ onBack }: { onBack: () => void }) {
       await reloadAi();
       const ids = rows.map((x) => `ai-${x.id}`);
       if (mode === "real") {
-        setE({ subject: r.subject, phase: "run", qids: ids, answers: ids.map(() => null), flags: ids.map(() => false), i: 0, minutes, count, endsAt: Date.now() + minutes * 60e3, usedSec: 0 });
+        setE({ subject: r.subject, phase: "run", qids: ids, answers: ids.map(() => null), flags: ids.map(() => false), i: 0, minutes, count, endsAt: Date.now() + minutes * 60e3, usedSec: 0, scoring });
       } else {
         const set = new Set(ids);
         setPracticeQs({ title: `Practice · ${r.label}`, qs: poolRef.filter((q) => set.has(q.id)) });
@@ -228,6 +230,9 @@ function Simulator({ onBack }: { onBack: () => void }) {
           <span>Questions</span><div className="emd-pills">{[10, 20, 30].map((n) => <button key={n} type="button" className={n === count ? "is-on" : ""} onClick={() => { setCount(n); setMinutes(n * 3); }}>{n}</button>)}</div>
           {mode === "real" && <><span>Duration</span><select aria-label="Duration" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>{[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m} min</option>)}</select></>}
         </div>
+        {mode === "real" && <fieldset className="emd-card"><legend className="font-semibold">Choose your scoring system</legend>
+          {SCORING.map((o) => <label key={o.key} className="flex items-start gap-2 py-1 cursor-pointer"><input type="radio" name="scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} className="mt-1" /><span><strong>{o.label}</strong><br /><small className="text-muted-foreground">{o.hint}</small></span></label>)}
+        </fieldset>}
         <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {busy}</> : mode === "real" ? "Generate & start Real Exam" : "Generate & start practice"}</Button>
       </div>
     </section>
@@ -294,13 +299,21 @@ function RealExam({ qs }: { qs: Question[] }) {
 function Debrief({ qs }: { qs: Question[] }) {
   const e = useAppState().exam;
   const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
+  const graded = qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) }));
+  const sel = e.scoring ?? "aon";
+  const all = SCORING.map((o) => ({ ...o, v: scoreWith(graded, o.key) }));
+  const official = all.find((o) => o.key === sel)!;
   const mods: Record<string, { c: number; n: number }> = {};
   qs.forEach((q, k) => { const key = q.topic && q.topic !== q.subject ? `${q.subject} · ${q.topic}` : q.subject; const m = (mods[key] ??= { c: 0, n: 0 }); m.n++; if (e.answers[k] === q.answer) m.c++; });
   const wrong = qs.filter((q, k) => e.answers[k] !== q.answer);
   return (
     <section className="emd-section">
       <div className="emd-score-grid">
-        {[["Score", `${r.on20} / 20`], ["Accuracy", `${r.accuracy}%`], ["Correct", `${r.correct} / ${r.total}`], ["Time used", fmt(e.usedSec)]].map(([k, v]) => <div key={k}><span>{k}</span><strong>{v}</strong></div>)}
+        {[["Score", `${official.v} / 20`], ["Accuracy", `${r.accuracy}%`], ["Correct", `${r.correct} / ${r.total}`], ["Time used", fmt(e.usedSec)]].map(([k, v]) => <div key={k}><span>{k}</span><strong>{v}</strong></div>)}
+      </div>
+      <div className="emd-card"><h3>Your Results</h3>
+        {all.map((o) => <div key={o.key} className={`flex justify-between rounded-md px-3 py-2 ${o.key === sel ? "bg-primary/10 font-semibold" : ""}`}><span>{o.label}{o.key === sel && " · official"}</span><b>{o.v} / 20</b></div>)}
+        <p className="mt-2 text-sm">Your selected scoring system: <strong>{official.label}</strong> — your score: <strong>{official.v} / 20</strong></p>
       </div>
       <div className="emd-card"><h3>Breakdown by module</h3>{Object.entries(mods).map(([k, v]) => (
         <div key={k} className="emd-bar"><div><span>{k}</span><b>{v.c}/{v.n}</b></div><i><em style={{ width: `${(v.c / v.n) * 100}%` }} /></i></div>

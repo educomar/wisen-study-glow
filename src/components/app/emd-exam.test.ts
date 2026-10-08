@@ -17,3 +17,18 @@ test("multi-answer toggles as bitmask, single replaces", () => {
   assert.equal(toggleOption(5, 0, true), 4);
   assert.equal(toggleOption(1, 3, false), 3);
 });
+import { scoreWith, questionCredit } from "./emd-exam";
+const ABC = 0b111;
+test("all-or-nothing: A+B 0, A+B+C full, A+B+C+D 0", () => {
+  assert.equal(questionCredit({ answer: ABC, picked: 0b011, multi: true }, "aon"), 0);
+  assert.equal(questionCredit({ answer: ABC, picked: ABC, multi: true }, "aon"), 1);
+  assert.equal(questionCredit({ answer: ABC, picked: 0b1111, multi: true }, "aon"), 0);
+});
+test("partial: A+B 2/3, any wrong 0", () => {
+  assert.equal(Math.floor(questionCredit({ answer: ABC, picked: 0b011, multi: true }, "partial") * 100), 66);
+  assert.equal(questionCredit({ answer: ABC, picked: 0b1111, multi: true }, "partial"), 0);
+});
+test("positive partial: A+B+D 1/3", () => {
+  assert.equal(Math.floor(questionCredit({ answer: ABC, picked: 0b1011, multi: true }, "positive") * 100), 33);
+  assert.equal(scoreWith([{ answer: ABC, picked: ABC, multi: true }, { answer: ABC, picked: null, multi: true }], "positive"), 10);
+});
