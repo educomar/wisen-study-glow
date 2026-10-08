@@ -170,7 +170,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
 function submitExam() {
   const st = getState(); const e = st.exam;
   if (e.phase !== "run") return;
-  const pool = useAiPool();
+  const pool = getPool();
   const qs = e.qids.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
   qs.forEach((q, k) => recordQuestion(q, e.answers[k] ?? null));
   const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
@@ -179,7 +179,7 @@ function submitExam() {
   update((s) => ({ ...s, exam: { ...s.exam, phase: "done", usedSec: used }, examHistory: [{ t: Date.now(), subject: e.subject, score: r.correct, total: qs.length }, ...s.examHistory].slice(0, 20) }));
 }
 let poolRef: Question[] = [];
-const useAiPool = () => poolRef;
+const getPool = () => poolRef;
 
 function Simulator({ onBack }: { onBack: () => void }) {
   const { tree } = useCurriculum();
