@@ -1,5 +1,10 @@
 # Roadmap
 
+## Dedicated Library — October 8
+- [ ] Add the Library route, navigation, content tabs and live search.
+- [ ] Connect real saved Kapsule decks and Study Sheets to review, reopen, practice and export actions.
+- [ ] Verify data helpers, authenticated content, empty/filter states and responsive light/dark layouts.
+
 ## Active Kapsules Hub — October 8
 - [x] Replace the old configuration/preview layout with real deck counts, filters, manual creation and curriculum AI generation.
 - [x] Add focused live review, keyboard controls, queue summary and preserved decks/history.
