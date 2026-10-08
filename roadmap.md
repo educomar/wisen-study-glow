@@ -1,8 +1,8 @@
 # Roadmap
 
 ## English-only Study Sheets — October 8
-- [ ] Translate sheet labels, suggestions, tags and course selection display without changing shared curriculum records.
-- [ ] Require English generated content from all source languages; test generation and existing study rules.
+- [x] Translate sheet labels, suggestions, tags and course selection display without changing shared curriculum records.
+- [x] Require English generated content from all source languages; twelve tests pass and signed-in generation from French notes produced six English sections and saved successfully with no browser errors.
 
 ## Structured Study Sheets — October 8
 - [x] Rebuild composer and sectioned reader with profile-based topics and faculty material selection.
