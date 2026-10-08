@@ -323,6 +323,7 @@ html { scroll-behavior: smooth; }
 .reference-links a:hover {color:var(--primary);}
 .reference-signin {background:var(--reference-nav-ink);color:var(--background);font-size:12px;box-shadow:none;}
 .reference-menu {display:none;}
+.reference-nav>div>button {color:var(--reference-nav-ink);}
 .reference-background {position:fixed;inset:0;pointer-events:none;background-image:var(--reference-paper-image);background-size:100% 100%;background-position:center top;opacity:0.72;}
 .reference-background::after {content:'';position:absolute;inset:0;background-image:var(--reference-grain-image);background-size:128px 128px;opacity:0.06;mix-blend-mode:multiply;}
 .dark .reference-background {opacity:0.1;}
