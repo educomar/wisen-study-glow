@@ -122,7 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({select:s=>s.location.pathname});
-  const student = ['/app', '/dashboard', '/roadmap', '/sheets', '/flashcards', '/qbank'].includes(pathname);
+  const student = ['/app', '/dashboard', '/roadmap', '/sheets', '/flashcards', '/qbank', '/library'].includes(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>

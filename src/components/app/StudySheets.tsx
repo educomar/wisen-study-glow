@@ -19,7 +19,7 @@ const icons = [BookOpen, Stethoscope, List, Lightbulb, TriangleAlert, Layers];
 const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const savedPrefix = 'WISEN_SHEET_V1\n';
 
-export function StudySheets() {
+export function StudySheets({ initialSheetId }: { initialSheetId?: string | undefined }) {
   const { user, profile } = useSession();
   const { tree } = useCurriculum();
   const state = useAppState();
@@ -31,7 +31,7 @@ export function StudySheets() {
   const [busy, setBusy] = useState(false), [stage, setStage] = useState(''), [prepared, setPrepared] = useState(0), [error, setError] = useState('');
   const [active, setActive] = useState('overview'), [revealed, setRevealed] = useState<number[]>([]), [saving, setSaving] = useState('');
   const [saved, setSaved] = useState(false), [editing, setEditing] = useState(false), [editText, setEditText] = useState('');
-  const fileInput = useRef<HTMLInputElement>(null), stopped = useRef(false);
+  const fileInput = useRef<HTMLInputElement>(null), stopped = useRef(false), openedInitial = useRef('');
   const resolved = resolveScope(tree, scope);
   const suggestions = sheetSuggestions(profile, tree);
   const done = sheetSections.filter(s => sheet?.sections[s.id] !== undefined).length;
@@ -149,6 +149,13 @@ export function StudySheets() {
   const loadSaved = (text: string, title: string) => {
     try { if (text.startsWith(savedPrefix)) { const data = JSON.parse(text.slice(savedPrefix.length)) as StudySheetData; if (!data.sections || !Array.isArray(data.cards)) throw new Error(); setSheet(data); setSaved(true); setMaterial([]); setError(''); } else { setTopic(title); setNotes(text); setSheet(null); } } catch { toast.error('This saved sheet could not be opened.'); }
   };
+  useEffect(() => {
+    if (!initialSheetId || openedInitial.current === initialSheetId) return;
+    const match = state.notes.find(note => note.id === initialSheetId && note.source === 'Study Sheet');
+    if (!match) return;
+    openedInitial.current = initialSheetId;
+    loadSaved(match.text, match.subject);
+  }, [initialSheetId, state.notes]);
   return <main className={`wisen-sheets ${sheet ? 'has-sheet' : ''}`}>
     <input type="file" accept=".pdf,.txt,.md" hidden ref={fileInput} onChange={e => void attach(e.target.files?.[0])} />
     {!sheet ? <>

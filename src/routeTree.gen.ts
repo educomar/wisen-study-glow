@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FlashcardsRouteImport } from './routes/flashcards'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as LibraryRouteImport } from './routes/library'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as QbankRouteImport } from './routes/qbank'
@@ -61,6 +62,11 @@ const FlashcardsRoute = FlashcardsRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibraryRoute = LibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
+  '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/qbank': typeof QbankRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
+  '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/qbank': typeof QbankRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
+  '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/qbank': typeof QbankRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flashcards'
     | '/home'
+    | '/library'
     | '/login'
     | '/onboarding'
     | '/qbank'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flashcards'
     | '/home'
+    | '/library'
     | '/login'
     | '/onboarding'
     | '/qbank'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flashcards'
     | '/home'
+    | '/library'
     | '/login'
     | '/onboarding'
     | '/qbank'
@@ -318,6 +330,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   FlashcardsRoute: typeof FlashcardsRoute
   HomeRoute: typeof HomeRoute
+  LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   QbankRoute: typeof QbankRoute
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library': {
+      id: '/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof LibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -548,6 +568,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   FlashcardsRoute: FlashcardsRoute,
   HomeRoute: HomeRoute,
+  LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   QbankRoute: QbankRoute,

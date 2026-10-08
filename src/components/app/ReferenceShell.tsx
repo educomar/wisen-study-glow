@@ -36,6 +36,7 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
     { label: 'Sheets', path: '/sheets', active: location.pathname === '/sheets' },
     { label: 'Kapsules', path: '/flashcards', active: location.pathname === '/flashcards' },
     { label: 'QBank', path: '/qbank', active: location.pathname === '/qbank' },
+    { label: 'Library', path: '/library', active: location.pathname === '/library' },
   ] as const;
   return <div className="study-theme reference-theme min-h-dvh bg-background text-foreground">
     <header className="reference-header">
@@ -43,7 +44,6 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
         <Link to="/dashboard" className="reference-brand" aria-label="Wisen dashboard"><Logo className="reference-logo"/></Link>
         <nav className={`reference-links ${menu ? 'is-open' : ''}`} aria-label="Study navigation">
           {links.map(item => <Link key={item.label} to={item.path} aria-current={item.active ? 'page' : undefined} onClick={() => setMenu(false)}>{item.label}</Link>)}
-          <Link to="/app" search={{view:'courses'}} aria-current={view==='courses'?'page':undefined} onClick={() => setMenu(false)}>Library</Link>
         </nav>
         <div className="flex items-center gap-1">
           {user && profile ? <Button variant="ghost" size="icon" aria-label="Profile settings" title="Profile settings" onClick={() => setEditing(true)}><UserRound/></Button> : <Button className="reference-signin" asChild><Link to="/login"><LogIn/>Sign in</Link></Button>}
