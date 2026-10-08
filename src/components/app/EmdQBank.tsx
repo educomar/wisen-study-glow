@@ -295,7 +295,7 @@ function Debrief({ qs }: { qs: Question[] }) {
   const e = useAppState().exam;
   const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
   const mods: Record<string, { c: number; n: number }> = {};
-  qs.forEach((q, k) => { const key = `${q.subject} · ${q.topic}`; const m = (mods[key] ??= { c: 0, n: 0 }); m.n++; if (e.answers[k] === q.answer) m.c++; });
+  qs.forEach((q, k) => { const key = q.topic && q.topic !== q.subject ? `${q.subject} · ${q.topic}` : q.subject; const m = (mods[key] ??= { c: 0, n: 0 }); m.n++; if (e.answers[k] === q.answer) m.c++; });
   const wrong = qs.filter((q, k) => e.answers[k] !== q.answer);
   return (
     <section className="emd-section">
