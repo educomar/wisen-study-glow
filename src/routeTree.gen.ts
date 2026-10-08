@@ -13,10 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FlashcardsRouteImport } from './routes/flashcards'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as QbankRouteImport } from './routes/qbank'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RoadmapRouteImport } from './routes/roadmap'
+import { Route as SheetsRouteImport } from './routes/sheets'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as TeamLoginRouteImport } from './routes/team/login'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -49,6 +53,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FlashcardsRoute = FlashcardsRouteImport.update({
+  id: '/flashcards',
+  path: '/flashcards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -64,9 +73,24 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QbankRoute = QbankRouteImport.update({
+  id: '/qbank',
+  path: '/qbank',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoadmapRoute = RoadmapRouteImport.update({
+  id: '/roadmap',
+  path: '/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SheetsRoute = SheetsRouteImport.update({
+  id: '/sheets',
+  path: '/sheets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
@@ -137,10 +161,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/dashboard': typeof DashboardRoute
+  '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/qbank': typeof QbankRoute
   '/register': typeof RegisterRoute
+  '/roadmap': typeof RoadmapRoute
+  '/sheets': typeof SheetsRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
@@ -158,10 +186,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/dashboard': typeof DashboardRoute
+  '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/qbank': typeof QbankRoute
   '/register': typeof RegisterRoute
+  '/roadmap': typeof RoadmapRoute
+  '/sheets': typeof SheetsRoute
   '/team/login': typeof TeamLoginRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
   '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
@@ -180,10 +212,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/app': typeof AppRoute
   '/dashboard': typeof DashboardRoute
+  '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/qbank': typeof QbankRoute
   '/register': typeof RegisterRoute
+  '/roadmap': typeof RoadmapRoute
+  '/sheets': typeof SheetsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
   '/_authenticated/admin/files': typeof AuthenticatedAdminFilesRoute
@@ -203,10 +239,14 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/dashboard'
+    | '/flashcards'
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/qbank'
     | '/register'
+    | '/roadmap'
+    | '/sheets'
     | '/admin'
     | '/team/login'
     | '/admin/files'
@@ -224,10 +264,14 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/dashboard'
+    | '/flashcards'
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/qbank'
     | '/register'
+    | '/roadmap'
+    | '/sheets'
     | '/team/login'
     | '/admin/files'
     | '/admin/flashcards'
@@ -245,10 +289,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/app'
     | '/dashboard'
+    | '/flashcards'
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/qbank'
     | '/register'
+    | '/roadmap'
+    | '/sheets'
     | '/_authenticated/admin'
     | '/team/login'
     | '/_authenticated/admin/files'
@@ -268,10 +316,14 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AppRoute: typeof AppRoute
   DashboardRoute: typeof DashboardRoute
+  FlashcardsRoute: typeof FlashcardsRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  QbankRoute: typeof QbankRoute
   RegisterRoute: typeof RegisterRoute
+  RoadmapRoute: typeof RoadmapRoute
+  SheetsRoute: typeof SheetsRoute
   TeamLoginRoute: typeof TeamLoginRoute
   ApiCurriculumFileIdRoute: typeof ApiCurriculumFileIdRoute
   TeamInviteTokenRoute: typeof TeamInviteTokenRoute
@@ -307,6 +359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/flashcards': {
+      id: '/flashcards'
+      path: '/flashcards'
+      fullPath: '/flashcards'
+      preLoaderRoute: typeof FlashcardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/home': {
       id: '/home'
       path: '/home'
@@ -328,11 +387,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/qbank': {
+      id: '/qbank'
+      path: '/qbank'
+      fullPath: '/qbank'
+      preLoaderRoute: typeof QbankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roadmap': {
+      id: '/roadmap'
+      path: '/roadmap'
+      fullPath: '/roadmap'
+      preLoaderRoute: typeof RoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sheets': {
+      id: '/sheets'
+      path: '/sheets'
+      fullPath: '/sheets'
+      preLoaderRoute: typeof SheetsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -466,10 +546,14 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AppRoute: AppRoute,
   DashboardRoute: DashboardRoute,
+  FlashcardsRoute: FlashcardsRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  QbankRoute: QbankRoute,
   RegisterRoute: RegisterRoute,
+  RoadmapRoute: RoadmapRoute,
+  SheetsRoute: SheetsRoute,
   TeamLoginRoute: TeamLoginRoute,
   ApiCurriculumFileIdRoute: ApiCurriculumFileIdRoute,
   TeamInviteTokenRoute: TeamInviteTokenRoute,

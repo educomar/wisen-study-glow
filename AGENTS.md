@@ -20,9 +20,9 @@
 - Course material is extracted to text in the browser (pdf.js) before being sent to Wisen AI.
 - Student personal study data (bookmarks, notes, attempts, exam history, SRS card state, activity) lives in `student_data` (one own-row RLS row per user), synced by `src/components/app/store.ts`; localStorage is only a per-user cache keyed `wisen-app-state:<uid>` so accounts on a shared browser never mix.
 - `/api/curriculum-file/$id` verifies the bearer with the auth server and reads `lesson_resources` as the caller, so RLS alone decides file access; it serves the stored MIME type and rejects Drive HTML interstitials.
-- `/home` and `/app` share study state and metrics; workspace destinations use validated search parameters for bookmarkable deep links without duplicating tools.
+- `/home` is a legacy redirect to /dashboard; dashboard and study tools share persisted student state, and /app search views preserve older study deep links.
 - Manual planner tasks are individual own-row RLS records in `study_tasks`; question results, review events and sessions extend `student_data` so student tools share persisted history.
 - Study-only theme overrides are scoped to `.study-theme` so redesigns do not change the public website or team workspace.
-- StudentShell wraps /home; ReferenceShell wraps /app with reference-style horizontal navigation, and StudyDashboard owns its default entry screen; existing validated study search views remain deep-linkable to preserve all tools and saved data.
+- ReferenceShell wraps /dashboard, /roadmap, /sheets, /flashcards, /qbank and legacy /app with one horizontal navigation and a browser canvas medical backdrop; the page tools reuse existing authorized generation and persistence functions to keep student data ownership intact.
 - Course files use a standalone CourseReader, with citations opening the courses view and AI actions opening the separate chat; never reintroduce the removed parallel layout or duplicate exam destination.
 - General weakness and lesson-performance analytics live in StudyProgress; QBank shows only scope, practice and current-session results.
