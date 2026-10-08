@@ -117,7 +117,7 @@ export function QBank(props: { context?: string | undefined; defaultSubject?: st
   if (props.source === "ai") return <div className="space-y-4"><AiGenerator /><Practice {...props} /></div>;
   return <LegacyQBank {...props} />;
 }
-function LegacyQBank(props: { context?: string | undefined; defaultSubject?: string }) {
+function LegacyQBank(props: { context?: string | undefined; defaultSubject?: string | undefined }) {
   const [tab, setTabQ] = useState<"ai" | "emd">("ai");
   const t = (k: typeof tab, l: string) => <button onClick={() => setTabQ(k)} className={`rounded-md px-3 py-1.5 text-sm font-medium ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>{l}</button>;
   return (
