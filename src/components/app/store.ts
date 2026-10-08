@@ -21,6 +21,7 @@ export type ExamSession = {
   i: number;
   endsAt: number;
   usedSec: number;
+  scoring?: "aon" | "partial" | "positive";
 };
 export type Tab = "qbank" | "ai" | "courses" | "cards" | "exam" | "progress" | "saved";
 

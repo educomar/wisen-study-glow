@@ -1,5 +1,30 @@
 /** Pure helpers for EMD practice and the real-exam simulator. */
-export type Graded = { answer: number; picked: number | null };
+export type Graded = { answer: number; picked: number | null; multi?: boolean };
+export type Scoring = "aon" | "partial" | "positive";
+export const SCORING: { key: Scoring; label: string; hint: string }[] = [
+  { key: "aon", label: "All-or-Nothing", hint: "Strict scoring — all correct answers required." },
+  { key: "partial", label: "Partial Scoring", hint: "Partial credit for incomplete answers, but incorrect choices give 0." },
+  { key: "positive", label: "Improved / Positive Partial Scoring", hint: "Partial credit with penalties for incorrect choices." },
+];
+
+const bits = (n: number) => { let c = 0; for (let x = n; x; x &= x - 1) c++; return c; };
+
+/** Credit (0..1) for one question. Multi answers are bitmasks; single answers are option indexes. */
+export function questionCredit(g: Graded, mode: Scoring) {
+  if (g.picked === null || g.picked < 0) return 0;
+  if (!g.multi) return g.picked === g.answer ? 1 : 0;
+  const n = bits(g.answer); if (!n) return 0;
+  const hits = bits(g.picked & g.answer), wrong = bits(g.picked & ~g.answer);
+  if (mode === "aon") return g.picked === g.answer ? 1 : 0;
+  if (mode === "partial") return wrong ? 0 : hits / n;
+  return Math.max(0, (hits - wrong) / n);
+}
+
+export function scoreWith(items: Graded[], mode: Scoring) {
+  const total = items.length;
+  const pts = items.reduce((a, g) => a + questionCredit(g, mode), 0);
+  return total ? Math.round((pts / total) * 2000) / 100 : 0;
+}
 
 /** All-or-nothing per question (an MCQ answer is a bitmask), scaled to the faculty's /20 mark. */
 export function scoreOn20(items: Graded[]) {
