@@ -12,6 +12,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { StudentShell } from '@/components/app/StudentShell';
+import { ReferenceShell } from '@/components/app/ReferenceShell';
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -122,12 +123,12 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({select:s=>s.location.pathname});
-  const student = pathname === "/home" || pathname === "/app";
+  const student = pathname === "/home";
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      {student ? <StudentShell><Outlet /></StudentShell> : <Outlet />}
+      {pathname === '/app' ? <ReferenceShell><Outlet /></ReferenceShell> : student ? <StudentShell><Outlet /></StudentShell> : <Outlet />}
     </QueryClientProvider>
   );
 }
