@@ -327,8 +327,14 @@ export function EmdQBank() {
   poolRef = ai;
   const e = useAppState().exam;
   const [view, setView] = useState<"hub" | "past" | "sim">("hub");
-  // A finished exam stays in the persisted state; clear it on entry so the hub always opens first (an in-progress exam still resumes).
-  useEffect(() => { if (getState().exam.phase === "done") update((s) => ({ ...s, exam: { ...s.exam, phase: "setup", qids: [], answers: [], flags: [], i: 0 } })); }, []);
+  // A finished exam stays in the persisted state (and may arrive after the server sync); clear the first "done" seen on entry so the hub always opens first. An in-progress exam still resumes, and a debrief reached by submitting in this visit stays.
+  const clearedDone = useRef(false);
+  useEffect(() => {
+    if (e.phase === "done" && !clearedDone.current) {
+      clearedDone.current = true;
+      update((s) => ({ ...s, exam: { ...s.exam, phase: "setup", qids: [], answers: [], flags: [], i: 0 } }));
+    }
+  }, [e.phase]);
   const examQs = useMemo(() => e.qids.map((id) => ai.find((q) => q.id === id)).filter((q): q is AiQuestion => !!q), [e.qids, ai]);
   const realActive = (e.phase === "run" || e.phase === "done") && examQs.length > 0;
   if (!user) return <main className="reference-page emd-page"><div className="tool-signin"><span className="reference-tool-icon"><LogIn /></span><strong>Sign in to practise EMDs</strong><p>Your exams and results are saved to your account.</p><Button asChild><Link to="/login"><LogIn />Sign in</Link></Button></div></main>;
