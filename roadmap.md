@@ -1,5 +1,10 @@
 # Roadmap
 
+## Complete reference platform — October 8
+- [ ] Remove the old /home dashboard and redirect existing links to the new dashboard.
+- [ ] Build reference-matched Dashboard, Roadmap, Sheets, Kapsules and QBank pages with shared navigation.
+- [ ] Add a live animated medical backdrop and verify page links, generation controls and themes.
+
 ## /app reference rebuild — October 8
 - [x] Replace the /app entry screen and navigation with the StudyBuddy dashboard composition, adapted to Wisen.
 - [x] Preserve all study destinations, saved data and account controls; verify signed-in navigation, profile dialog, themes, background loading and desktop/mobile page health.
