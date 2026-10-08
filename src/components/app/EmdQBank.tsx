@@ -104,7 +104,7 @@ function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; 
       <div className="emd-panes">
         <Grille qs={qs} answers={answers} i={i} onJump={setI} onToggle={toggle} reveal={(k) => checked[k]!} />
         <section className="emd-main">
-          <QuestionPane q={q} n={i + 1} total={qs.length} picked={answers[i] ?? null} onToggle={(k) => toggle(i, k)} reveal={checked[i]} />
+          <QuestionPane q={q} n={i + 1} total={qs.length} picked={answers[i] ?? null} onToggle={(k) => toggle(i, k)} reveal={!!checked[i]} />
           {checked[i] && <Explanation q={q} picked={answers[i] ?? null} />}
           <div className="emd-actions">
             <Button variant="outline" disabled={!i} onClick={() => setI(i - 1)}><ArrowLeft /> Previous</Button>
