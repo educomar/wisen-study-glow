@@ -1,16 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { StudySheets } from '@/components/app/StudySheets';
+import { ParallelWorkspace } from '@/components/app/ParallelWorkspace';
 import { studyMeta } from '@/lib/study-meta';
 
 export const Route = createFileRoute('/workspace')({
   validateSearch: (search: Record<string, unknown>) => ({
     sheet: typeof search['sheet'] === 'string' ? search['sheet'] : '',
   }),
-  head: () => studyMeta('Workspace', 'Your Wisen study workspace for faculty-grounded medical sheets, EMD revision and active recall.'),
+  head: () => studyMeta('Parallel Study Workspace', 'Study official UFAS1 lectures beside contextual Wisen AI, with selected-passage explanations, EMD questions, Kapsules and saved notes.'),
   component: WorkspacePage,
 });
 
 function WorkspacePage() {
-  const { sheet } = Route.useSearch();
-  return <StudySheets initialSheetId={sheet || undefined} />;
+  return <ParallelWorkspace />;
 }

@@ -24,8 +24,8 @@
 - Manual planner tasks are individual own-row RLS records in `study_tasks`; question results, review events and sessions extend `student_data` so student tools share persisted history.
 - Study-only theme overrides are scoped to `.study-theme` so redesigns do not change the public website or team workspace.
 - ReferenceShell wraps /dashboard, /roadmap, /workspace, /sheets, /flashcards, /qbank, /library and legacy /app with one horizontal navigation and a browser canvas medical backdrop; the page tools reuse existing authorized generation and persistence functions to keep student data ownership intact.
-- /workspace reuses StudySheets and its saved-sheet search parameter while /sheets remains accessible, preserving existing saved-content links without duplicating storage.
-- Course files use a standalone CourseReader, with citations opening the courses view and AI actions opening the separate chat; never reintroduce the removed parallel layout or duplicate exam destination.
+- /workspace composes CourseReader and the existing WisenChat in parallel; selected-passage actions reuse authorized AI and student_data notes/cards, while /sheets remains the dedicated sheet tool.
+- CourseReader remains standalone in legacy study views; the parallel workspace intercepts selection actions and citation jumps so they never navigate away from the two-pane session.
 - General weakness and lesson-performance analytics live in StudyProgress; QBank shows only scope, practice and current-session results.
 - Roadmap derives semester groups and search results in the browser from the authorized curriculum tree and existing academic knowledge; annual content is shared across semesters and academic totals deduplicate IDs, avoiding duplicated counts or invented assignments.
 - Study Sheets uses sequential existing Wisen server-function calls per section for truthful completion progress; structured sheets stay in student notes and exact embedded cards save to the own-row AI card table, avoiding regenerated card answers.
