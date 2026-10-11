@@ -69,8 +69,8 @@ function DriveImporter() {
 
   async function doCrawl() {
     const id = parseFolderId(link);
-    if (!id) return toast.error("Paste a Google Drive folder link.");
-    if (level === "unit" && (!subjectId || !unitId)) return toast.error("Choose the subject and unit to import into.");
+    if (!id) { toast.error("Paste a Google Drive folder link."); return; }
+    if (level === "unit" && (!subjectId || !unitId)) { toast.error("Choose the subject and unit to import into."); return; }
     setBusy("crawl"); setTree(null);
     const r = await run(crawl({ data: { folderId: id, apiKey: apiKey.trim() || undefined } }));
     setBusy("");

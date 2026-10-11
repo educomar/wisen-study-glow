@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { buildTree, cleanName, detectKind, FOLDER, parseFolderId } from "./drive-import";
 
-type T = { id: string; name: string; mimeType: string; size: number; createdTime: null; children?: T[] };
+type T = { id: string; name: string; mimeType: string; size: number; createdTime: null; children?: T[] | undefined };
 const f = (id: string, name: string, children?: T[]): T => ({ id, name, mimeType: children ? FOLDER : "application/pdf", size: 1, createdTime: null, children });
 
 describe("drive importer", () => {
