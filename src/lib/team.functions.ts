@@ -207,7 +207,7 @@ const FIELDS: Record<Table, string[]> = {
   subjects: ["name", "faculty", "department", "academic_year", "position"],
   units: ["subject_id", "name", "position"],
   lessons: ["unit_id", "name", "position"],
-  qbank_questions: ["lesson_id", "stem", "options", "answer", "explanation", "difficulty"],
+  qbank_questions: ["lesson_id", "stem", "options", "answer", "answers", "explanation", "difficulty"],
   team_flashcards: ["lesson_id", "front", "back"],
   kb_entries: ["title", "category", "content"],
 };
@@ -343,4 +343,52 @@ export const deleteResource = createServerFn({ method: "POST" })
     if (!r.storage_path.startsWith("gdrive:")) await supabaseAdmin.storage.from("resources").remove([r.storage_path]);
     await audit(context.supabase, t, "deleted_file", "resource", data.id, r.file_name);
     return { ok: true };
+  });
+
+/* ---------- QBank bulk import ---------- */
+
+const importQ = z.object({
+  stem: z.string().trim().min(1).max(4000),
+  options: z.array(z.string().trim().min(1).max(1000)).min(2).max(5),
+  answers: z.array(z.number().int().min(0).max(4)).min(1).max(5),
+  explanation: z.string().max(6000).default(""),
+  difficulty: z.enum(["Easy", "Medium", "Hard"]).default("Medium"),
+});
+
+export const bulkImportQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ lessonId: z.string().uuid(), questions: z.array(importQ).min(1).max(200) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const t = await requireTeam(context.supabase, context.userId);
+    const rows = data.questions.map((q) => {
+      const answers = [...new Set(q.answers.filter((a) => a < q.options.length))].sort();
+      if (!answers.length) throw new Error("Every question needs at least one valid correct option.");
+      return { lesson_id: data.lessonId, stem: q.stem, options: q.options, answer: answers[0]!, answers, explanation: q.explanation, difficulty: q.difficulty, created_by: t.userId };
+    });
+    const { data: saved, error } = await context.supabase.from("qbank_questions").insert(rows).select("id");
+    if (error) { await audit(context.supabase, t, "bulk_import", "question", null, `${rows.length} questions`, {}, "failed"); throw new Error(error.message); }
+    await audit(context.supabase, t, "bulk_import", "question", data.lessonId, `${saved.length} questions`, { count: saved.length });
+    return { count: saved.length };
+  });
+
+export const aiParseQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ text: z.string().trim().min(20).max(60000), context: z.string().max(300).default("") }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireTeam(context.supabase, context.userId);
+    const { wisenComplete, parseJson } = await import("./ai/gateway.server");
+    const system = `You are Wisen AI, structuring raw past-exam text (French or English) from the Faculty of Medicine, Université Ferhat Abbas Sétif 1 into QCM/QCU questions. Keep each stem and option faithful to the source (fix only OCR spacing), keep the source language. Never invent or merge questions; skip unreadable ones. Max 5 options (A–E). If an answer key is present, use it exactly; otherwise determine the correct option(s) from established medical knowledge. A question may have one (QCU) or several (QCM) correct options. If an explanation is missing, write a concise medically accurate rationale explaining why the correct options are right and the distractors wrong. Difficulty is Easy, Medium or Hard.
+Return JSON only: {"questions":[{"stem":"...","options":["..."],"answers":[0-based indices],"explanation":"...","difficulty":"Medium","keyFromSource":true}]}`;
+    const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: `${data.context ? `Context: ${data.context}\n\n` : ""}RAW EXAM TEXT:\n${data.text}` }], { json: true });
+    if (!r.ok) throw new Error(r.error === "credits" ? "Wisen AI is out of credits right now." : r.error === "busy" ? "Wisen AI is busy — try again in a minute." : "Wisen AI couldn't parse this text. Try again.");
+    const parsed = parseJson<{ questions?: { stem?: string; options?: string[]; answers?: number[]; explanation?: string; difficulty?: string; keyFromSource?: boolean }[] }>(r.text);
+    const qs = (parsed?.questions ?? []).flatMap((q) => {
+      const options = (q.options ?? []).map((o) => String(o).trim()).filter(Boolean).slice(0, 5);
+      const answers = [...new Set((q.answers ?? []).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < options.length))];
+      if (!q.stem || options.length < 2) return [];
+      const difficulty = ["Easy", "Medium", "Hard"].includes(String(q.difficulty)) ? String(q.difficulty) : "Medium";
+      return [{ stem: String(q.stem).trim(), options, answers, explanation: String(q.explanation ?? ""), difficulty, aiKey: !q.keyFromSource }];
+    });
+    if (!qs.length) throw new Error("No readable questions were found in this text.");
+    return qs;
   });
