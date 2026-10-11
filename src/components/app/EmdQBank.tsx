@@ -16,7 +16,6 @@ import { Inline, RichText } from "./RichText";
 import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
 import { addCard, getState, log, recordQuestion, update, useAppState, type ExamSession } from "./store";
 import { useSession } from "@/lib/profile";
-import { useRemoteQuestions } from "./remote";
 
 const L = ["A", "B", "C", "D", "E", "F"];
 const fmt = (sec: number) => `${String(Math.floor(sec / 3600)).padStart(2, "0")}:${String(Math.floor((sec % 3600) / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
@@ -167,33 +166,6 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   );
 }
 
-/* ---------- Faculty QBank (team-verified questions) ---------- */
-function FacultyBank({ onBack }: { onBack: () => void }) {
-  const all = useRemoteQuestions();
-  const [f, setF] = useState({ s: "", u: "", l: "", t: "All" });
-  const [run, setRun] = useState<Question[] | null>(null);
-  const subjects = [...new Set(all.map((q) => q.subject))].sort();
-  const units = [...new Set(all.filter((q) => q.subject === f.s).map((q) => q.unit))].sort();
-  const lessons = [...new Set(all.filter((q) => q.subject === f.s && q.unit === f.u).map((q) => q.topic))].sort();
-  const shown = all.filter((q) => (!f.s || q.subject === f.s) && (!f.u || q.unit === f.u) && (!f.l || q.topic === f.l) && (f.t === "All" || (f.t === "QCM") === q.multi));
-  if (run) return <PracticeRunner qs={run} title={[f.s || "Faculty QBank", f.u, f.l].filter(Boolean).join(" · ")} onExit={() => setRun(null)} />;
-  return (
-    <section className="emd-section">
-      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft /> QBank</Button>
-      <h2 className="emd-h2">Faculty QBank</h2>
-      <p className="emd-sub">Questions verified by the UFAS1 Wisen team. Instant feedback, explanations and Save as Kapsule.</p>
-      <div className="emd-filters">
-        <select aria-label="Subject" value={f.s} onChange={(e) => setF({ ...f, s: e.target.value, u: "", l: "" })}><option value="">All subjects</option>{subjects.map((x) => <option key={x}>{x}</option>)}</select>
-        <select aria-label="Unit" value={f.u} disabled={!f.s} onChange={(e) => setF({ ...f, u: e.target.value, l: "" })}><option value="">All units</option>{units.map((x) => <option key={x}>{x}</option>)}</select>
-        <select aria-label="Lesson" value={f.l} disabled={!f.u} onChange={(e) => setF({ ...f, l: e.target.value })}><option value="">All lessons</option>{lessons.map((x) => <option key={x}>{x}</option>)}</select>
-        <div className="emd-pills">{["All", "QCM", "QCU"].map((t) => <button key={t} type="button" className={t === f.t ? "is-on" : ""} onClick={() => setF({ ...f, t })}>{t === "All" ? "QCM + QCU" : t}</button>)}</div>
-      </div>
-      {!shown.length ? <p className="emd-empty">No faculty questions match these filters yet.</p> : (
-        <Button className="mt-4" onClick={() => { setRun([...shown]); log(`Faculty QBank · ${f.s || "all"} (${shown.length})`); }}><ClipboardList /> Practise {shown.length} questions</Button>
-      )}
-    </section>
-  );
-}
 
 /* ---------- EMD Simulator ---------- */
 function submitExam() {
@@ -368,7 +340,7 @@ export function EmdQBank() {
   const { qs: ai } = useAi();
   poolRef = ai;
   const e = useAppState().exam;
-  const [view, setView] = useState<"hub" | "past" | "sim" | "faculty">("hub");
+  const [view, setView] = useState<"hub" | "past" | "sim">("hub");
   // A finished exam stays in the persisted state; only show the debrief when the exam was actually run during this visit, so /qbank always opens on the hub. An in-progress exam still resumes.
   const [sawRun, setSawRun] = useState(false);
   useEffect(() => { if (e.phase === "run") setSawRun(true); }, [e.phase]);
@@ -378,13 +350,12 @@ export function EmdQBank() {
   if (realActive && e.phase === "run") return <RealExam qs={examQs} />;
   return (
     <main className="reference-page emd-page">
-      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : view === "faculty" ? <FacultyBank onBack={() => setView("hub")} /> : (
+      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : (
         <>
           <header className="tool-page-heading"><span className="tool-kicker">QBANK · FACULTY OF MEDICINE SÉTIF 1</span><h1>Train for the <em>EMD.</em></h1><p>Practise real past exams, or sit a full UFAS1 simulation.</p></header>
           <div className="emd-choices">
             <button type="button" className="emd-choice" onClick={() => setView("past")}><FileText /><strong>Past EMDs</strong><span>Previous years' official faculty exams by module and academic year, with instant feedback, explanations and Save as Kapsule.</span><em>Open past EMDs <ArrowRight /></em></button>
             <button type="button" className="emd-choice" onClick={() => setView("sim")}><Timer /><strong>EMD Simulator</strong><span>UFAS1 Simulation in Practice Mode (untimed, explained) or Real Exam (timed QCM grille, debrief out of 20).</span><em>Start a simulation <ArrowRight /></em></button>
-            <button type="button" className="emd-choice" onClick={() => setView("faculty")}><GraduationCap /><strong>Faculty QBank</strong><span>Verified faculty questions filtered by subject, unit or lesson — QCM and QCU with instant feedback, explanations and Save as Kapsule.</span><em>Practise faculty questions <ArrowRight /></em></button>
           </div>
         </>
       )}
