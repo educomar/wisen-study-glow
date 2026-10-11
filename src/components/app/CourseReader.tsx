@@ -54,6 +54,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
   useEffect(() => {
     const root = readerRef.current;
     if (!root) return;
+    if (parallel && doc.pdf) return;
     const ratios = new Map<number, number>();
     const io = new IntersectionObserver((es) => {
       if (!root.offsetParent) return;
