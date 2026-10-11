@@ -320,6 +320,7 @@ export type Database = {
       qbank_questions: {
         Row: {
           answer: number
+          answers: Json
           created_at: string
           created_by: string | null
           difficulty: string
@@ -334,6 +335,7 @@ export type Database = {
         }
         Insert: {
           answer?: number
+          answers?: Json
           created_at?: string
           created_by?: string | null
           difficulty?: string
@@ -348,6 +350,7 @@ export type Database = {
         }
         Update: {
           answer?: number
+          answers?: Json
           created_at?: string
           created_by?: string | null
           difficulty?: string

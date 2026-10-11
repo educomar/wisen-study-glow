@@ -1,0 +1,2 @@
+ALTER TABLE public.qbank_questions ADD COLUMN IF NOT EXISTS answers jsonb NOT NULL DEFAULT '[]'::jsonb;
+UPDATE public.qbank_questions SET answers = jsonb_build_array(answer) WHERE answers = '[]'::jsonb;
