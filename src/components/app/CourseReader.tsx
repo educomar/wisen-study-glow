@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, FileText, FileUp, HelpCircle, Layers, Library, Lightbulb, ListChecks, Loader2, NotebookPen, Target, Wand2, X, AlignLeft, ZoomIn, ZoomOut } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, FileText, FileUp, HelpCircle, Layers, Library, Lightbulb, ListChecks, Loader2, NotebookPen, Target, Wand2, X, AlignLeft, ZoomIn, ZoomOut, ScanLine, ChevronDown } from "lucide-react";
 import { CurriculumBrowser, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -11,12 +11,13 @@ import { PdfPage } from "./PdfPage";
 import { addCard, addNote, log } from "./store";
 import { setTab } from "./store";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 const SUBJECTS = ["Embryology", "Anatomy", "Histology", "Pathology", "Cardiology", "Pharmacology", "Physiology"];
 export const SUBJECT_LIST = SUBJECTS;
 const ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["Summarize", AlignLeft], ["Compare", AlignLeft], ["Exam Prep", Target], ["Make Kapsule", Layers], ["Quiz me", HelpCircle], ["Generate EMD Question", ListChecks], ["Save note", NotebookPen]] as const;
 const STAGES = ["Parsing pages…", "Indexing medical content", "Ready to study"];
-const WORKSPACE_ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["EMD Trap", Target], ["Make Kapsule", Layers], ["Quiz Me", HelpCircle], ["Save Note", NotebookPen]] as const;
+const WORKSPACE_ACTIONS = [["Explain", Lightbulb], ["EMD Trap", Target], ["Make Kapsule", Layers], ["Quiz Me", HelpCircle], ["Save Note", NotebookPen]] as const;
 export type PassageSelection = { text: string; page: number; subject: string; title: string };
 
 function Diagram({ kind }: { kind?: Slide["diagram"] }) {
@@ -36,7 +37,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
   const [err, setErr] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
   const [drag, setDrag] = useState(false);
-  const [showCourses, setShowCourses] = useState(true);
+  const [showCourses, setShowCourses] = useState(!parallel);
   const [reading, setReading] = useState(parallel);
   const [zoom, setZoom] = useState(100);
   const { tree, signedIn } = useCurriculum();
@@ -78,7 +79,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
   useEffect(() => {
     if (jump != null) { setReading(true); setShowCourses(false); }
     if (jump == null || width === 0) return;
-    if (parallel && doc.pdf) { setPage(jump); readerRef.current?.scrollTo({ top: 0 }); clearJump(); return; }
+    if (parallel && doc.pdf) { setPage(jump); readerRef.current?.scrollTo({ top: 0, behavior: "smooth" }); readerRef.current?.focus({ preventScroll: true }); clearJump(); return; }
     let tries = 0, raf = 0;
     const tick = () => {
       const root = readerRef.current;
@@ -99,7 +100,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
     const r = s.getRangeAt(0).getBoundingClientRect();
     const box = readerRef.current.getBoundingClientRect();
     if (!anchor || !readerRef.current.contains(anchor)) return setSel(null);
-    setSel({ text, page: pg, x: parallel ? Math.max(8, Math.min(r.left, window.innerWidth - 340)) : r.left - box.left + r.width / 2, y: parallel ? Math.max(8, Math.min(r.bottom + 8, window.innerHeight - 130)) : r.top - box.top + readerRef.current.scrollTop });
+    setSel({ text, page: pg, x: parallel ? Math.max(8, Math.min(r.left, window.innerWidth - Math.min(520, window.innerWidth - 16))) : r.left - box.left + r.width / 2, y: parallel ? Math.max(8, Math.min(r.bottom + 8, window.innerHeight - 112)) : r.top - box.top + readerRef.current.scrollTop });
   };
 
   const act = (a: string) => {
@@ -168,9 +169,9 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
 
   return (
     <div className={`flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0 ${parallel ? 'parallel-reader' : ''}`}>
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
-        <Button size="sm" variant={showCourses ? "default" : "outline"} onClick={() => setShowCourses(!showCourses)}><Library /> My courses</Button>
-        <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
+      <div className={parallel ? "studio-lecture-header" : "flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2"}>
+        <Button size="sm" variant="ghost" className={parallel ? "studio-browse" : ""} aria-expanded={showCourses} onClick={() => setShowCourses(!showCourses)}><Library />{parallel ? doc.subject : "My courses"}{parallel && <ChevronDown/>}</Button>
+        <div className="studio-title flex min-w-0 flex-1 items-center gap-2 px-1">
           <FileText className="size-4 shrink-0 text-primary" />
           <p className="truncate text-sm font-semibold">{doc.title}</p>
           <span className="shrink-0 font-mono text-[11px] text-muted-foreground">· {doc.pages.length} pages</span>
@@ -178,29 +179,30 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
         {restoring && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" /> Restoring your document…</span>}
         {!isSample && !parallel && <Button size="sm" variant="ghost" onClick={() => { setDoc(sampleDoc); setErr(null); pushMsgs({ role: "ai", text: `Switched back to “${sampleDoc.title}”.`, cite: 12 }); }}>Sample lecture</Button>}
         <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-        <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp /> Upload PDF</Button>
+        <Button size={parallel ? "icon" : "sm"} variant="ghost" aria-label="Upload PDF" title="Upload PDF" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp />{!parallel && "Upload PDF"}</Button>
       </div>
-      {showCourses && <div className={`${parallel ? 'max-h-64 shrink-0' : 'max-h-[65dvh]'} overflow-y-auto rounded-lg border border-border bg-card`}><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
+      {parallel && <Sheet open={showCourses} onOpenChange={setShowCourses}><SheetContent side="left" className="study-theme reference-theme studio-course-drawer"><SheetHeader><SheetTitle>Faculty lectures</SheetTitle><SheetDescription>UFAS1 Sétif · Courses & materials</SheetDescription></SheetHeader><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum}/></SheetContent></Sheet>}
+      {!parallel && showCourses && <div className={`${parallel ? 'max-h-64 shrink-0' : 'max-h-[65dvh]'} overflow-y-auto rounded-lg border border-border bg-card`}><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
       {err && <div role="alert" className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"><AlertCircle className="size-4 shrink-0" /><span className="flex-1">{err}</span><button onClick={() => setErr(null)} aria-label="Dismiss"><X className="size-4" /></button></div>}
 
       <div className={`min-h-0 flex-1 ${reading ? "" : "hidden"}`}>
-        <section onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }} className={`relative flex ${parallel ? 'h-full min-h-0 rounded-lg' : 'min-h-[28rem] rounded-xl'} flex-col overflow-hidden border bg-card ${drag ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
-          <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+        <section onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }} className={`relative flex ${parallel ? 'studio-document h-full min-h-0' : 'min-h-[28rem] rounded-xl'} flex-col overflow-hidden border bg-card ${drag ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
+          <header className={parallel ? "sr-only" : "flex items-center justify-between gap-2 border-b border-border px-4 py-2.5"}>
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary">{doc.subject} · {isSample ? `${lecture.faculty}` : "Course file"}</p>
             <span className="font-mono text-xs text-muted-foreground">Page {page} / {isSample ? (doc.pages.at(-1)?.pageNumber ?? 1) : doc.pages.length}</span>
           </header>
-          {parallel && <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+          {parallel && <div className="studio-reader-controls" aria-label="Reader controls">
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" aria-label="Previous page" disabled={pageIndex <= 0} onClick={() => goTo(doc.pages[pageIndex - 1]?.pageNumber ?? page)}><ChevronLeft/></Button>
-              <label className="flex items-center gap-2 text-sm">Page <select aria-label="Lecture page" value={page} onChange={e => goTo(Number(e.target.value))} className="rounded border border-input bg-background px-2 py-1">{doc.pages.map(p => <option key={p.pageNumber} value={p.pageNumber}>{p.pageNumber}</option>)}</select></label>
+              <label className="studio-page-switcher">Page <select aria-label="Lecture page" value={page} onChange={e => goTo(Number(e.target.value))} className="rounded border border-input bg-background px-2 py-1">{doc.pages.map(p => <option key={p.pageNumber} value={p.pageNumber}>{p.pageNumber}</option>)}</select><span>of {doc.pages.length}</span></label>
               <Button variant="ghost" size="icon" aria-label="Next page" disabled={pageIndex >= doc.pages.length - 1} onClick={() => goTo(doc.pages[pageIndex + 1]?.pageNumber ?? page)}><ChevronRight/></Button>
             </div>
-            <div className="flex items-center gap-1"><Button variant="ghost" size="icon" aria-label="Zoom out" disabled={zoom <= 60} onClick={() => setZoom(z => z - 20)}><ZoomOut/></Button><Button variant="ghost" size="sm" title="Reset zoom" onClick={() => setZoom(100)}>{zoom}%</Button><Button variant="ghost" size="icon" aria-label="Zoom in" disabled={zoom >= 180} onClick={() => setZoom(z => z + 20)}><ZoomIn/></Button></div>
+            <div className="flex items-center gap-1"><Button variant="ghost" size="icon" aria-label="Zoom out" disabled={zoom <= 60} onClick={() => setZoom(z => z - 20)}><ZoomOut/></Button><span className="studio-zoom">{zoom}%</span><Button variant="ghost" size="icon" aria-label="Zoom in" disabled={zoom >= 180} onClick={() => setZoom(z => z + 20)}><ZoomIn/></Button><Button variant="ghost" size="icon" aria-label="Fit width" title="Fit width" onClick={() => setZoom(100)}><ScanLine/></Button></div>
           </div>}
           {drag && <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-background/80 text-sm font-semibold text-primary">Drop your PDF to upload</div>}
-          <div ref={readerRef} onScroll={() => { if (parallel) setSel(null); }} onMouseUp={onMouseUp} onTouchEnd={() => setTimeout(onMouseUp, 100)} className={`relative ${parallel ? 'min-h-0' : 'max-h-[72dvh]'} flex-1 overflow-auto bg-muted/30 p-5`}>
+          <div ref={readerRef} tabIndex={-1} aria-label="Document pages" onScroll={() => { if (parallel) setSel(null); }} onMouseUp={onMouseUp} onTouchEnd={() => setTimeout(onMouseUp, 100)} className={`relative ${parallel ? 'studio-document-scroll min-h-0' : 'max-h-[72dvh]'} flex-1 overflow-auto bg-muted/30 p-5`}>
             {sel && (
-              <div role="toolbar" aria-label="Selected passage actions" className={`${parallel ? 'fixed z-50' : 'absolute z-20 -translate-x-1/2 -translate-y-[112%]'} flex w-max max-w-[min(22rem,calc(100vw-16px))] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl`} style={{ left: parallel ? sel.x : Math.min(Math.max(170, sel.x), (readerRef.current?.clientWidth ?? 400) - 170), top: sel.y }} onMouseUp={(e) => e.stopPropagation()}>
+              <div role="toolbar" aria-label="Selected passage actions" className={`${parallel ? 'studio-selection fixed z-50' : 'absolute z-20 -translate-x-1/2 -translate-y-[112%]'} flex w-max max-w-[min(33rem,calc(100vw-16px))] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl`} style={{ left: parallel ? sel.x : Math.min(Math.max(170, sel.x), (readerRef.current?.clientWidth ?? 400) - 170), top: sel.y }} onMouseUp={(e) => e.stopPropagation()}>
                 {(parallel ? WORKSPACE_ACTIONS : ACTIONS).map(([l, Icon]) => (
                   <Button variant="ghost" size="sm" key={l} onMouseDown={(e) => e.preventDefault()} onClick={() => act(l)} className="gap-1 px-2 text-xs"><Icon className="size-3.5 text-primary" /> {l}</Button>
                 ))}
@@ -210,7 +212,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
               <div className="space-y-5">{width > 0 && (parallel ? doc.pages.filter(p => p.pageNumber === page) : doc.pages).map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={pdf} n={p.pageNumber} width={Math.round(width * zoom / 100)} />)}</div>
             ) : (
               <div className="space-y-5">
-                {lecture.slides.map((s) => (
+                {(parallel ? lecture.slides.filter(s => s.n === page) : lecture.slides).map((s) => (
                   <article key={s.n} data-page={s.n} className="rounded-lg border border-border bg-card p-5 sm:p-7">
                     <p className="font-mono text-xs text-muted-foreground">Page {s.n}</p>
                     <h2 className="mt-1 font-serif text-3xl">{s.title}</h2>
