@@ -37,3 +37,4 @@
 
 - Workspace studio styles and palette are scoped to workspace and its portals; its copilot composes AI Elements over the existing chat transport, preserving conversation persistence and authorized study actions.
 - Faculty QBank questions store correct options in `qbank_questions.answers` (jsonb indices, `answer` kept as first index for legacy reads); bulk/AI imports go through team-checked `bulkImportQuestions`/`aiParseQuestions` so every batch is audited and only reviewed drafts are saved.
+- Google Drive curriculum imports run through `src/lib/drive-import.functions.ts` (team-checked crawl via the linked Drive connection or a one-off public API key, AI name cleanup, audited batch commit that skips existing `gdrive:` paths) so re-imports never duplicate files.

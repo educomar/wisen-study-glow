@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { BookOpen, Brain, FileText, GraduationCap, Layers, LayoutDashboard, ListChecks, LogOut, Users } from "lucide-react";
+import { BookOpen, Brain, CloudDownload, FileText, GraduationCap, Layers, LayoutDashboard, ListChecks, LogOut, Users } from "lucide-react";
 import { useState } from "react";
 
 import { TeamCtx } from "@/components/admin/team-context";
@@ -30,6 +30,7 @@ const NAV = [
   { to: "/admin/qbank", label: "QBank", icon: ListChecks, admin: false },
   { to: "/admin/subjects", label: "Subjects", icon: BookOpen, admin: false },
   { to: "/admin/files", label: "Files & Sources", icon: FileText, admin: false },
+  { to: "/admin/drive-import", label: "Drive Importer", icon: CloudDownload, admin: false },
   { to: "/admin/flashcards", label: "Kapsules", icon: Layers, admin: false },
   { to: "/admin/kb", label: "Wisen AI Knowledge Base", icon: Brain, admin: true },
   { to: "/admin/students", label: "Students", icon: GraduationCap, admin: true },
