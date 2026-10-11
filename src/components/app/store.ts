@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { Card, Question } from "./data";
 import { supabase } from "@/integrations/supabase/client";
+import { academicName } from "./academic-names";
 
 export type CardState = { due: number; status: "new" | "learning" | "review"; box?: number };
 export type QuestionResult = { question: Question; picked: number | null; correct: boolean; t: number };
@@ -96,14 +97,24 @@ function merge(a: Personal, b: Partial<Personal>): Personal {
     attempts, cards,
   };
 }
-const personal = (s: Partial<AppState>): Personal => merge({ ...initial }, s);
+const personal = (s: Partial<AppState>): Personal => {
+  const p = merge({ ...initial }, s);
+  return {
+    ...p,
+    customCards: p.customCards.map(c => ({ ...c, topic: academicName(c.topic), ...(c.source ? { source: academicName(c.source) } : {}) })),
+    customQuestions: p.customQuestions.map(q => ({ ...q, topic: academicName(q.topic, q.subject) })),
+    questionResults: Object.fromEntries(Object.entries(p.questionResults).map(([id, r]) => [id, { ...r, question: { ...r.question, topic: academicName(r.question.topic, r.question.subject) } }])),
+    reviewHistory: p.reviewHistory.map(r => ({ ...r, topic: academicName(r.topic) })),
+    notes: p.notes.map(n => ({ ...n, source: academicName(n.source, n.subject) })),
+  };
+};
 
 function readLocal(key: string): Partial<AppState> | null {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch { return null; }
 }
 function hydrate(saved: Partial<AppState> | null): AppState {
   if (!saved) return { ...initial };
-  return { ...initial, ...saved, flash: { ...initial.flash, ...saved.flash }, exam: { ...initial.exam, ...saved.exam } };
+  return { ...initial, ...saved, flash: { ...initial.flash, ...saved.flash }, exam: { ...initial.exam, ...saved.exam }, qbank: saved.qbank ? { ...saved.qbank, lesson: academicName(saved.qbank.lesson, saved.qbank.subject) } : null };
 }
 
 async function pushRemote() {

@@ -1,5 +1,10 @@
 # Roadmap
 
+## Academic naming cleanup — October 11
+- [x] Review supplied naming map; standardize all 27 units, 159 lessons and 150 resource labels while preserving original file extensions and medical terminology.
+- [x] Apply name-only database updates; unchanged integrity fingerprint confirms IDs, relationships, storage paths and other resource/curriculum fields remain intact. Update 95 AI question lesson labels and 28 Kapsule scope labels without changing content or counts.
+- [x] Preserve old lesson links and saved personal scopes with exact aliases; ten tests pass, preview build OK, and authenticated Roadmap/course browsing and the existing 57-page PDF with selectable text work. Faculty QBank opens; no faculty questions exist to verify a practice session.
+
 ## Workspace studio redesign — October 11
 - [x] Rebuild the edge-to-edge reader, floating course drawer, glass controls and selection toolbar.
 - [x] Refine copilot/notebook with AI Elements, prompt chips and Kapsule preview while preserving existing study actions.
