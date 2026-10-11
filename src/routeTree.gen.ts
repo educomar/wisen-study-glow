@@ -22,6 +22,7 @@ import { Route as QbankRouteImport } from './routes/qbank'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as SheetsRouteImport } from './routes/sheets'
+import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as TeamLoginRouteImport } from './routes/team/login'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -97,6 +98,11 @@ const RoadmapRoute = RoadmapRouteImport.update({
 const SheetsRoute = SheetsRouteImport.update({
   id: '/sheets',
   path: '/sheets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkspaceRoute = WorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/roadmap': typeof RoadmapRoute
   '/sheets': typeof SheetsRoute
+  '/workspace': typeof WorkspaceRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/roadmap': typeof RoadmapRoute
   '/sheets': typeof SheetsRoute
+  '/workspace': typeof WorkspaceRoute
   '/team/login': typeof TeamLoginRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
   '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/roadmap': typeof RoadmapRoute
   '/sheets': typeof SheetsRoute
+  '/workspace': typeof WorkspaceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
   '/_authenticated/admin/files': typeof AuthenticatedAdminFilesRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/roadmap'
     | '/sheets'
+    | '/workspace'
     | '/admin'
     | '/team/login'
     | '/admin/files'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/roadmap'
     | '/sheets'
+    | '/workspace'
     | '/team/login'
     | '/admin/files'
     | '/admin/flashcards'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/roadmap'
     | '/sheets'
+    | '/workspace'
     | '/_authenticated/admin'
     | '/team/login'
     | '/_authenticated/admin/files'
@@ -337,6 +349,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   RoadmapRoute: typeof RoadmapRoute
   SheetsRoute: typeof SheetsRoute
+  WorkspaceRoute: typeof WorkspaceRoute
   TeamLoginRoute: typeof TeamLoginRoute
   ApiCurriculumFileIdRoute: typeof ApiCurriculumFileIdRoute
   TeamInviteTokenRoute: typeof TeamInviteTokenRoute
@@ -433,6 +446,13 @@ declare module '@tanstack/react-router' {
       path: '/sheets'
       fullPath: '/sheets'
       preLoaderRoute: typeof SheetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workspace': {
+      id: '/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof WorkspaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -575,6 +595,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   RoadmapRoute: RoadmapRoute,
   SheetsRoute: SheetsRoute,
+  WorkspaceRoute: WorkspaceRoute,
   TeamLoginRoute: TeamLoginRoute,
   ApiCurriculumFileIdRoute: ApiCurriculumFileIdRoute,
   TeamInviteTokenRoute: TeamInviteTokenRoute,
