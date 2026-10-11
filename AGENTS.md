@@ -34,7 +34,4 @@
 - Kapsules routes reuse Flashcards as one active hub; scheduling is isolated in kapsule-review and curriculum generation passes a validated English override, preserving authorized storage and consistent review behavior across entry points.
 - /qbank is EmdQBank: Past EMDs are transcribed once per student from authorized past_emd files into ai_questions (origin 'past', unit = academic year) and cached; the EMD Simulator reuses generateQuestions and the persisted exam session, with /20 scoring in emd-exam.ts so results stay consistent across entry points.
 - /library is a read-only index over the existing own-row student notes and Kapsules stores; actions deep-link into Sheets, Kapsules and QBank so saved content is never duplicated into a parallel persistence model.
-
 - Workspace studio styles and palette are scoped to workspace and its portals; its copilot composes AI Elements over the existing chat transport, preserving conversation persistence and authorized study actions.
-- Faculty QBank questions store correct options in `qbank_questions.answers` (jsonb indices, `answer` kept as first index for legacy reads); bulk/AI imports go through team-checked `bulkImportQuestions`/`aiParseQuestions` so every batch is audited and only reviewed drafts are saved.
-- Google Drive curriculum imports run through `src/lib/drive-import.functions.ts` (team-checked crawl via the linked Drive connection or a one-off public API key, AI name cleanup, audited batch commit that skips existing `gdrive:` paths) so re-imports never duplicate files.
