@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, FileText, FileUp, HelpCircle, Layers, Library, Lightbulb, ListChecks, Loader2, NotebookPen, Target, Wand2, X, AlignLeft } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, FileText, FileUp, HelpCircle, Layers, Library, Lightbulb, ListChecks, Loader2, NotebookPen, Target, Wand2, X, AlignLeft, ZoomIn, ZoomOut } from "lucide-react";
 import { CurriculumBrowser, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ const SUBJECTS = ["Embryology", "Anatomy", "Histology", "Pathology", "Cardiology
 export const SUBJECT_LIST = SUBJECTS;
 const ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["Summarize", AlignLeft], ["Compare", AlignLeft], ["Exam Prep", Target], ["Make Kapsule", Layers], ["Quiz me", HelpCircle], ["Generate EMD Question", ListChecks], ["Save note", NotebookPen]] as const;
 const STAGES = ["Parsing pages…", "Indexing medical content", "Ready to study"];
+const WORKSPACE_ACTIONS = [["Explain", Lightbulb], ["Simplify", Wand2], ["EMD Trap", Target], ["Make Kapsule", Layers], ["Quiz Me", HelpCircle], ["Save Note", NotebookPen]] as const;
+export type PassageSelection = { text: string; page: number; subject: string; title: string };
 
 function Diagram({ kind }: { kind?: Slide["diagram"] }) {
   if (!kind) return null;
@@ -26,7 +28,7 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
   return <svg viewBox="0 0 300 110" className={c}><rect x="140" y="10" width="20" height="90" rx="8" fill="currentColor" opacity=".3" />{[0, 1, 2, 3, 4].map((i) => <g key={i}><rect x="100" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /><rect x="170" y={12 + i * 18} width="30" height="14" rx="4" fill="currentColor" opacity=".6" /></g>)}<text x="210" y="60" fontSize="10" fill="currentColor">Somite pairs</text></svg>;
 }
 
-export function CourseReader() {
+export function CourseReader({ parallel = false, onSelectionAction }: { parallel?: boolean; onSelectionAction?: (action: string, selection: PassageSelection) => void }) {
   const { doc, page, jump, restoring } = useDoc();
   const subject = doc.subject;
   const [sel, setSel] = useState<{ text: string; page: number; x: number; y: number } | null>(null);
@@ -35,7 +37,8 @@ export function CourseReader() {
   const [width, setWidth] = useState(0);
   const [drag, setDrag] = useState(false);
   const [showCourses, setShowCourses] = useState(true);
-  const [reading, setReading] = useState(false);
+  const [reading, setReading] = useState(parallel);
+  const [zoom, setZoom] = useState(100);
   const { tree, signedIn } = useCurriculum();
   const readerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -51,22 +54,31 @@ export function CourseReader() {
   useEffect(() => {
     const root = readerRef.current;
     if (!root) return;
+    if (parallel && doc.pdf) return;
     const ratios = new Map<number, number>();
     const io = new IntersectionObserver((es) => {
       if (!root.offsetParent) return;
       es.forEach((e) => ratios.set(Number((e.target as HTMLElement).dataset["page"]), e.intersectionRatio));
+      if (parallel) {
+        const top = root.getBoundingClientRect().top;
+        const visible = Array.from(root.querySelectorAll<HTMLElement>('[data-page]')).filter(el => el.getBoundingClientRect().bottom > top + 24);
+        const first = visible[0];
+        if (first) setPage(Number(first.dataset['page']));
+        return;
+      }
       let best = 0, bp = 0;
       ratios.forEach((r, p) => { if (r > best) { best = r; bp = p; } });
       if (bp) setPage(bp);
     }, { root, threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] });
     root.querySelectorAll("[data-page]").forEach((n) => io.observe(n));
     return () => io.disconnect();
-  }, [doc, width]);
+  }, [doc, width, parallel]);
 
   // Jump requests (citations, restored reading position) — wait until the reader is visible and laid out.
   useEffect(() => {
     if (jump != null) { setReading(true); setShowCourses(false); }
     if (jump == null || width === 0) return;
+    if (parallel && doc.pdf) { setPage(jump); readerRef.current?.scrollTo({ top: 0 }); clearJump(); return; }
     let tries = 0, raf = 0;
     const tick = () => {
       const root = readerRef.current;
@@ -76,7 +88,7 @@ export function CourseReader() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [jump, width, doc]);
+  }, [jump, width, doc, parallel]);
 
   const onMouseUp = () => {
     const s = window.getSelection();
@@ -86,11 +98,18 @@ export function CourseReader() {
     const pg = Number(anchor?.closest<HTMLElement>("[data-page]")?.dataset["page"]) || page;
     const r = s.getRangeAt(0).getBoundingClientRect();
     const box = readerRef.current.getBoundingClientRect();
-    setSel({ text, page: pg, x: r.left - box.left + r.width / 2, y: r.top - box.top + readerRef.current.scrollTop });
+    if (!anchor || !readerRef.current.contains(anchor)) return setSel(null);
+    setSel({ text, page: pg, x: parallel ? Math.max(8, Math.min(r.left, window.innerWidth - 340)) : r.left - box.left + r.width / 2, y: parallel ? Math.max(8, Math.min(r.bottom + 8, window.innerHeight - 130)) : r.top - box.top + readerRef.current.scrollTop });
   };
 
   const act = (a: string) => {
     if (!sel) return;
+    if (onSelectionAction) {
+      onSelectionAction(a, { text: sel.text, page: sel.page, subject: doc.subject, title: doc.title });
+      setSel(null);
+      window.getSelection()?.removeAllRanges();
+      return;
+    }
     const q = `“${sel.text.slice(0, 110)}${sel.text.length > 110 ? "…" : ""}”`;
     const label = `${a} · ${doc.subject} · Page ${sel.page}: ${q}`;
     if (a === "Make Kapsule") {
@@ -134,9 +153,21 @@ export function CourseReader() {
   const isSample = !!doc.sample;
   const pdf = doc.pdf;
   const subjectOptions = tree && tree.length ? tree.map((t) => t.name) : SUBJECTS;
+  const pageIndex = doc.pages.findIndex(p => p.pageNumber === page);
+  const goTo = (n: number) => {
+    const target = doc.pages.find(p => p.pageNumber === n);
+    if (!target) return;
+    setReading(true); setShowCourses(false); setPage(n);
+    if (parallel && doc.pdf) { readerRef.current?.scrollTo({ top: 0 }); return; }
+    requestAnimationFrame(() => {
+      const root = readerRef.current;
+      const el = root?.querySelector<HTMLElement>(`[data-page="${n}"]`);
+      if (root && el) root.scrollTo({ top: el.offsetTop - 12, behavior: 'smooth' });
+    });
+  };
 
   return (
-    <div className="flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0">
+    <div className={`flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0 ${parallel ? 'parallel-reader' : ''}`}>
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
         <Button size="sm" variant={showCourses ? "default" : "outline"} onClick={() => setShowCourses(!showCourses)}><Library /> My courses</Button>
         <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
@@ -145,30 +176,38 @@ export function CourseReader() {
           <span className="shrink-0 font-mono text-[11px] text-muted-foreground">· {doc.pages.length} pages</span>
         </div>
         {restoring && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" /> Restoring your document…</span>}
-        {!isSample && <Button size="sm" variant="ghost" onClick={() => { setDoc(sampleDoc); setErr(null); pushMsgs({ role: "ai", text: `Switched back to “${sampleDoc.title}”.`, cite: 12 }); }}>Sample lecture</Button>}
+        {!isSample && !parallel && <Button size="sm" variant="ghost" onClick={() => { setDoc(sampleDoc); setErr(null); pushMsgs({ role: "ai", text: `Switched back to “${sampleDoc.title}”.`, cite: 12 }); }}>Sample lecture</Button>}
         <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
         <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={!!stage}><FileUp /> Upload PDF</Button>
       </div>
-      {showCourses && <div className="max-h-[65dvh] overflow-y-auto rounded-lg border border-border bg-card"><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
+      {showCourses && <div className={`${parallel ? 'max-h-64 shrink-0' : 'max-h-[65dvh]'} overflow-y-auto rounded-lg border border-border bg-card`}><CurriculumBrowser tree={tree} signedIn={signedIn} activeTitle={doc.title} onOpen={openCurriculum} /></div>}
       {err && <div role="alert" className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"><AlertCircle className="size-4 shrink-0" /><span className="flex-1">{err}</span><button onClick={() => setErr(null)} aria-label="Dismiss"><X className="size-4" /></button></div>}
 
       <div className={`min-h-0 flex-1 ${reading ? "" : "hidden"}`}>
-        <section onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }} className={`relative flex min-h-[28rem] flex-col overflow-hidden rounded-xl border bg-card ${drag ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
+        <section onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }} className={`relative flex ${parallel ? 'h-full min-h-0 rounded-lg' : 'min-h-[28rem] rounded-xl'} flex-col overflow-hidden border bg-card ${drag ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
           <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary">{doc.subject} · {isSample ? `${lecture.faculty}` : "Course file"}</p>
             <span className="font-mono text-xs text-muted-foreground">Page {page} / {isSample ? (doc.pages.at(-1)?.pageNumber ?? 1) : doc.pages.length}</span>
           </header>
+          {parallel && <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" aria-label="Previous page" disabled={pageIndex <= 0} onClick={() => goTo(doc.pages[pageIndex - 1]?.pageNumber ?? page)}><ChevronLeft/></Button>
+              <label className="flex items-center gap-2 text-sm">Page <select aria-label="Lecture page" value={page} onChange={e => goTo(Number(e.target.value))} className="rounded border border-input bg-background px-2 py-1">{doc.pages.map(p => <option key={p.pageNumber} value={p.pageNumber}>{p.pageNumber}</option>)}</select></label>
+              <Button variant="ghost" size="icon" aria-label="Next page" disabled={pageIndex >= doc.pages.length - 1} onClick={() => goTo(doc.pages[pageIndex + 1]?.pageNumber ?? page)}><ChevronRight/></Button>
+            </div>
+            <div className="flex items-center gap-1"><Button variant="ghost" size="icon" aria-label="Zoom out" disabled={zoom <= 60} onClick={() => setZoom(z => z - 20)}><ZoomOut/></Button><Button variant="ghost" size="sm" title="Reset zoom" onClick={() => setZoom(100)}>{zoom}%</Button><Button variant="ghost" size="icon" aria-label="Zoom in" disabled={zoom >= 180} onClick={() => setZoom(z => z + 20)}><ZoomIn/></Button></div>
+          </div>}
           {drag && <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-background/80 text-sm font-semibold text-primary">Drop your PDF to upload</div>}
-          <div ref={readerRef} onMouseUp={onMouseUp} className="relative max-h-[72dvh] flex-1 overflow-y-auto bg-muted/30 p-5">
+          <div ref={readerRef} onScroll={() => { if (parallel) setSel(null); }} onMouseUp={onMouseUp} onTouchEnd={() => setTimeout(onMouseUp, 100)} className={`relative ${parallel ? 'min-h-0' : 'max-h-[72dvh]'} flex-1 overflow-auto bg-muted/30 p-5`}>
             {sel && (
-              <div className="absolute z-20 flex w-max max-w-[22rem] -translate-x-1/2 -translate-y-[112%] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl" style={{ left: Math.min(Math.max(170, sel.x), (readerRef.current?.clientWidth ?? 400) - 170), top: sel.y }} onMouseUp={(e) => e.stopPropagation()}>
-                {ACTIONS.map(([l, Icon]) => (
-                  <button key={l} onMouseDown={(e) => e.preventDefault()} onClick={() => act(l)} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent"><Icon className="size-3.5 text-primary" /> {l}</button>
+              <div role="toolbar" aria-label="Selected passage actions" className={`${parallel ? 'fixed z-50' : 'absolute z-20 -translate-x-1/2 -translate-y-[112%]'} flex w-max max-w-[min(22rem,calc(100vw-16px))] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl`} style={{ left: parallel ? sel.x : Math.min(Math.max(170, sel.x), (readerRef.current?.clientWidth ?? 400) - 170), top: sel.y }} onMouseUp={(e) => e.stopPropagation()}>
+                {(parallel ? WORKSPACE_ACTIONS : ACTIONS).map(([l, Icon]) => (
+                  <Button variant="ghost" size="sm" key={l} onMouseDown={(e) => e.preventDefault()} onClick={() => act(l)} className="gap-1 px-2 text-xs"><Icon className="size-3.5 text-primary" /> {l}</Button>
                 ))}
               </div>
             )}
             {!isSample && pdf ? (
-              <div className="space-y-5">{width > 0 && doc.pages.map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={pdf} n={p.pageNumber} width={width} />)}</div>
+              <div className="space-y-5">{width > 0 && (parallel ? doc.pages.filter(p => p.pageNumber === page) : doc.pages).map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={pdf} n={p.pageNumber} width={Math.round(width * zoom / 100)} />)}</div>
             ) : (
               <div className="space-y-5">
                 {lecture.slides.map((s) => (

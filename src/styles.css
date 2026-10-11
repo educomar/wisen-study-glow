@@ -895,6 +895,21 @@ button.emd-cell:not(:disabled):hover{transform:scale(1.15);border-color:var(--pr
 @media(prefers-reduced-motion:reduce){.emd-timer.is-low{animation:none;}.emd-choice:hover{transform:none;}}
 
 /* Library: one searchable index over the student's real saved work. */
+/* Parallel workspace: independent scrolling panes, shared lecture context. */
+.parallel-workspace{width:100%;max-width:1840px;margin:0 auto;padding:24px 28px 28px;}
+.parallel-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px;}
+.parallel-heading h1{font-family:var(--font-sans);letter-spacing:0;line-height:1.2;}
+.parallel-panes{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(380px,1fr);gap:22px;height:calc(100dvh - 202px);min-height:620px;}
+.parallel-lecture,.parallel-assistant{min-width:0;min-height:0;}
+.parallel-assistant{display:flex;flex-direction:column;gap:12px;}
+.parallel-chat{flex:1;min-height:0;}
+.parallel-chat>section{min-height:0;border-radius:8px;}
+.parallel-reader>div:first-child{flex-shrink:0;}
+.parallel-reader article h2{font-family:var(--font-sans);}
+.parallel-chat input{min-width:0;}
+.parallel-chat p,.parallel-assistant article p{overflow-wrap:anywhere;}
+@media(max-width:1000px){.parallel-workspace{padding:20px 16px;}.parallel-heading{align-items:flex-start;flex-direction:column;gap:10px;}.parallel-panes{grid-template-columns:1fr;height:auto;min-height:0;}.parallel-lecture{height:760px;}.parallel-reader{height:100%;min-height:0;}.parallel-assistant{height:660px;}}
+@media(max-width:520px){.parallel-heading h1{font-size:26px;}.parallel-workspace{padding:18px 12px;}.parallel-lecture{height:700px;}.parallel-assistant{height:720px;}}
 .library-page{width:100%;max-width:1540px;margin:0 auto;padding:54px 36px 64px;}
 .library-heading{max-width:920px;margin-bottom:36px;}.library-kicker,.library-section-title>div>span,.library-card-type{display:block;font-size:11px;line-height:1.5;font-weight:700;color:var(--primary);text-transform:uppercase;}
 .reference-theme .library-heading h1{font:600 48px/1.13 var(--font-sans);margin:10px 0 14px;letter-spacing:0;}.library-heading>p{max-width:780px;color:var(--muted-foreground);font-size:18px;line-height:1.7;}

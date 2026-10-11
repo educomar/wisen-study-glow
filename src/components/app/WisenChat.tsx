@@ -31,7 +31,7 @@ function McqView({ q }: { q: NonNullable<AiMsg["mcq"]> }) {
 
 const CHIPS = ["Summarize this page", "What's high-yield for EMD?", "Generate an EMD question", "EMD & coefficients at UFAS1"];
 
-export function WisenChat({ context, initialQuery }: { context?: string | undefined; initialQuery?: string | undefined }) {
+export function WisenChat({ context, initialQuery, onCitation }: { context?: string | undefined; initialQuery?: string | undefined; onCitation?: (page: number) => void }) {
   const { msgs, typing } = useChat();
   const { doc, page } = useDoc();
   const [input, setInput] = useState("");
@@ -93,7 +93,7 @@ export function WisenChat({ context, initialQuery }: { context?: string | undefi
               {m.mcq && <McqView q={m.mcq} />}
               {m.sources?.map((s) => <p key={s} className="mr-1 mt-1 inline-flex rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 font-mono text-[11px] text-primary">Source: {s}</p>)}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {m.cite ? <button onClick={() => openPage(m.cite!)} className="inline-flex rounded-md border border-border px-2 py-0.5 font-mono text-[11px] text-primary hover:bg-accent">[Source: {doc.subject} · Page {m.cite}]</button> : null}
+                {m.cite ? <Button variant="outline" size="sm" onClick={() => { if (m.cite) (onCitation ?? openPage)(m.cite); }} className="h-auto px-2 py-0.5 font-mono text-[11px] text-primary">[Source: {doc.subject} · Page {m.cite}]</Button> : null}
                 {k > 0 && <button onClick={() => { addNote([m.text, ...(m.points ?? [])].join("\n"), doc.subject, `Wisen AI · ${doc.title}`, m.cite); toast("Saved to high-yield notes"); }} className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"><NotebookPen className="size-3" /> Save note</button>}
               </div>
             </div>

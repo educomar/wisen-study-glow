@@ -71,6 +71,8 @@ export function setDoc(doc: Doc) { emit({ doc, page: doc.pages[0]?.pageNumber ??
 export function setPage(page: number) { if (page !== st.page) { emit({ page }); saveMeta(); } }
 export function setSubject(subject: string) { emit({ doc: { ...st.doc, subject } }); saveMeta(); }
 export function clearJump() { emit({ jump: null }); }
+/** Jump within a mounted reader without navigating away from a parallel workspace. */
+export function jumpToPage(page: number) { if (st.doc.pages.some(p => p.pageNumber === page)) emit({ jump: page }); }
 /** Open a cited page in the standalone course reader. */
 export function openPage(page: number) { setTab("courses"); emit({ jump: page }); }
 
