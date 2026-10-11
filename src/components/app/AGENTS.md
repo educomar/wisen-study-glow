@@ -1,0 +1,1 @@
+- Course PDFs are extracted in-browser before AI calls; CourseReader stays standalone in legacy views while the parallel workspace intercepts its selection actions and citation jumps.
