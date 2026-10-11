@@ -13,11 +13,10 @@
 - Team roles live in `user_roles` + `team_members`; every Team server fn in `src/lib/team.functions.ts` re-checks role/status via `requireTeam` — frontend role state is never trusted.
 - Team content writes go through `saveContent`/`deleteContent` so every change is audited and QBank edits snapshot to `question_versions`.
 - Student QBank reads the same `subjects → units → lessons → qbank_questions` tables, scoped by profile via RLS (`student_can_see_subject`).
-- Resource files use a private `resources` bucket accessed only through server-issued signed URLs (no storage policies).
+- Resource files: private `resources` bucket, server-issued signed URLs only.
 - Wisen AI runs on `google/gemini-3.8-flash` via `src/lib/ai/gateway.server.ts` (user choice); the model name never appears in UI or messages.
 - AI-generated questions/flashcards are saved per student in `ai_questions` / `ai_flashcards` (own-row RLS); MCQ answers are a bitmask in the client so scoring stays a number compare.
 - Previous-year EMDs are `lesson_resources.kind = 'past_emd'`; they're hidden from My Courses and used only as style reference for AI exams.
-- Course PDFs are extracted in-browser before AI calls.
 - Exact legacy name aliases preserve old links and scopes; cleanup changes labels, not content or IDs.
 - Student personal study data (bookmarks, notes, attempts, exam history, SRS card state, activity) lives in `student_data` (one own-row RLS row per user), synced by `src/components/app/store.ts`; localStorage is only a per-user cache keyed `wisen-app-state:<uid>` so accounts on a shared browser never mix.
 - `/api/curriculum-file/$id` verifies the bearer with the auth server and reads `lesson_resources` as the caller, so RLS alone decides file access; it serves the stored MIME type and rejects Drive HTML interstitials.
@@ -26,7 +25,6 @@
 - Study-only theme overrides are scoped to `.study-theme` so redesigns do not change the public website or team workspace.
 - ReferenceShell wraps /dashboard, /roadmap, /workspace, /sheets, /flashcards, /qbank, /library and legacy /app with one horizontal navigation and a browser canvas medical backdrop; the page tools reuse existing authorized generation and persistence functions to keep student data ownership intact.
 - /workspace composes CourseReader and the existing WisenChat in parallel; selected-passage actions reuse authorized AI and student_data notes/cards, while /sheets remains the dedicated sheet tool.
-- CourseReader remains standalone in legacy study views; the parallel workspace intercepts selection actions and citation jumps so they never navigate away from the two-pane session.
 - General weakness and lesson-performance analytics live in StudyProgress; QBank shows only scope, practice and current-session results.
 - Roadmap derives semester groups and search results in the browser from the authorized curriculum tree and existing academic knowledge; annual content is shared across semesters and academic totals deduplicate IDs, avoiding duplicated counts or invented assignments.
 - Study Sheets uses sequential existing Wisen server-function calls per section for truthful completion progress; structured sheets stay in student notes and exact embedded cards save to the own-row AI card table, avoiding regenerated card answers.
