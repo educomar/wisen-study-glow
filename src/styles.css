@@ -911,7 +911,7 @@ button.emd-cell:not(:disabled):hover{transform:scale(1.15);border-color:var(--pr
 .studio-title p{font-size:15px;}.studio-title>svg,.studio-title>span{display:none;}
 .studio-document{border:0;border-radius:0;background:transparent;}
 .studio-document-scroll{padding:98px 32px 116px;background:transparent;outline:0;scroll-behavior:smooth;}
-.studio-document-scroll>div:not([role=toolbar]){width:max-content;min-width:100%;max-width:none;}
+.studio-document-scroll>div:not([role=toolbar]){min-width:100%;}
 .studio-document-scroll canvas{box-shadow:var(--studio-deep-shadow);}
 .studio-document-scroll article{width:min(760px,100%);margin:auto;border:0;border-radius:3px;padding:42px;box-shadow:var(--studio-deep-shadow);}
 .parallel-reader article h2{font-family:var(--font-sans);font-size:30px;}.parallel-reader article p{line-height:1.8;}
