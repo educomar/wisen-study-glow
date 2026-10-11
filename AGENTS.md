@@ -35,3 +35,4 @@
 - /library is a read-only index over the existing own-row student notes and Kapsules stores; actions deep-link into Sheets, Kapsules and QBank so saved content is never duplicated into a parallel persistence model.
 
 - Workspace studio styles and palette are scoped to workspace and its portals; its copilot composes AI Elements over the existing chat transport, preserving conversation persistence and authorized study actions.
+- Faculty QBank questions store correct options in `qbank_questions.answers` (jsonb indices, `answer` kept as first index for legacy reads); bulk/AI imports go through team-checked `bulkImportQuestions`/`aiParseQuestions` so every batch is audited and only reviewed drafts are saved.
