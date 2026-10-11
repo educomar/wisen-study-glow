@@ -42,7 +42,7 @@ export function QBankImporter({ lessonId, context, onClose }: { lessonId: string
 
   const issues = drafts.map(draftIssue);
   const saveAll = async () => {
-    if (issues.some(Boolean)) return toast.error("Fix the highlighted questions first.");
+    if (issues.some(Boolean)) { toast.error("Fix the highlighted questions first."); return; }
     setBusy("save");
     try {
       const r = await save({ data: { lessonId, questions: drafts.map(({ aiKey: _a, ...q }) => q) } });
