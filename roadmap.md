@@ -1,5 +1,10 @@
 # Roadmap
 
+## Workspace studio redesign — October 11
+- [ ] Rebuild the edge-to-edge reader, floating course drawer, glass controls and selection toolbar.
+- [ ] Refine copilot/notebook, prompt chips and Kapsule preview while preserving existing study actions.
+- [ ] Verify real lecture interactions, saving, citations and both themes.
+
 ## Parallel Study Workspace — October 11
 - [x] Build the two-pane lecture reader and contextual Wisen AI on /workspace.
 - [x] Add page/zoom controls, selected-passage actions and saved notes access using existing student persistence.
