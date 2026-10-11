@@ -1,5 +1,9 @@
 # Roadmap
 
+## Academic naming cleanup — October 11
+- [ ] Review supplied naming map against existing records and preserve meaningful medical terms and file extensions.
+- [ ] Update existing names only and verify identifiers, relationships, storage paths and content remain unchanged.
+
 ## Workspace studio redesign — October 11
 - [x] Rebuild the edge-to-edge reader, floating course drawer, glass controls and selection toolbar.
 - [x] Refine copilot/notebook with AI Elements, prompt chips and Kapsule preview while preserving existing study actions.

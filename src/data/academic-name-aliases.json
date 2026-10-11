@@ -1,0 +1,932 @@
+[
+  {
+    "subject": "Anatomy",
+    "old": "S1",
+    "name": "Semester 1"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "S2",
+    "name": "Semester 2"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "S1",
+    "name": "Semester 1"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "S2",
+    "name": "Semester 2"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "S1 — English Version",
+    "name": "Semester 1 — English Version"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "S1 — French Version",
+    "name": "Semester 1 — French Version"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "S2 — English Version",
+    "name": "Semester 2 — English Version"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "S2 — French Version",
+    "name": "Semester 2 — French Version"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "S1",
+    "name": "Semester 1"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "S2",
+    "name": "Semester 2"
+  },
+  {
+    "subject": "Chemistry",
+    "old": "S1",
+    "name": "Semester 1"
+  },
+  {
+    "subject": "Chemistry",
+    "old": "S2",
+    "name": "Semester 2"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Courses S1",
+    "name": "Semester 1 — Lectures"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Courses S2",
+    "name": "Semester 2 — Lectures"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Td S1",
+    "name": "Semester 1 — Tutorials (TD)"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Td S2",
+    "name": "Semester 2 — Tutorials (TD)"
+  },
+  {
+    "subject": "Embryology",
+    "old": "Courses",
+    "name": "Lectures"
+  },
+  {
+    "subject": "Embryology",
+    "old": "Embryology td",
+    "name": "Tutorials (TD)"
+  },
+  {
+    "subject": "Histology",
+    "old": "Courses",
+    "name": "Lectures"
+  },
+  {
+    "subject": "Histology",
+    "old": "Td",
+    "name": "Tutorials (TD)"
+  },
+  {
+    "subject": "Informatics",
+    "old": "General / Practical Works",
+    "name": "Practical Works (TP)"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Fluid compartment",
+    "name": "Fluid Compartments"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Food Ration",
+    "name": "Food Rations & Energy Metabolism"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Muscle",
+    "name": "Muscular Physiology"
+  },
+  {
+    "subject": "Physiology",
+    "old": "SNV(Vegetative nervous system)",
+    "name": "Autonomic Nervous System (SNV)"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Thermoregulation",
+    "name": "Thermoregulation"
+  },
+  {
+    "subject": "SSH",
+    "old": "Courses",
+    "name": "Lectures"
+  },
+  {
+    "subject": "Cytology",
+    "old": "cyto generalities 2025 eng",
+    "name": "General Organization of the Cell"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Lenses",
+    "name": "Geometrical Optics — Thin Lenses"
+  },
+  {
+    "subject": "Cytology",
+    "old": "perroxisome  2026",
+    "name": "Peroxisomes"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Innervation",
+    "name": "Introduction to Peripheral Innervation"
+  },
+  {
+    "subject": "SSH",
+    "old": "TELEMEDICINE_26_English",
+    "name": "Telemedicine & Digital Health Technologies"
+  },
+  {
+    "subject": "Physiology",
+    "old": "1. Food RATION",
+    "name": "Food Rations & Energy Metabolism"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology — knee joint",
+    "name": "The Knee Joint"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rays — Rayonnements  (continued) pdf",
+    "name": "Radiation Interactions & Dosimetry"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Methods stydying the cell 2026 pptx",
+    "name": "Methods of Studying the Cell"
+  },
+  {
+    "subject": "SSH",
+    "old": "HEALTH INDICATOR1💯",
+    "name": "Health Indicators & Epidemiological Metrics"
+  },
+  {
+    "subject": "SSH",
+    "old": "Medical Ethics presentation",
+    "name": "Foundations of Medical Ethics"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Osteology — osteology of lower limbs",
+    "name": "Osteology of the Lower Limbs"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Myology — Muscles of the Upper Limb Original",
+    "name": "Muscles of the Upper Limb"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology — Hip joint",
+    "name": "The Hip Joint"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "8. sampling fluctuations (1)",
+    "name": "8. Sampling & Sampling Fluctuations (Review)"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rays — Biophysics of radiation",
+    "name": "Biophysics of Radiation"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Innervation — INNERVATION OF THE UPPER LIMBS",
+    "name": "Innervation of the Upper Limbs"
+  },
+  {
+    "subject": "Cytology",
+    "old": "plasma mb 2026 (1).pptm",
+    "name": "The Plasma Membrane"
+  },
+  {
+    "subject": "SSH",
+    "old": "Determinants of health💯",
+    "name": "Determinants of Health"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "9. LES SONDAGES eng.ppt",
+    "name": "9. Survey & Sampling Methods"
+  },
+  {
+    "subject": "SSH",
+    "old": "Epidemiological transition",
+    "name": "The Epidemiological Transition"
+  },
+  {
+    "subject": "Histology",
+    "old": "Blood tissue",
+    "name": "Blood & Hematopoietic Tissue"
+  },
+  {
+    "subject": "Chemistry",
+    "old": "AA_Chapter I, II, and III – General Chemistry",
+    "name": "General Chemistry (Chapters I, II & III)"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "10. principles of hypothesis testing",
+    "name": "10. Principles of Hypothesis Testing"
+  },
+  {
+    "subject": "Informatics",
+    "old": "Tp3_00d636659d3d16a09c838c57b2335bfc",
+    "name": "Practical Work 3 (TP 3) — Medical Word Processing & Document Design"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Part 1. SNV 2025.2026",
+    "name": "Autonomic Nervous System — SNV (Part 1 — Organization)"
+  },
+  {
+    "subject": "Cytology",
+    "old": "cytoskeleton (1)",
+    "name": "Cytology Practical TD — Cytoskeleton Dynamics"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rays",
+    "name": "Biophysics of Ionizing & Non-Ionizing Radiation"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "13 Test de khi-deux ENG.ppt",
+    "name": "13. Chi-Square (χ²) Test of Independence"
+  },
+  {
+    "subject": "SSH",
+    "old": "COURSE_NOTES_THE_DOCTOR-PATIENT_RELATIONSHIP",
+    "name": "The Doctor-Patient Relationship"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "carbohydrate metabolism(1) (1) (1)",
+    "name": "Carbohydrate Metabolism"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "refraction",
+    "name": "Optique Géométrique — Réfraction"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Fluid compart(3rd part)",
+    "name": "Fluid Compartments (Part 3 — Fluid Balance & Exchanges)"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "8. sampling fluctuations (1).ppt",
+    "name": "8. Sampling & Sampling Fluctuations"
+  },
+  {
+    "subject": "Histology",
+    "old": "Epithelium",
+    "name": "Introduction to Epithelial Tissue"
+  },
+  {
+    "subject": "SSH",
+    "old": "ORGANIZATION OF HEALTH SYSTEMS HEALTH EXPENDITURE",
+    "name": "Organization of Health Systems & Health Expenditures"
+  },
+  {
+    "subject": "Chemistry",
+    "old": "Organic Chemistry(chapter 1&2)",
+    "name": "Organic Chemistry (Chapters 1 & 2)"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "intro humain Anatomy  (1)",
+    "name": "Introduction to Human Anatomy"
+  },
+  {
+    "subject": "Cytology",
+    "old": "mitochondria pdf",
+    "name": "Cytology Practical TD — Mitochondria & Respiration"
+  },
+  {
+    "subject": "Informatics",
+    "old": "Tp2_ab7b5c2b107495e3e212a925f296019f",
+    "name": "Practical Work 2 (TP 2) — Operating Systems & File Management"
+  },
+  {
+    "subject": "Histology",
+    "old": "Connective tissue — connective tissue 2026",
+    "name": "Proper Connective Tissue"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "9. LES SONDAGES eng.ppt",
+    "name": "9. Survey & Sampling Methods"
+  },
+  {
+    "subject": "Physiology",
+    "old": "part 1. muscle 2025.2026",
+    "name": "Muscular Physiology (Part 1 — Skeletal Muscle)"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology — Ankle joint",
+    "name": "The Ankle Joint"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "5.The normal law",
+    "name": "5. The Normal Distribution (Gaussian Law)"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Cancer cell",
+    "name": "Biology of the Cancer Cell"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Vessels — Arterial supply of the Lower Limb",
+    "name": "Arterial Supply to the Lower Limb"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Part 2. SNV",
+    "name": "Autonomic Nervous System — SNV (Part 2 — Functional Pharmacology)"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Osteology",
+    "name": "General Osteology"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "7.the law of  poisson.",
+    "name": "7. The Poisson Distribution"
+  },
+  {
+    "subject": "Histology",
+    "old": "Connective tissue — Skeletal tissues 1",
+    "name": "Skeletal Tissues — Cartilage"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "chapter of Glucides-Pr-Zerargui KHEBBAT-2025",
+    "name": "Carbohydrate Structure & Chemistry"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rays — Rayonnements (X-Rays) Eng",
+    "name": "Biophysics of X-Rays"
+  },
+  {
+    "subject": "Histology",
+    "old": "Connective tissue — Skeletal tissues 2",
+    "name": "Skeletal Tissues — Bone Tissue"
+  },
+  {
+    "subject": "Embryology",
+    "old": "spermatogenesis",
+    "name": "Spermatogenesis (Part 1)"
+  },
+  {
+    "subject": "Histology",
+    "old": "Epithelium — 2-2 Glandular epithelium",
+    "name": "Glandular Epithelia (Part 2)"
+  },
+  {
+    "subject": "Embryology",
+    "old": "Introduction __ l'embryo",
+    "name": "Introduction to Human Embryology"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Myology — MUSCLES OF THE LOWER LIMB",
+    "name": "Muscles of the Lower Limb"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Vessels — General Angiology",
+    "name": "General Angiology"
+  },
+  {
+    "subject": "SSH",
+    "old": "Introduction to health economics",
+    "name": "Introduction to Health Economics"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Ribosomes 2026",
+    "name": "Ribosomes & Protein Translation"
+  },
+  {
+    "subject": "SSH",
+    "old": "EPIDEMICS IN ALGERIA",
+    "name": "Major Epidemics in Algerian History"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "oeil",
+    "name": "Biophysique de la Vision — L'Œil"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Reflection",
+    "name": "Geometrical Optics — Reflection"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rayonnement",
+    "name": "Biophysique des Rayonnements"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Vessels — Arterial Supply to the Upper Limb (1)",
+    "name": "Arterial Supply to the Upper Limb"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "1.introduction to biostatistics",
+    "name": "1. Introduction to Biostatistics"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Fluid compart (2nd part)",
+    "name": "Fluid Compartments (Part 2 — Osmolality & Tonicity)"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rayonnement — BIOPHYSIQUE DES RAYONNEMENTS",
+    "name": "Biophysique Fondamentale des Rayonnements"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Cytology or cellular Biology",
+    "name": "Introduction to Cytology & Cellular Biology"
+  },
+  {
+    "subject": "Histology",
+    "old": "muscle tissue td(1)",
+    "name": "Muscle Tissue (Histology TD)"
+  },
+  {
+    "subject": "Informatics",
+    "old": "Tp6_1485258ad2efe0a4fefc87c1f8ba2c2b",
+    "name": "Practical Work 6 (TP 6) — Biomedical Internet Research & Databases"
+  },
+  {
+    "subject": "Embryology",
+    "old": "FECUNDATION-1",
+    "name": "Fertilization"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "3. STATISTIQUE DESCRIPTIVE",
+    "name": "3. Descriptive Statistics"
+  },
+  {
+    "subject": "Histology",
+    "old": "Epithelium — 1.2- lining epithelia 2026 Original Part 2",
+    "name": "Lining Epithelia (Part 2)"
+  },
+  {
+    "subject": "Informatics",
+    "old": "Tp5_6583bb9dcaa8399196968ac09185937d",
+    "name": "Practical Work 5 (TP 5) — Medical Presentations & Scientific Communication"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "2.Defintions and terminologies in biostatistics(1)",
+    "name": "2. Definitions & Terminology in Biostatistics"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "14 correlation regression eng.ppt",
+    "name": "14. Correlation & Linear Regression"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Vessels — The veins of the  limbs",
+    "name": "Veins of the Limbs"
+  },
+  {
+    "subject": "SSH",
+    "old": "from normal to pathological..",
+    "name": "From Normal to Pathological States in Medicine"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "11.RELATIONSHIP BETWEEN TWO QUALITATIVE VARIABLES",
+    "name": "11. Association Between Two Qualitative Variables"
+  },
+  {
+    "subject": "Embryology",
+    "old": "4 th week of ED (1)",
+    "name": "Fourth Week of Development (Folding & Organogenesis)"
+  },
+  {
+    "subject": "Cytology",
+    "old": "viruses 2025",
+    "name": "Structure & Biology of Viruses"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "ELECTROCINETIQUE",
+    "name": "Électrocinétique"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Fluid compart 2026 (1st part)",
+    "name": "Fluid Compartments (Part 1 — Body Water Distribution)"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Vessels",
+    "name": "Introduction to Angiology"
+  },
+  {
+    "subject": "SSH",
+    "old": "13- MEDICAL DEONTOLOGY",
+    "name": "Medical Deontology & Professional Duties"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "electrostatique",
+    "name": "Électrostatique"
+  },
+  {
+    "subject": "Chemistry",
+    "old": "chapter 4 (The periodic table)",
+    "name": "The Periodic Table of Elements (Chapter 4)"
+  },
+  {
+    "subject": "SSH",
+    "old": "Organisation des Systèmes de Soins ANGLAIS",
+    "name": "Comparative Healthcare Systems"
+  },
+  {
+    "subject": "Cytology",
+    "old": "plasma membrane (TD2)",
+    "name": "Cytology Practical TD 2 — Plasma Membrane Transport"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology",
+    "name": "Introduction to Arthrology"
+  },
+  {
+    "subject": "Histology",
+    "old": "skin burns",
+    "name": "Integumentary System & Skin Histology"
+  },
+  {
+    "subject": "SSH",
+    "old": "Standardization 2025",
+    "name": "Standardization in Healthcare & Epidemiology"
+  },
+  {
+    "subject": "Cytology",
+    "old": "7- Intercellular communication 2026",
+    "name": "Intercellular Communication & Signaling"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rayonnement — Suite 3",
+    "name": "Rayonnements — Applications Médicales et Radioprotection"
+  },
+  {
+    "subject": "Physiology",
+    "old": "part 2. thermoregulation",
+    "name": "Thermoregulation (Part 2 — Thermolytic Mechanisms)"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Myology — General myology",
+    "name": "General Myology"
+  },
+  {
+    "subject": "SSH",
+    "old": "Methodological approach in public health",
+    "name": "Methodological Approach in Public Health"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "Enzymology",
+    "name": "Clinical & Diagnostic Enzymology"
+  },
+  {
+    "subject": "Embryology",
+    "old": "OVOG",
+    "name": "Oogenesis & Folliculogenesis (TD)"
+  },
+  {
+    "subject": "Cytology",
+    "old": "09.nucleus 2026",
+    "name": "The Cell Nucleus & Chromatin"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Protein synthesis",
+    "name": "Cytology Practical TD — Protein Synthesis & Secretion"
+  },
+  {
+    "subject": "Cytology",
+    "old": "syst endo mem Lysosomes",
+    "name": "Endomembrane System & Lysosomes"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "Chapter II (1)",
+    "name": "Enzymes & Biological Catalysis"
+  },
+  {
+    "subject": "Informatics",
+    "old": "Tp1_7712756b4b75d1169d4620d187f80887",
+    "name": "Practical Work 1 (TP 1) — Computer Hardware & System Architecture"
+  },
+  {
+    "subject": "Embryology",
+    "old": "First week of embryonic development",
+    "name": "First Week of Development (Cleavage & Blastocyst)"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "6. the bionomial law",
+    "name": "6. The Binomial Distribution"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "chapter 1: electricity - electrostatic",
+    "name": "Electrostatics"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Part 1. thermoregulation",
+    "name": "Thermoregulation (Part 1 — Heat Balance & Production)"
+  },
+  {
+    "subject": "Histology",
+    "old": "Connective tissue",
+    "name": "Introduction to Connective Tissue"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "4.reduction parameters",
+    "name": "4. Parameters of Central Tendency & Dispersion"
+  },
+  {
+    "subject": "SSH",
+    "old": "Social_Security_and_Healthcare_System_and_Needs_Demand_supply",
+    "name": "Social Security & Healthcare Demand and Supply"
+  },
+  {
+    "subject": "Cytology",
+    "old": "08-mitochnodria",
+    "name": "Mitochondria & Bioenergetics"
+  },
+  {
+    "subject": "SSH",
+    "old": "Iatrogenisis  In Novembre 2025",
+    "name": "Iatrogenesis & Patient Safety"
+  },
+  {
+    "subject": "Chemistry",
+    "old": "chapter 5(Chemical bonds)",
+    "name": "Chemical Bonds & Molecular Structure (Chapter 5)"
+  },
+  {
+    "subject": "Embryology",
+    "old": "Teratology",
+    "name": "Teratology & Congenital Malformations"
+  },
+  {
+    "subject": "Embryology",
+    "old": "spermatogenesis.....(continuity)",
+    "name": "Spermatogenesis (Part 2 — Spermiogenesis)"
+  },
+  {
+    "subject": "Embryology",
+    "old": "OVOGENESIS 1 2",
+    "name": "Oogenesis (Parts 1 & 2)"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rays — X-rays Continue",
+    "name": "X-Rays & Medical Applications"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "reflexion 1",
+    "name": "Optique Géométrique — Réflexion"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Innervation — INNERVATION OF THE LOWER LIMBS",
+    "name": "Innervation of the Lower Limbs"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Lysosomes",
+    "name": "Cytology Practical TD — Lysosomes & Phagocytosis"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Endoplasmic Reticulum",
+    "name": "The Endoplasmic Reticulum"
+  },
+  {
+    "subject": "Cytology",
+    "old": "prokaryotes 2026 eng",
+    "name": "Prokaryotic Cell Structure"
+  },
+  {
+    "subject": "Embryology",
+    "old": "Gamétogenèse G",
+    "name": "Gametogenesis (General Principles)"
+  },
+  {
+    "subject": "SSH",
+    "old": "PUBLIC HEALTH",
+    "name": "Introduction to Public Health"
+  },
+  {
+    "subject": "Biostatistics",
+    "old": "12.  relationship between quantit V and qualit V",
+    "name": "12. Relationship Between Quantitative & Qualitative Variables"
+  },
+  {
+    "subject": "Embryology",
+    "old": "Second week of embryonic development",
+    "name": "Second Week of Development (Bilaminar Disc)"
+  },
+  {
+    "subject": "SSH",
+    "old": "ISSUES IN MEDICAL ETHICS (2)",
+    "name": "Contemporary Issues in Medical Ethics"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Myology",
+    "name": "Introduction to Myology"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "LENTILLES MINCES",
+    "name": "Optique Géométrique — Lentilles Minces"
+  },
+  {
+    "subject": "Histology",
+    "old": "Epithelium — 2.1- Glandular epithelia 2026 Original Part 1",
+    "name": "Glandular Epithelia (Part 1)"
+  },
+  {
+    "subject": "Cytology",
+    "old": "extracell matri 2026",
+    "name": "The Extracellular Matrix"
+  },
+  {
+    "subject": "SSH",
+    "old": "History_of_Medicine_FULL_EN (1)",
+    "name": "History of Medicine"
+  },
+  {
+    "subject": "SSH",
+    "old": "Medical confidentiality",
+    "name": "Medical Confidentiality & Patient Privacy"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology — The elbow joint",
+    "name": "The Elbow Joint"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "Chapter protein metabolism",
+    "name": "Protein & Amino Acid Metabolism"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rayonnement — Rayonnements_suite_2_",
+    "name": "Rayonnements — Dosimétrie et Détection"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology — General arthrology",
+    "name": "General Arthrology"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology — Wrist joint (1)",
+    "name": "The Wrist Joint"
+  },
+  {
+    "subject": "Informatics",
+    "old": "Tp4_762ed8282fb59617922e4ce233e0fee2",
+    "name": "Practical Work 4 (TP 4) — Medical Spreadsheets & Data Analysis"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "Cour Protein 1e MED (1)",
+    "name": "Protein Structure & Amino Acids"
+  },
+  {
+    "subject": "Cytology",
+    "old": "cytoseleton 2026",
+    "name": "The Cytoskeleton"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Osteology — BONES OF UPPER LIMBS (1)",
+    "name": "Osteology of the Upper Limbs"
+  },
+  {
+    "subject": "Histology",
+    "old": "Introduction à l'Histologie fr",
+    "name": "Introduction to General Histology"
+  },
+  {
+    "subject": "Physiology",
+    "old": "Part 2 - muscular physiology - Pr ADJIRI Djamila",
+    "name": "Muscular Physiology (Part 2 — Neuromuscular Transmission)"
+  },
+  {
+    "subject": "Cytology",
+    "old": "Golgi apparatus (1)",
+    "name": "The Golgi Apparatus"
+  },
+  {
+    "subject": "Cytology",
+    "old": "TD-1",
+    "name": "Cytology Practical TD 1 — Microscopy & Cell Measurement"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "ELECTROCINETICS_53dccfcd-cdf7-4f53-be02-00a4c61fdcad",
+    "name": "Electrokinetics"
+  },
+  {
+    "subject": "Biochemistry",
+    "old": "chapter of Lipids Metabolism",
+    "name": "Lipid Metabolism"
+  },
+  {
+    "subject": "Embryology",
+    "old": "3 rd week of ED",
+    "name": "Third Week of Development (Gastrulation & Neurulation)"
+  },
+  {
+    "subject": "Anatomy",
+    "old": "Arthrology — shoulder complex joint",
+    "name": "Shoulder Joint Complex"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Rayonnement — Rayonnements suite1",
+    "name": "Rayonnements — Interactions avec la Matière"
+  },
+  {
+    "subject": "Histology",
+    "old": "td nrv 1",
+    "name": "Nervous Tissue (Histology TD)"
+  },
+  {
+    "subject": "Histology",
+    "old": "Epithelium — 1.1- lining epithelia 2026 Original Part 1",
+    "name": "Lining Epithelia (Part 1)"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "Refraction",
+    "name": "Geometrical Optics — Refraction"
+  },
+  {
+    "subject": "Physiology",
+    "old": "part 3 thermoregulation",
+    "name": "Thermoregulation (Part 3 — Central Regulation & Fever)"
+  },
+  {
+    "subject": "Biophysics",
+    "old": "EYE",
+    "name": "Biophysics of Vision — The Eye"
+  }
+]
