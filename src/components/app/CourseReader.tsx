@@ -58,13 +58,20 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
     const io = new IntersectionObserver((es) => {
       if (!root.offsetParent) return;
       es.forEach((e) => ratios.set(Number((e.target as HTMLElement).dataset["page"]), e.intersectionRatio));
+      if (parallel) {
+        const top = root.getBoundingClientRect().top;
+        const visible = Array.from(root.querySelectorAll<HTMLElement>('[data-page]')).filter(el => el.getBoundingClientRect().bottom > top + 24);
+        const first = visible[0];
+        if (first) setPage(Number(first.dataset['page']));
+        return;
+      }
       let best = 0, bp = 0;
       ratios.forEach((r, p) => { if (r > best) { best = r; bp = p; } });
       if (bp) setPage(bp);
     }, { root, threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] });
     root.querySelectorAll("[data-page]").forEach((n) => io.observe(n));
     return () => io.disconnect();
-  }, [doc, width]);
+  }, [doc, width, parallel]);
 
   // Jump requests (citations, restored reading position) — wait until the reader is visible and laid out.
   useEffect(() => {
@@ -188,7 +195,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
             <div className="flex items-center gap-1"><Button variant="ghost" size="icon" aria-label="Zoom out" disabled={zoom <= 60} onClick={() => setZoom(z => z - 20)}><ZoomOut/></Button><Button variant="ghost" size="sm" title="Reset zoom" onClick={() => setZoom(100)}>{zoom}%</Button><Button variant="ghost" size="icon" aria-label="Zoom in" disabled={zoom >= 180} onClick={() => setZoom(z => z + 20)}><ZoomIn/></Button></div>
           </div>}
           {drag && <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-background/80 text-sm font-semibold text-primary">Drop your PDF to upload</div>}
-          <div ref={readerRef} onMouseUp={onMouseUp} onTouchEnd={() => setTimeout(onMouseUp, 100)} className={`relative ${parallel ? 'min-h-0' : 'max-h-[72dvh]'} flex-1 overflow-auto bg-muted/30 p-5`}>
+          <div ref={readerRef} onScroll={() => { if (parallel) setSel(null); }} onMouseUp={onMouseUp} onTouchEnd={() => setTimeout(onMouseUp, 100)} className={`relative ${parallel ? 'min-h-0' : 'max-h-[72dvh]'} flex-1 overflow-auto bg-muted/30 p-5`}>
             {sel && (
               <div role="toolbar" aria-label="Selected passage actions" className={`${parallel ? 'fixed z-50' : 'absolute z-20 -translate-x-1/2 -translate-y-[112%]'} flex w-max max-w-[min(22rem,calc(100vw-16px))] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl`} style={{ left: parallel ? sel.x : Math.min(Math.max(170, sel.x), (readerRef.current?.clientWidth ?? 400) - 170), top: sel.y }} onMouseUp={(e) => e.stopPropagation()}>
                 {(parallel ? WORKSPACE_ACTIONS : ACTIONS).map(([l, Icon]) => (
