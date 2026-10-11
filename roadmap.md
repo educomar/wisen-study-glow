@@ -1,5 +1,9 @@
 # Roadmap
 
+## Workspace entry — October 11
+- [x] Replace Sheets in the top navigation with Workspace and add /workspace using the existing Study Sheets experience.
+- [ ] Verify navigation and direct page loading while preserving /sheets links.
+
 ## Dedicated Library — October 8
 - [x] Add the Library route, navigation, content tabs and live search.
 - [x] Connect real saved Kapsule decks and Study Sheets to review, reopen, practice and export actions.

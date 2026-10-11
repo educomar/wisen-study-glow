@@ -23,7 +23,8 @@
 - `/home` is a legacy redirect to /dashboard; dashboard and study tools share persisted student state, and /app search views preserve older study deep links.
 - Manual planner tasks are individual own-row RLS records in `study_tasks`; question results, review events and sessions extend `student_data` so student tools share persisted history.
 - Study-only theme overrides are scoped to `.study-theme` so redesigns do not change the public website or team workspace.
-- ReferenceShell wraps /dashboard, /roadmap, /sheets, /flashcards, /qbank and legacy /app with one horizontal navigation and a browser canvas medical backdrop; the page tools reuse existing authorized generation and persistence functions to keep student data ownership intact.
+- ReferenceShell wraps /dashboard, /roadmap, /workspace, /sheets, /flashcards, /qbank, /library and legacy /app with one horizontal navigation and a browser canvas medical backdrop; the page tools reuse existing authorized generation and persistence functions to keep student data ownership intact.
+- /workspace reuses StudySheets and its saved-sheet search parameter while /sheets remains accessible, preserving existing saved-content links without duplicating storage.
 - Course files use a standalone CourseReader, with citations opening the courses view and AI actions opening the separate chat; never reintroduce the removed parallel layout or duplicate exam destination.
 - General weakness and lesson-performance analytics live in StudyProgress; QBank shows only scope, practice and current-session results.
 - Roadmap derives semester groups and search results in the browser from the authorized curriculum tree and existing academic knowledge; annual content is shared across semesters and academic totals deduplicate IDs, avoiding duplicated counts or invented assignments.
