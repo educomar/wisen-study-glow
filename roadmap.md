@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Parallel Study Workspace — October 11
-- [ ] Build the two-pane lecture reader and contextual Wisen AI on /workspace.
-- [ ] Add page/zoom controls, selected-passage actions and saved notes access using existing student persistence.
-- [ ] Verify signed-in curriculum reading, selection actions, persistence and page layout.
+- [x] Build the two-pane lecture reader and contextual Wisen AI on /workspace.
+- [x] Add page/zoom controls, selected-passage actions and saved notes access using existing student persistence.
+- [x] Verify a signed-in 57-page faculty lecture, selected-passage quiz, exact citation jump, saved notes after reload, Kapsules reopened through Library, zoom and small-screen layout; eleven existing study tests pass.
 
 ## Workspace entry — October 11
 - [x] Replace Sheets in the top navigation with Workspace and add /workspace using the existing Study Sheets experience.
