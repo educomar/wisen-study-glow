@@ -77,6 +77,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
   useEffect(() => {
     if (jump != null) { setReading(true); setShowCourses(false); }
     if (jump == null || width === 0) return;
+    if (parallel && doc.pdf) { setPage(jump); readerRef.current?.scrollTo({ top: 0 }); clearJump(); return; }
     let tries = 0, raf = 0;
     const tick = () => {
       const root = readerRef.current;
@@ -86,7 +87,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [jump, width, doc]);
+  }, [jump, width, doc, parallel]);
 
   const onMouseUp = () => {
     const s = window.getSelection();
@@ -156,6 +157,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
     const target = doc.pages.find(p => p.pageNumber === n);
     if (!target) return;
     setReading(true); setShowCourses(false); setPage(n);
+    if (parallel && doc.pdf) { readerRef.current?.scrollTo({ top: 0 }); return; }
     requestAnimationFrame(() => {
       const root = readerRef.current;
       const el = root?.querySelector<HTMLElement>(`[data-page="${n}"]`);
@@ -204,7 +206,7 @@ export function CourseReader({ parallel = false, onSelectionAction }: { parallel
               </div>
             )}
             {!isSample && pdf ? (
-              <div className="space-y-5">{width > 0 && doc.pages.map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={pdf} n={p.pageNumber} width={Math.round(width * zoom / 100)} />)}</div>
+              <div className="space-y-5">{width > 0 && (parallel ? doc.pages.filter(p => p.pageNumber === page) : doc.pages).map((p) => <PdfPage key={`${doc.title}-${p.pageNumber}`} pdf={pdf} n={p.pageNumber} width={Math.round(width * zoom / 100)} />)}</div>
             ) : (
               <div className="space-y-5">
                 {lecture.slides.map((s) => (
