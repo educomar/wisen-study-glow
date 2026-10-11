@@ -1,5 +1,5 @@
 /** Pure helpers for the Google Drive curriculum importer (shared by UI and tests). */
-export type DriveItem = { id: string; name: string; mimeType: string; size: number; createdTime: string | null; children?: DriveItem[] };
+export type DriveItem = { id: string; name: string; mimeType: string; size: number; createdTime: string | null; children?: DriveItem[] | undefined };
 export type Level = "year" | "subject" | "unit";
 export type NodeType = "subject" | "unit" | "lesson" | "file";
 export type ImportNode = {
