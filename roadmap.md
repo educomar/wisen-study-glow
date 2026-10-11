@@ -1,5 +1,10 @@
 # Roadmap
 
+## Workspace studio redesign — October 11
+- [x] Rebuild the edge-to-edge reader, floating course drawer, glass controls and selection toolbar.
+- [x] Refine copilot/notebook with AI Elements, prompt chips and Kapsule preview while preserving existing study actions.
+- [x] Verify an authenticated 57-page lecture, selection tools, note reload, saved Kapsule through Library, generated quiz and page-15 citation, zoom/fit-width, both themes and narrow-screen drawer; eleven tests pass and build OK. Changed workspace files pass lint; full-project lint still reports existing issues outside this scope and generated registry formatting.
+
 ## Parallel Study Workspace — October 11
 - [x] Build the two-pane lecture reader and contextual Wisen AI on /workspace.
 - [x] Add page/zoom controls, selected-passage actions and saved notes access using existing student persistence.
