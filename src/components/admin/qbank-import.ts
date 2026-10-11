@@ -27,7 +27,7 @@ export function parseQuestionJson(raw: string): { questions: DraftQ[]; errors: s
     const answers = [...new Set((Array.isArray(rawAns) ? rawAns : [rawAns]).map(toIndex).filter((n): n is number => n !== null && n >= 0 && n < options.length))].sort();
     if (!stem) { errors.push(`Question ${i + 1}: missing stem.`); return; }
     if (options.length < 2 || options.length > 5) { errors.push(`Question ${i + 1}: needs 2–5 options (A–E).`); return; }
-    if (!answers.length) { errors.push(`Question ${i + 1}: no valid correct option.`);
+    if (!answers.length) { errors.push(`Question ${i + 1}: no valid correct option.`); return; }
     const d = String(q.difficulty ?? "Medium");
     questions.push({ stem, options, answers, explanation: String(q.explanation ?? q.why ?? ""), difficulty: d === "Easy" || d === "Hard" ? d : "Medium" });
   });
