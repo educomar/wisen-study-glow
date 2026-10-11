@@ -33,3 +33,5 @@
 - Kapsules routes reuse Flashcards as one active hub; scheduling is isolated in kapsule-review and curriculum generation passes a validated English override, preserving authorized storage and consistent review behavior across entry points.
 - /qbank is EmdQBank: Past EMDs are transcribed once per student from authorized past_emd files into ai_questions (origin 'past', unit = academic year) and cached; the EMD Simulator reuses generateQuestions and the persisted exam session, with /20 scoring in emd-exam.ts so results stay consistent across entry points.
 - /library is a read-only index over the existing own-row student notes and Kapsules stores; actions deep-link into Sheets, Kapsules and QBank so saved content is never duplicated into a parallel persistence model.
+
+- Workspace studio styles and palette are scoped to workspace and its portals; its copilot composes AI Elements over the existing chat transport, preserving conversation persistence and authorized study actions.
