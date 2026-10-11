@@ -105,7 +105,7 @@ export const commitDriveImport = createServerFn({ method: "POST" })
       for (const r of rows ?? []) existing.add(r.storage_path);
     }
     const need = (name: string, what: string) => { if (!name) throw new Error(`A new ${what} needs a name.`); return name; };
-    const one = async <T,>(p: PromiseLike<{ data: T | null; error: { message: string } | null }>) => { const { data: d, error } = await p; if (error || !d) throw new Error(error?.message ?? "Save failed"); return d; };
+    const one = async (p: PromiseLike<{ data: { id: string } | null; error: { message: string } | null }>) => { const { data: d, error } = await p; if (error || !d) throw new Error(error?.message ?? "Save failed"); return d; };
     const addFiles = async (subject_id: string, unit_id: string, lesson_id: string | null, files: z.infer<typeof fileZ>[]) => {
       const rows = files.filter((f) => !existing.has(`gdrive:${f.driveId}`)).map((f) => {
         existing.add(`gdrive:${f.driveId}`);

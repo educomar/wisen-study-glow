@@ -2,7 +2,8 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { buildTree, cleanName, detectKind, FOLDER, parseFolderId } from "./drive-import";
 
-const f = (id: string, name: string, children?: ReturnType<typeof f>[]) => ({ id, name, mimeType: children ? FOLDER : "application/pdf", size: 1, createdTime: null, children });
+type T = { id: string; name: string; mimeType: string; size: number; createdTime: null; children?: T[] };
+const f = (id: string, name: string, children?: T[]): T => ({ id, name, mimeType: children ? FOLDER : "application/pdf", size: 1, createdTime: null, children });
 
 describe("drive importer", () => {
   it("tags EMD, QCM, Rattrapage and Sujet files as past EMDs", () => {

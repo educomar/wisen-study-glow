@@ -26,6 +26,7 @@ import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as TeamLoginRouteImport } from './routes/team/login'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminDriveImportRouteImport } from './routes/_authenticated/admin/drive-import'
 import { Route as AuthenticatedAdminFilesRouteImport } from './routes/_authenticated/admin/files'
 import { Route as AuthenticatedAdminFlashcardsRouteImport } from './routes/_authenticated/admin/flashcards'
 import { Route as AuthenticatedAdminKbRouteImport } from './routes/_authenticated/admin/kb'
@@ -120,6 +121,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminDriveImportRoute =
+  AuthenticatedAdminDriveImportRouteImport.update({
+    id: '/drive-import',
+    path: '/drive-import',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminFilesRoute = AuthenticatedAdminFilesRouteImport.update({
   id: '/files',
   path: '/files',
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/workspace': typeof WorkspaceRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
+  '/admin/drive-import': typeof AuthenticatedAdminDriveImportRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
   '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
   '/admin/kb': typeof AuthenticatedAdminKbRoute
@@ -211,6 +219,7 @@ export interface FileRoutesByTo {
   '/sheets': typeof SheetsRoute
   '/workspace': typeof WorkspaceRoute
   '/team/login': typeof TeamLoginRoute
+  '/admin/drive-import': typeof AuthenticatedAdminDriveImportRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
   '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
   '/admin/kb': typeof AuthenticatedAdminKbRoute
@@ -240,6 +249,7 @@ export interface FileRoutesById {
   '/workspace': typeof WorkspaceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
+  '/_authenticated/admin/drive-import': typeof AuthenticatedAdminDriveImportRoute
   '/_authenticated/admin/files': typeof AuthenticatedAdminFilesRoute
   '/_authenticated/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
   '/_authenticated/admin/kb': typeof AuthenticatedAdminKbRoute
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/workspace'
     | '/admin'
     | '/team/login'
+    | '/admin/drive-import'
     | '/admin/files'
     | '/admin/flashcards'
     | '/admin/kb'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/sheets'
     | '/workspace'
     | '/team/login'
+    | '/admin/drive-import'
     | '/admin/files'
     | '/admin/flashcards'
     | '/admin/kb'
@@ -323,6 +335,7 @@ export interface FileRouteTypes {
     | '/workspace'
     | '/_authenticated/admin'
     | '/team/login'
+    | '/_authenticated/admin/drive-import'
     | '/_authenticated/admin/files'
     | '/_authenticated/admin/flashcards'
     | '/_authenticated/admin/kb'
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/drive-import': {
+      id: '/_authenticated/admin/drive-import'
+      path: '/drive-import'
+      fullPath: '/admin/drive-import'
+      preLoaderRoute: typeof AuthenticatedAdminDriveImportRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/files': {
       id: '/_authenticated/admin/files'
       path: '/files'
@@ -543,6 +563,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminDriveImportRoute: typeof AuthenticatedAdminDriveImportRoute
   AuthenticatedAdminFilesRoute: typeof AuthenticatedAdminFilesRoute
   AuthenticatedAdminFlashcardsRoute: typeof AuthenticatedAdminFlashcardsRoute
   AuthenticatedAdminKbRoute: typeof AuthenticatedAdminKbRoute
@@ -555,6 +576,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminDriveImportRoute: AuthenticatedAdminDriveImportRoute,
     AuthenticatedAdminFilesRoute: AuthenticatedAdminFilesRoute,
     AuthenticatedAdminFlashcardsRoute: AuthenticatedAdminFlashcardsRoute,
     AuthenticatedAdminKbRoute: AuthenticatedAdminKbRoute,
