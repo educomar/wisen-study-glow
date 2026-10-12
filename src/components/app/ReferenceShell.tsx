@@ -57,6 +57,6 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
     <MedicalBackdrop/>
     <div className="reference-content">{children}</div>
     {location.pathname !== '/app' && <Toaster/>}
-    {user && profile && <ProfileDialog open={editing} onOpenChange={setEditing} user={user} profile={profile} onSaved={setProfile}/>}
+    {user && profile && <ProfileDialog open={editing} onOpenChange={setEditing} user={user} profile={profile} onSaved={p => { const changed = p.department !== profile.department || p.academic_year !== profile.academic_year; setProfile(p); if (changed) window.location.reload(); }}/>}
   </div>;
 }
