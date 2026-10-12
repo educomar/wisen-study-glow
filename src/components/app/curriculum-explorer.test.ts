@@ -14,3 +14,10 @@ describe('academic explorer rules', () => {
   test('Search matches lessons and subjects in real time without accent sensitivity', () => { strictEqual(exploreCurriculum(tree,'embryologie fecondation','all').counts.lessons, 1); strictEqual(exploreCurriculum(tree,'unknown','all').counts.lessons, 0); });
   test('Language-version semester labels retain their semester', () => { strictEqual(unitSemester('S1 — French Version'), '1'); strictEqual(unitSemester('Semestre 2 English'), '2'); });
 });
+test('annual curricula (Year 2) list modules once without semesters', () => {
+  const tree = [{ id: 's', name: 'Système Digestif', units: [{ id: 'u', name: 'Anatomie', lessons: [{ id: 'l', name: 'Foie', files: [] }] }] }] as never;
+  const r = exploreCurriculum(tree, '', 'all');
+  expect(r.semestered).toBe(false);
+  expect(r.groups.map(g => g.semester)).toEqual(['all']);
+  expect(r.counts.modules).toBe(1);
+});
