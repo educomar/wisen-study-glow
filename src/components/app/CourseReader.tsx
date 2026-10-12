@@ -180,6 +180,16 @@ export function CourseReader({
   const [reading, setReading] = useState(parallel);
   const [zoom, setZoom] = useState(100);
   const { tree, signedIn } = useCurriculum();
+  const wantFile = (useSearch({ strict: false }) as { file?: string }).file;
+  const openedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!wantFile || !tree || openedRef.current === wantFile) return;
+    const f = tree.flatMap((s) => s.units.flatMap((u) => u.lessons.flatMap((l) => l.files))).find((x) => x.id === wantFile);
+    if (!f) return;
+    openedRef.current = wantFile;
+    void openCurriculum(f);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantFile, tree]);
   const readerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
