@@ -33,7 +33,7 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
   const links = [
     { label: 'Dashboard', path: '/dashboard', active: location.pathname === '/dashboard' || (location.pathname === '/app' && !view) },
     { label: 'Roadmap', path: '/roadmap', active: location.pathname === '/roadmap' },
-    { label: 'Workspace', path: '/workspace', active: location.pathname === '/workspace' || location.pathname === '/sheets' },
+    { label: 'Workspace', path: '/workspace', active: location.pathname === '/workspace' },
     { label: 'Kapsules', path: '/flashcards', active: location.pathname === '/flashcards' },
     { label: 'QBank', path: '/qbank', active: location.pathname === '/qbank' },
     { label: 'Library', path: '/library', active: location.pathname === '/library' },
