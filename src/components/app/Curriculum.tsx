@@ -49,9 +49,19 @@ export async function fetchCurriculumFile(f: CurFile): Promise<File> {
   // Some Drive files have no extension or a wrong MIME; detect PDFs by their magic bytes.
   const head = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
   const isPdf = type === "application/pdf" || String.fromCharCode(...head) === "%PDF-";
-  if (!isPdf) throw new Error("This file isn't a PDF, so it can't open in the reader yet.");
-  const name = /\.pdf$/i.test(f.file_name) ? f.file_name : `${f.file_name}.pdf`;
-  return new File([blob], name, { type: "application/pdf" });
+  if (isPdf) return new File([blob], /\.pdf$/i.test(f.file_name) ? f.file_name : `${f.file_name}.pdf`, { type: "application/pdf" });
+  const ext = type.includes("wordprocessingml") ? ".docx" : type.includes("presentationml") ? ".pptx" : "";
+  const name = ext && !f.file_name.toLowerCase().endsWith(ext) ? `${f.file_name}${ext}` : f.file_name;
+  return new File([blob], name, { type });
+}
+
+/** Save a curriculum file to the student's device in its original format. */
+export async function downloadCurriculumFile(f: CurFile) {
+  const file = await fetchCurriculumFile(f);
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url; a.download = file.name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tree: Tree | null; signedIn: boolean; activeTitle: string; onOpen: (f: CurFile) => void }) {
