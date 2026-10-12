@@ -7,6 +7,7 @@ import { askWisen } from "./wisen.functions";
 let level: WisenRequest["level"];
 /** Set by the signed-in session so every Wisen AI request is pitched at the student's department and year. */
 export function setAiLevel(l: WisenRequest["level"]) { level = l; }
+export const currentLevel = () => level;
 
 export type RemoteConfig = { baseUrl: string; apiKey: string; models: Partial<Record<ModelKey, string>> };
 const KEY = "wisen-ai-remote";

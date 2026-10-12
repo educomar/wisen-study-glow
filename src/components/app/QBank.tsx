@@ -1,3 +1,4 @@
+import { currentLevel } from "@/lib/ai/client";
 import { Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, FileText, Layers, ListChecks, Loader2, RotateCcw, Sparkles as Wand, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,7 +16,9 @@ import { remoteQuestions } from "./remote";
 import { addCard, getState, log, recordQuestion, setTab, toggle, update, useAppState, type AppState, type QSession } from "./store";
 import { Button } from "@/components/ui/button";
 
-export const allQuestions = (s: AppState) => [...questions, ...s.customQuestions, ...remoteQuestions(), ...aiQuestions()];
+/** Built-in sample questions are Year 1 Medicine content, so only Year 1 Medicine students get them. */
+const staticForLevel = () => { const l = currentLevel(); return l && l.department === 'Medicine' && l.year === 1 ? questions : []; };
+export const allQuestions = (s: AppState) => [...staticForLevel(), ...s.customQuestions, ...remoteQuestions(), ...aiQuestions()];
 const letters = (q: Question) => q.options.map((_, k) => k).filter((k) => isCorrectOption(q, k)).map((k) => String.fromCharCode(65 + k)).join(", ");
 
 const sel = "h-11 min-w-0 w-full rounded-md border border-input bg-card px-3 text-base outline-none focus:border-primary";
