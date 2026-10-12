@@ -290,6 +290,7 @@ export type Database = {
           faculty: string
           full_name: string
           id: string
+          language: string
           onboarded: boolean
           updated_at: string
         }
@@ -301,6 +302,7 @@ export type Database = {
           faculty?: string
           full_name?: string
           id: string
+          language?: string
           onboarded?: boolean
           updated_at?: string
         }
@@ -312,6 +314,7 @@ export type Database = {
           faculty?: string
           full_name?: string
           id?: string
+          language?: string
           onboarded?: boolean
           updated_at?: string
         }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Logo } from "@/components/site/Logo";
 import { useTheme } from "@/components/site/theme";
 import { Button } from "@/components/ui/button";
+import { LangSwitch, useLang } from "@/lib/i18n";
 
 const links = [
   { label: "How it works", href: "#how-it-works" },
@@ -13,6 +14,7 @@ const links = [
 
 export function Navbar() {
   const { dark, toggle } = useTheme();
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
 
   return (
@@ -25,12 +27,13 @@ export function Navbar() {
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
           {links.map((link) => (
             <a key={link.href} href={link.href} className="transition-colors hover:text-foreground">
-              {link.label}
+              {t(link.label)}
             </a>
           ))}
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <LangSwitch />
           <Button
             variant="ghost"
             size="icon"
@@ -41,11 +44,11 @@ export function Navbar() {
             {dark ? <Sun /> : <Moon />}
           </Button>
           <Button asChild variant="ghost" className="hidden h-10 px-4 sm:inline-flex">
-            <a href="/login">Log in</a>
+            <a href="/login">{t("Log in")}</a>
           </Button>
           <Button asChild className="hidden h-10 rounded-md px-5 shadow-lg shadow-primary/15 sm:inline-flex">
             <a href="/register">
-              Get started <ArrowRight />
+              {t("Get started")} <ArrowRight />
             </a>
           </Button>
           <Button
@@ -71,15 +74,15 @@ export function Navbar() {
                 onClick={() => setOpen(false)}
                 className="py-1 text-muted-foreground transition-colors hover:text-foreground"
               >
-                {link.label}
+                {t(link.label)}
               </a>
             ))}
             <a href="/login" onClick={() => setOpen(false)} className="py-1">
-              Log in
+              {t("Log in")}
             </a>
             <Button asChild className="mt-2 h-11 w-full rounded-md">
               <a href="/register" onClick={() => setOpen(false)}>
-                Get started <ArrowRight />
+                {t("Get started")} <ArrowRight />
               </a>
             </Button>
           </nav>

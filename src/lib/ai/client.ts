@@ -3,6 +3,7 @@ import { respond, rankPages, type AiMsg, type DocPage, type Mcq } from "@/compon
 import { prepare, type WisenRequest } from "./prompt";
 import { MODELS, type ModelKey } from "./router";
 import { askWisen } from "./wisen.functions";
+import { getLang } from "@/lib/i18n";
 
 let level: WisenRequest["level"];
 /** Set by the signed-in session so every Wisen AI request is pitched at the student's department and year. */
@@ -59,7 +60,7 @@ function toMsg(raw: string, fallbackCite: number): Pick<AiMsg, "text" | "mcq" | 
 
 export async function askWisenAI(p: { action: string; message: string; subject: string; title: string; page: number; pages: DocPage[]; history: WisenRequest["history"]; image?: string; attachment?: { name: string; text: string } }): Promise<AiMsg> {
   const excerpts = rankPages(p.message, p.pages, p.page).map((pg) => ({ page: pg.pageNumber, text: pg.text.replace(/\s+/g, " ").slice(0, 2400) }));
-  const req: WisenRequest = { message: p.message, action: p.action, subject: p.subject, title: p.title, page: p.page, excerpts, history: p.history.slice(-10), image: p.image, level };
+  const req: WisenRequest = { message: p.message, action: p.action, subject: p.subject, title: p.title, page: p.page, excerpts, history: p.history.slice(-10), image: p.image, level, outputLanguage: getLang() === "fr" ? "french" : "english" };
   const { route, kb, system, user } = prepare(req);
   const pageCite = p.action === "Ask" && kb.length && !route.medical ? undefined : p.page;
   const sources = kb.map((c) => c.source).filter((s, i, a) => a.indexOf(s) === i);

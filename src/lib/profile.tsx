@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { setAiLevel } from "@/lib/ai/client";
+import { setLang } from "@/lib/i18n";
 
 export type Department = "Medicine" | "Dentistry";
 export type Exam = "EMD1" | "EMD2";
@@ -14,6 +15,7 @@ export type Profile = {
   academic_year: number;
   current_target_exam: Exam;
   onboarded: boolean;
+  language?: "en" | "fr";
 };
 
 export const FACULTIES = ["Faculty of Medicine — Sétif 1"];
@@ -66,6 +68,7 @@ export function useSession() {
     return () => sub.subscription.unsubscribe();
   }, [load]);
 
+  useEffect(() => { if (profile?.language === "en" || profile?.language === "fr") setLang(profile.language, false); }, [profile]);
   useEffect(() => { setAiLevel(profile ? { department: profile.department, year: profile.academic_year } : undefined); }, [profile]);
 
   return { user, profile, setProfile, loading };
