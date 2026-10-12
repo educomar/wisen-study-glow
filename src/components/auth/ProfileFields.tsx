@@ -5,7 +5,20 @@ export const DEFAULTS: Fields = { faculty: FACULTIES[0]!, department: "Medicine"
 
 const chip = (on: boolean) => `rounded-md border px-3 py-2 text-sm transition ${on ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`;
 
-export function ProfileFields({ v, onChange }: { v: Fields; onChange: (v: Fields) => void }) {
+export function ProfileFields({ v, onChange, locked = false }: { v: Fields; onChange: (v: Fields) => void; locked?: boolean }) {
+  if (locked) return (
+    <div className="space-y-5">
+      <div><span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Enrolled level</span>
+        <p className="rounded-md border border-border bg-muted/40 px-3 py-2.5 text-sm">{v.faculty} · {v.department} Department · {ordinal(v.academic_year)}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">Your department and academic year are fixed once you enrol.</p></div>
+      <div>
+        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Currently preparing for</span>
+        <div className="grid grid-cols-2 gap-2">
+          {(["EMD1", "EMD2"] as Exam[]).map((x) => <button type="button" key={x} className={chip(v.current_target_exam === x)} onClick={() => onChange({ ...v, current_target_exam: x })}>{x}</button>)}
+        </div>
+      </div>
+    </div>
+  );
   return (
     <div className="space-y-5">
       <label className="block">

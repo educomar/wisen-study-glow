@@ -64,6 +64,13 @@
       "when": 1791806529528,
       "tag": "0008_year2_orphan_files_lessons",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791808575047,
+      "tag": "0009_lock_enrolled_level",
+      "breakpoints": true
     }
   ]
 }
