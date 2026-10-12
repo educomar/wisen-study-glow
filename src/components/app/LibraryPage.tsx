@@ -3,8 +3,7 @@ import { ArrowRight, BookOpen, Download, FileText, Layers, Play, Search, Sparkle
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAi } from './ai-store';
-import { groupLibraryDecks, parseLibrarySheets } from './library-data';
-import { readableSheet, englishSheetLabel } from './sheet-content';
+import { groupLibraryDecks } from './library-data';
 import { useAppState } from './store';
 
 type LibraryTab = 'all' | 'decks' | 'sheets';
@@ -17,24 +16,10 @@ export function LibraryPage() {
   const [query, setQuery] = useState('');
   const now = Date.now();
   const decks = useMemo(() => groupLibraryDecks([...state.customCards, ...ai.cards], state.cards, now), [state.customCards, state.cards, ai.cards, now]);
-  const sheets = useMemo(() => parseLibrarySheets(state.notes), [state.notes]);
-  const needle = query.trim().toLowerCase();
-  const shownDecks = decks.filter(deck => !needle || `${deck.name} ${deck.module} ${deck.cards.map(card => `${card.front} ${card.back} ${card.source ?? ''}`).join(' ')}`.toLowerCase().includes(needle));
-  const shownSheets = sheets.filter(item => !needle || `${item.sheet.topic} ${item.sheet.subject} ${item.preview}`.toLowerCase().includes(needle));
   const showDecks = tab !== 'sheets';
-  
-  const exportSheet = (item: (typeof sheets)[number]) => {
-    const blob = new Blob([readableSheet(item.sheet)], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${item.sheet.topic.replace(/[^a-z0-9]+/gi, '-')}.txt`;
-    anchor.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
 
   return <main className="library-page">
-    <header className="library-heading"><span className="library-kicker">LIBRARY · EVERYTHING YOU&apos;VE CREATED</span><h1>Your saved sheets and decks.</h1><p>Every study sheet you kept and every Kapsule deck you built, in one place — search, reopen, or drill them again.</p></header>
+    <header className="library-heading"><span className="library-kicker">LIBRARY · EVERYTHING YOU&apos;VE CREATED</span><h1>Your saved Kapsule decks.</h1><p>Every Kapsule deck you built, in one place — search, reopen, or drill them again.</p></header>
     <section className="library-controls" aria-label="Library controls">
       <div className="library-tabs" role="tablist" aria-label="Library content type">
         <Button role="tab" variant="ghost" aria-selected={tab === 'all'} className={tab === 'all' ? 'is-active' : ''} onClick={() => setTab('all')}>All</Button>
@@ -52,5 +37,5 @@ export function LibraryPage() {
 
 function EmptyState({ kind, filtered }: { kind: 'decks' | 'sheets'; filtered: boolean }) {
   const decks = kind === 'decks';
-  return <div className="library-empty"><span>{decks ? <Layers/> : <FileText/>}</span><h3>{filtered ? `No matching ${kind}` : decks ? 'No Kapsule decks yet.' : 'No saved study sheets yet.'}</h3><p>{filtered ? 'Try another title, keyword, or module.' : decks ? 'Build your first active-recall deck from a lecture or add a card yourself.' : 'Turn a faculty lecture into a structured sheet you can revisit here.'}</p>{!filtered && <Button asChild>{decks ? <Link to="/flashcards" search={{deck:''}}>Create your first deck<ArrowRight/></Link> : <Link to="/sheets" search={{sheet:''}}>Generate your first sheet<ArrowRight/></Link>}</Button>}</div>;
+  return <div className="library-empty"><span>{decks ? <Layers/> : <FileText/>}</span><h3>{filtered ? `No matching ${kind}` : decks ? 'No Kapsule decks yet.' : 'No saved study sheets yet.'}</h3><p>{filtered ? 'Try another title, keyword, or module.' : decks ? 'Build your first active-recall deck from a lecture or add a card yourself.' : 'Turn a faculty lecture into a structured sheet you can revisit here.'}</p>{!filtered && <Button asChild>{decks ? <Link to="/flashcards" search={{deck:''}}>Create your first deck<ArrowRight/></Link> : <Link to="/workspace" search={{sheet:''}}>Open Workspace<ArrowRight/></Link>}</Button>}</div>;
 }
