@@ -16,6 +16,8 @@ export function LibraryPage() {
   const [query, setQuery] = useState('');
   const now = Date.now();
   const decks = useMemo(() => groupLibraryDecks([...state.customCards, ...ai.cards], state.cards, now), [state.customCards, state.cards, ai.cards, now]);
+  const needle = query.trim().toLowerCase();
+  const shownDecks = decks.filter(deck => !needle || `${deck.name} ${deck.module} ${deck.cards.map(card => `${card.front} ${card.back} ${card.source ?? ''}`).join(' ')}`.toLowerCase().includes(needle));
   const showDecks = tab !== 'sheets';
 
   return <main className="library-page">
