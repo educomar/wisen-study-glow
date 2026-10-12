@@ -71,6 +71,13 @@
       "when": 1791808575047,
       "tag": "0009_lock_enrolled_level",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791813648376,
+      "tag": "0010_profile_language",
+      "breakpoints": true
     }
   ]
 }
