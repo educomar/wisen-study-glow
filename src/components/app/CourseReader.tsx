@@ -20,7 +20,6 @@ import {
   ZoomOut,
   ScanLine,
   ChevronDown,
-  Download,
 } from "lucide-react";
 import { CurriculumBrowser, downloadCurriculumFile, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
@@ -30,7 +29,6 @@ import { ask, pushMsgs } from "./chat";
 import { lecture, type Slide } from "./data";
 import {
   clearJump,
-  downloadActiveDoc,
   sampleDoc,
   setDoc,
   setPage,
@@ -447,18 +445,6 @@ export function CourseReader({
           <FileUp />
           {!parallel && "Upload file"}
         </Button>
-        {!isSample && (
-          <Button
-            size={parallel ? "icon" : "sm"}
-            variant="ghost"
-            aria-label="Download original file"
-            title="Download original file"
-            onClick={() => void downloadActiveDoc().then((ok) => { if (!ok) toast.error("The original file isn't available to download."); })}
-          >
-            <Download />
-            {!parallel && "Download"}
-          </Button>
-        )}
       </div>
       {parallel && (
         <Sheet open={showCourses} onOpenChange={setShowCourses}>

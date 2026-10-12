@@ -1,4 +1,4 @@
-import { ChevronRight, Download, FileText, Library, Loader2 } from "lucide-react";
+import { ChevronRight, FileText, Library, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -91,7 +91,6 @@ export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tre
               <button onClick={() => onOpen(f)} className={`flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${activeTitle === f.file_name.replace(/\.(pdf|docx|pptx)$/i, "") ? "bg-primary/10 text-primary" : ""}`}>
                 <FileText className="size-3.5 shrink-0 text-primary" /><span className="truncate">{f.file_name}</span>
               </button>
-              <button aria-label={`Download ${f.file_name}`} title="Download" onClick={() => void downloadCurriculumFile(f).catch(() => undefined)} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"><Download className="size-3.5" /></button>
             </div>
           )) : <p className="px-1 text-xs text-muted-foreground">No file yet</p>}
         </div>
