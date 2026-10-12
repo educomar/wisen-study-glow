@@ -11,12 +11,20 @@ export type WisenRequest = {
   history: { role: "user" | "assistant"; text: string }[];
   image?: string | undefined;
   outputLanguage?: 'english' | undefined;
+  level?: { department: 'Medicine' | 'Dentistry'; year: number } | undefined;
 };
+
+const ord = (n: number) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
+/** Student audience phrase, e.g. "2nd-year Medicine students"; generic when the level is unknown. */
+export function audience(level?: WisenRequest['level']) {
+  return level ? `${ord(level.year)}-year ${level.department} students` : 'medical and dental students';
+}
+const faculty = (level?: WisenRequest['level']) => level?.department === 'Dentistry' ? 'Faculté de Médecine (Département de Médecine Dentaire)' : 'Faculté de Médecine';
 
 const LANG_RULE: Record<Lang, string> = {
   darija: "Reply in Algerian Darija written in Arabic script, the way Sétif students talk. Keep medical terms in French/English (e.g. potentiel d'action, notochord) as students use them.",
   arabic: "Reply in Modern Standard Arabic. Keep key medical terms in French/English in parentheses.",
-  french: "Réponds en français, niveau étudiant de 1ère année médecine.",
+  french: "Réponds en français, au niveau de l'étudiant.",
   english: "Reply in English. Add the French term in parentheses for key medical terms when helpful.",
 };
 const EXP_PHRASE: Record<Lang, string> = {
@@ -43,13 +51,13 @@ export function prepare(req: WisenRequest): { route: Route; kb: KbChunk[]; syste
   const m = MODELS[route.primary];
   const mcq = req.action === "Quiz me" || req.action === "Generate EMD Question";
   const system = [
-    `You are Wisen AI, the study companion of 1st-year medical students at the Faculté de Médecine, Université Ferhat Abbas Sétif 1 (UFAS1). You are one unified assistant; never mention model names, routing or technical details.`,
-    `Active expertise profile: ${m.profile}`,
+    `You are Wisen AI, the study companion of ${audience(req.level)} at the ${faculty(req.level)}, Université Ferhat Abbas Sétif 1 (UFAS1). You are one unified assistant; never mention model names, routing or technical details.`,
+    `Active expertise profile: ${m.profile} Pitch depth, vocabulary and examples at the level of ${audience(req.level)}; build on what earlier years already covered.`,
     req.outputLanguage === 'english'
       ? 'Language: Respond exclusively in English, regardless of the topic, source material or student language. Translate all medical terms, headings, tags, mnemonics, questions and answers into English. Do not add French translations in parentheses. Preserve proper names and source identifiers only.'
       : `Language: ${LANG_RULE[route.lang]} Understand Arabic, Algerian Darija (Arabic script or Latin/Arabizi like "wach", "kifach", "3lach"), French and English.`,
     `Rules:
-- Ground answers in the course excerpts and UFAS1 knowledge below when relevant; otherwise use sound, standard medical knowledge for a 1st-year student.
+- Ground answers in the course excerpts and UFAS1 knowledge below when relevant; otherwise use sound, standard medical knowledge pitched for ${audience(req.level)}.
 - UFAS1 excerpts are labelled [academic] or [student_experience]. Anything from [student_experience] MUST be introduced with "${EXP_PHRASE[route.lang]}" and never presented as an official faculty rule.
 - ${KB_RULES.exam_prediction_rule} Never claim a specific teacher will ask a specific question.
 - If UFAS1-specific information is missing, say (in the reply language): "${KB_RULES.missing_information_response}" Never invent teachers, dates, coefficients or rules. Mention that dates/coefficients should be checked against official faculty announcements when you give them.
