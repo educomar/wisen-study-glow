@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { CurriculumBrowser, downloadCurriculumFile, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
+import { useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { ask, pushMsgs } from "./chat";

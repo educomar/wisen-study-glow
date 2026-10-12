@@ -30,19 +30,11 @@ function Roadmap() {
   const [error, setError] = useState('');
   const { groups, counts } = exploreCurriculum(tree ?? [], query, semester);
   const toggle = (key: string) => setExpanded(previous => { const next = new Set(previous); if (next.has(key)) next.delete(key); else next.add(key); return next; });
-  async function openMaterial(file: CurFile) {
-    setOpening(file.id); setError('');
-    try {
-      const result = await uploadPdf(await fetchCurriculumFile(file), file.subject, () => undefined);
-      if (result.error) throw new Error(result.error);
-      await navigate({ to: '/app', search: { view: 'courses' } });
-      openPage(1);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Could not open this lecture. Please try again.'); }
-    finally { setOpening(null); }
+  function openMaterial(file: CurFile) {
+    void navigate({ to: '/workspace', search: { sheet: '', file: file.id } });
   }
-  function practice(subject: string, lesson: string) {
-    update(s => ({ ...s, qbank: { subject, lesson, difficulty: 'All', order: [], i: 0, answers: {}, startedAt: Date.now() } }));
-    void navigate({ to: '/qbank' });
+  function practice(s: string, u: string, l: string) {
+    void navigate({ to: '/qbank', search: { s, u, l } });
   }
   return <main className="reference-page curriculum-page">
     <header className="tool-page-heading"><span className="tool-kicker">ACADEMIC CURRICULUM</span><h1>Roadmap</h1></header>
