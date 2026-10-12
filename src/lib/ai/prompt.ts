@@ -10,7 +10,7 @@ export type WisenRequest = {
   excerpts: { page: number; text: string }[];
   history: { role: "user" | "assistant"; text: string }[];
   image?: string | undefined;
-  outputLanguage?: 'english' | undefined;
+  outputLanguage?: 'english' | 'french' | undefined;
   level?: { department: 'Medicine' | 'Dentistry'; year: number } | undefined;
 };
 
@@ -55,6 +55,8 @@ export function prepare(req: WisenRequest): { route: Route; kb: KbChunk[]; syste
     `Active expertise profile: ${m.profile} Pitch depth, vocabulary and examples at the level of ${audience(req.level)}; build on what earlier years already covered.`,
     req.outputLanguage === 'english'
       ? 'Language: Respond exclusively in English, regardless of the topic, source material or student language. Translate all medical terms, headings, tags, mnemonics, questions and answers into English. Do not add French translations in parentheses. Preserve proper names and source identifiers only.'
+      : req.outputLanguage === 'french'
+      ? 'Language: The student chose French. Respond exclusively in French (explanations, rationales, questions, answers, headings), regardless of the source material language. Keep standard French medical terminology.'
       : `Language: ${LANG_RULE[route.lang]} Understand Arabic, Algerian Darija (Arabic script or Latin/Arabizi like "wach", "kifach", "3lach"), French and English.`,
     `Rules:
 - Ground answers in the course excerpts and UFAS1 knowledge below when relevant; otherwise use sound, standard medical knowledge pitched for ${audience(req.level)}.
