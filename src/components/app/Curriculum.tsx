@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, Library, Loader2 } from "lucide-react";
+import { ChevronRight, Download, FileText, Library, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -49,9 +49,19 @@ export async function fetchCurriculumFile(f: CurFile): Promise<File> {
   // Some Drive files have no extension or a wrong MIME; detect PDFs by their magic bytes.
   const head = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
   const isPdf = type === "application/pdf" || String.fromCharCode(...head) === "%PDF-";
-  if (!isPdf) throw new Error("This file isn't a PDF, so it can't open in the reader yet.");
-  const name = /\.pdf$/i.test(f.file_name) ? f.file_name : `${f.file_name}.pdf`;
-  return new File([blob], name, { type: "application/pdf" });
+  if (isPdf) return new File([blob], /\.pdf$/i.test(f.file_name) ? f.file_name : `${f.file_name}.pdf`, { type: "application/pdf" });
+  const ext = type.includes("wordprocessingml") ? ".docx" : type.includes("presentationml") ? ".pptx" : "";
+  const name = ext && !f.file_name.toLowerCase().endsWith(ext) ? `${f.file_name}${ext}` : f.file_name;
+  return new File([blob], name, { type });
+}
+
+/** Save a curriculum file to the student's device in its original format. */
+export async function downloadCurriculumFile(f: CurFile) {
+  const file = await fetchCurriculumFile(f);
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url; a.download = file.name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tree: Tree | null; signedIn: boolean; activeTitle: string; onOpen: (f: CurFile) => void }) {
@@ -77,9 +87,12 @@ export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tre
         <div key={les.id} className="rounded-md border border-border p-2">
           <p className="px-1 text-sm font-medium">{les.name}</p>
           {les.files.length ? les.files.map((f) => (
-            <button key={f.id} onClick={() => onOpen(f)} className={`mt-1 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${activeTitle === f.file_name.replace(/\.pdf$/i, "") ? "bg-primary/10 text-primary" : ""}`}>
-              <FileText className="size-3.5 shrink-0 text-primary" /><span className="truncate">{f.file_name}</span>
-            </button>
+            <div key={f.id} className="mt-1 flex items-center gap-1">
+              <button onClick={() => onOpen(f)} className={`flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${activeTitle === f.file_name.replace(/\.(pdf|docx|pptx)$/i, "") ? "bg-primary/10 text-primary" : ""}`}>
+                <FileText className="size-3.5 shrink-0 text-primary" /><span className="truncate">{f.file_name}</span>
+              </button>
+              <button aria-label={`Download ${f.file_name}`} title="Download" onClick={() => void downloadCurriculumFile(f).catch(() => undefined)} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"><Download className="size-3.5" /></button>
+            </div>
           )) : <p className="px-1 text-xs text-muted-foreground">No file yet</p>}
         </div>
       ))}

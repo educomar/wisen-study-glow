@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import type { CurFile } from "./Curriculum";
 import { fetchCurriculumFile } from "./Curriculum";
+import { officeKind, officeText } from "./office";
 import type { Card, Question } from "./data";
 import { loadPdfLib } from "./PdfPage";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,13 +54,16 @@ export function useAi() {
 
 /** Download course files and extract their text for Wisen AI (PDF only; other formats are skipped). */
 export async function extractMaterial(files: CurFile[], maxFiles = 8, onProgress?: (done: number, total: number) => void) {
-  const pick = files.filter((f) => /\.pdf$/i.test(f.file_name) || !/\.(pptx?|docx?|xlsx?|jpe?g|png)$/i.test(f.file_name)).slice(0, maxFiles);
+  const pick = files.filter((f) => /\.pdf$/i.test(f.file_name) || !/\.(ppt|doc|xlsx?|jpe?g|png)$/i.test(f.file_name)).slice(0, maxFiles);
   const out: { name: string; text: string }[] = [];
   const lib = await loadPdfLib();
   for (let i = 0; i < pick.length; i++) {
     onProgress?.(i, pick.length);
     try {
       const file = await fetchCurriculumFile(pick[i]!);
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const kind = officeKind(file.name, bytes);
+      if (kind) { const text = await officeText(kind, bytes); if (text.trim().length > 50) out.push({ name: pick[i]!.file_name, text }); continue; }
       const pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
       let text = "";
       for (let n = 1; n <= pdf.numPages && text.length < 55000; n++) {
@@ -74,6 +78,9 @@ export async function extractMaterial(files: CurFile[], maxFiles = 8, onProgress
 }
 
 export async function fileText(f: File) {
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  const kind = officeKind(f.name, bytes);
+  if (kind) return officeText(kind, bytes, 38000);
   const lib = await loadPdfLib();
   const pdf = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
   let text = "";

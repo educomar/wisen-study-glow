@@ -4,9 +4,21 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 import { lecture } from "./data";
 import type { DocPage } from "./grounded";
 import { loadPdfLib } from "./PdfPage";
+import { officeKind, readOffice, sniffOffice, type OfficeKind } from "./office";
 import { log, setTab } from "./store";
 
-export type Doc = { id: string; subject: string; title: string; pages: DocPage[]; pdf?: PDFDocumentProxy; sample?: boolean };
+export type Doc = { id: string; subject: string; title: string; pages: DocPage[]; pdf?: PDFDocumentProxy; sample?: boolean; office?: { kind: OfficeKind; html: Record<number, string> }; fileName?: string };
+
+/** Download the original bytes of the active document, whatever its format. */
+export async function downloadActiveDoc() {
+  const saved = await get<{ doc: Omit<Doc, "pdf">; bytes: Uint8Array; type?: string }>("active").catch(() => undefined);
+  if (!saved || saved.doc.id !== st.doc.id) return false;
+  const url = URL.createObjectURL(new Blob([saved.bytes.slice()], { type: saved.type ?? "application/octet-stream" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = st.doc.fileName ?? st.doc.title; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
 export type Stage = { i: number; done: number; total: number; name: string };
 
 export const sampleDoc: Doc = {
@@ -55,6 +67,7 @@ async function restore() {
   try {
     const saved = await get<{ doc: Omit<Doc, "pdf">; bytes: Uint8Array }>("active");
     if (!saved || saved.doc.id !== meta.id) return;
+    if (saved.doc.office) return emit({ doc: { ...saved.doc, subject: meta.subject }, page: meta.page, jump: meta.page });
     const pdf = await (await loadPdfLib()).getDocument({ data: saved.bytes.slice() }).promise;
     emit({ doc: { ...saved.doc, subject: meta.subject, pdf }, page: meta.page, jump: meta.page });
   } catch { /* keep sample */ } finally { emit({ restoring: false }); }
@@ -76,11 +89,31 @@ export function jumpToPage(page: number) { if (st.doc.pages.some(p => p.pageNumb
 /** Open a cited page in the standalone course reader. */
 export function openPage(page: number) { setTab("courses"); emit({ jump: page }); }
 
-/** Validate, parse and index a PDF, then make it the active document shared by every tool. */
+async function openOffice(f: File, buf: Uint8Array, kind: OfficeKind, subject: string, onStage: (s: Stage | null) => void) {
+  const name = f.name.replace(/\.(docx|pptx)$/i, "");
+  onStage({ i: 0, done: 0, total: 0, name });
+  try {
+    const parsed = await readOffice(kind, buf);
+    if (!parsed.length) return { error: "This file has no readable pages." };
+    onStage({ i: 1, done: parsed.length, total: parsed.length, name });
+    const doc: Doc = { id: `d${Date.now()}`, subject, title: name, fileName: f.name, pages: parsed.map(({ pageNumber, text }) => ({ pageNumber, text })), office: { kind, html: Object.fromEntries(parsed.map((p) => [p.pageNumber, p.html])) } };
+    await put("active", { doc, bytes: buf, type: f.type }).catch(() => undefined);
+    onStage({ i: 2, done: parsed.length, total: parsed.length, name });
+    setDoc(doc);
+    log(`Opened ${subject} course · ${name} (${parsed.length} ${kind === "pptx" ? "slides" : "pages"})`);
+    return parsed.some((p) => p.text.trim()) ? {} : { warning: "No text found in this file — Wisen AI can't cite it yet." };
+  } catch {
+    return { error: "We couldn't read this file. It may be corrupted or in an older format (.doc / .ppt)." };
+  } finally { onStage(null); }
+}
+
+/** Validate, parse and index a PDF, Word or PowerPoint file, then make it the active document shared by every tool. */
 export async function uploadPdf(f: File, subject: string, onStage: (s: Stage | null) => void): Promise<{ error?: string; warning?: string }> {
-  if (!f.name.toLowerCase().endsWith(".pdf") && f.type !== "application/pdf") return { error: `“${f.name}” isn't a PDF. Please upload a .pdf course file.` };
-  if (f.size > 80 * 1024 * 1024) return { error: "This PDF is larger than 80 MB. Please upload a smaller file." };
+  if (f.size > 80 * 1024 * 1024) return { error: "This file is larger than 80 MB. Please upload a smaller file." };
   const buf = new Uint8Array(await f.arrayBuffer());
+  const office = officeKind(f.name, buf) ?? (await sniffOffice(buf).catch(() => null));
+  if (office) return openOffice(f, buf, office, subject, onStage);
+  if (!f.name.toLowerCase().endsWith(".pdf") && f.type !== "application/pdf") return { error: `“${f.name}” can't be opened in the reader. Supported: PDF, Word (.docx) and PowerPoint (.pptx).` };
   if (!(buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46)) return { error: "This file looks corrupted or isn't a real PDF." };
   const name = f.name.replace(/\.pdf$/i, "");
   const bytes = buf.slice();
@@ -94,8 +127,8 @@ export async function uploadPdf(f: File, subject: string, onStage: (s: Stage | n
       onStage({ i: 0, done: n, total: pdf.numPages, name });
     }
     onStage({ i: 1, done: pdf.numPages, total: pdf.numPages, name });
-    const doc: Doc = { id: `d${Date.now()}`, subject, title: name, pages };
-    await put("active", { doc, bytes }).catch(() => undefined);
+    const doc: Doc = { id: `d${Date.now()}`, subject, title: name, fileName: f.name, pages };
+    await put("active", { doc, bytes, type: "application/pdf" }).catch(() => undefined);
     await new Promise((r) => setTimeout(r, 400));
     onStage({ i: 2, done: pdf.numPages, total: pdf.numPages, name });
     await new Promise((r) => setTimeout(r, 350));

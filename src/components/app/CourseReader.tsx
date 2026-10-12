@@ -20,8 +20,9 @@ import {
   ZoomOut,
   ScanLine,
   ChevronDown,
+  Download,
 } from "lucide-react";
-import { CurriculumBrowser, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
+import { CurriculumBrowser, downloadCurriculumFile, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ import { ask, pushMsgs } from "./chat";
 import { lecture, type Slide } from "./data";
 import {
   clearJump,
+  downloadActiveDoc,
   sampleDoc,
   setDoc,
   setPage,
@@ -335,7 +337,7 @@ export function CourseReader({
     setShowCourses(false);
     pushMsgs({
       role: "ai",
-      text: `Now grounded in “${f.name.replace(/\.pdf$/i, "")}” (${subj}). Select any text or ask a question — I'll cite the page.`,
+      text: `Now grounded in “${f.name.replace(/\.(pdf|docx|pptx)$/i, "")}” (${subj}). Select any text or ask a question — I'll cite the page.`,
       cite: 1,
     });
   }
@@ -351,8 +353,11 @@ export function CourseReader({
     } catch (e) {
       setStage(null);
       setErr(
-        `We couldn't open “${f.file_name}”: ${e instanceof Error ? e.message : "please try again in a moment."}`,
+        `We couldn't open “${f.file_name}” in the reader: ${e instanceof Error ? e.message : "please try again in a moment."}`,
       );
+      toast("You can still download the original file.", {
+        action: { label: "Download", onClick: () => void downloadCurriculumFile(f).catch(() => toast.error("Download failed.")) },
+      });
     }
   }
 
@@ -427,21 +432,33 @@ export function CourseReader({
         <input
           ref={fileRef}
           type="file"
-          accept=".pdf,application/pdf"
+          accept=".pdf,.docx,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
           className="hidden"
           onChange={(e) => onFile(e.target.files?.[0])}
         />
         <Button
           size={parallel ? "icon" : "sm"}
           variant="ghost"
-          aria-label="Upload PDF"
-          title="Upload PDF"
+          aria-label="Upload PDF, Word or PowerPoint"
+          title="Upload PDF, Word or PowerPoint"
           onClick={() => fileRef.current?.click()}
           disabled={!!stage}
         >
           <FileUp />
-          {!parallel && "Upload PDF"}
+          {!parallel && "Upload file"}
         </Button>
+        {!isSample && (
+          <Button
+            size={parallel ? "icon" : "sm"}
+            variant="ghost"
+            aria-label="Download original file"
+            title="Download original file"
+            onClick={() => void downloadActiveDoc().then((ok) => { if (!ok) toast.error("The original file isn't available to download."); })}
+          >
+            <Download />
+            {!parallel && "Download"}
+          </Button>
+        )}
       </div>
       {parallel && (
         <Sheet open={showCourses} onOpenChange={setShowCourses}>
@@ -625,7 +642,23 @@ export function CourseReader({
                 ))}
               </div>
             )}
-            {!isSample && pdf ? (
+            {!isSample && doc.office ? (
+              <div className="space-y-5">
+                {(parallel ? doc.pages.filter((p) => p.pageNumber === page) : doc.pages).map((p) => (
+                  <article
+                    key={`${doc.id}-${p.pageNumber}`}
+                    data-page={p.pageNumber}
+                    className="office-page mx-auto rounded-lg border border-border bg-card p-5 sm:p-7"
+                    style={{ maxWidth: width ? Math.round((width * zoom) / 100) : undefined, fontSize: `${zoom}%` }}
+                  >
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {doc.office!.kind === "pptx" ? "Slide" : "Page"} {p.pageNumber}
+                    </p>
+                    <div dangerouslySetInnerHTML={{ __html: doc.office!.html[p.pageNumber] ?? "" }} />
+                  </article>
+                ))}
+              </div>
+            ) : !isSample && pdf ? (
               <div className="space-y-5">
                 {width > 0 &&
                   (parallel ? doc.pages.filter((p) => p.pageNumber === page) : doc.pages).map(
