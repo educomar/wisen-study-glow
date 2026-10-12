@@ -1,7 +1,7 @@
 import { Link, useSearch } from "@tanstack/react-router";
 import { Mistakes } from "./Mistakes";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ClipboardList, FileText, GraduationCap, Layers, Loader2, LogIn, Timer, X } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ClipboardList, FileText, GraduationCap, Layers, Loader2, LogIn, Timer, TriangleAlert, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -368,8 +368,8 @@ export function EmdQBank() {
           <div className="emd-choices">
             <button type="button" className="emd-choice" onClick={() => setView("past")}><FileText /><strong>Past EMDs</strong><span>Previous years' official faculty exams by module and academic year, with instant feedback, explanations and Save as Kapsule.</span><em>Open past EMDs <ArrowRight /></em></button>
             <button type="button" className="emd-choice" onClick={() => setView("sim")}><Timer /><strong>EMD Simulator</strong><span>UFAS1 Simulation in Practice Mode (untimed, explained) or Real Exam (timed QCM grille, debrief out of 20).</span><em>Start a simulation <ArrowRight /></em></button>
-            <button type="button" className="emd-choice" onClick={() => setView("mistakes")}><X /><strong>My Mistakes</strong><span>{mistakes} questions to revisit — retry them quickly and convert them into Kapsules.</span><em>Review mistakes <ArrowRight /></em></button>
-            <button type="button" className="emd-choice" onClick={() => setView("history")}><ClipboardList /><strong>Exam History</strong><span>{app.examHistory.length} completed simulations with scores out of 20.</span><em>Open archive <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("mistakes")}><TriangleAlert /><strong>My Mistakes</strong><span>{mistakes} questions to revisit — retry them quickly and convert them into Kapsules.</span><em>Review mistakes <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("history")}><Archive /><strong>Exam History</strong><span>{app.examHistory.length} completed simulations with scores out of 20.</span><em>Open archive <ArrowRight /></em></button>
           </div>
         </>
       )}
