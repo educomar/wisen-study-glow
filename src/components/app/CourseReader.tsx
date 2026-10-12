@@ -20,7 +20,6 @@ import {
   ZoomOut,
   ScanLine,
   ChevronDown,
-  Download,
 } from "lucide-react";
 import { CurriculumBrowser, downloadCurriculumFile, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
@@ -30,7 +29,6 @@ import { ask, pushMsgs } from "./chat";
 import { lecture, type Slide } from "./data";
 import {
   clearJump,
-  downloadActiveDoc,
   sampleDoc,
   setDoc,
   setPage,
