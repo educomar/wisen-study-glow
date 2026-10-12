@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/site/theme';
 import { Logo } from '@/components/site/Logo';
-import { useSession } from '@/lib/profile';
+import { levelBadge, useSession } from '@/lib/profile';
 import { ProfileDialog } from './ProfileDialog';
 import { studySearch } from './study-navigation';
 import { Toaster } from '@/components/ui/sonner';
@@ -46,6 +46,7 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
           {links.map(item => <Link key={item.label} to={item.path} aria-current={item.active ? 'page' : undefined} onClick={() => setMenu(false)}>{item.label}</Link>)}
         </nav>
         <div className="flex items-center gap-1">
+          {user && profile && <Button variant="outline" size="sm" className="rounded-full font-medium" aria-label={`Change department and year (currently ${levelBadge(profile)})`} title="Change department and year" onClick={() => setEditing(true)}>{levelBadge(profile)}</Button>}
           {user && profile ? <Button variant="ghost" size="icon" aria-label="Profile settings" title="Profile settings" onClick={() => setEditing(true)}><UserRound/></Button> : <Button className="reference-signin" asChild><Link to="/login"><LogIn/>Sign in</Link></Button>}
           <Button variant="ghost" size="icon" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} title={dark ? 'Light mode' : 'Dark mode'} onClick={toggle}>{dark ? <Sun/> : <Moon/>}</Button>
           <Button variant="ghost" size="icon" className="reference-menu" aria-label="Toggle navigation" aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X/> : <Menu/>}</Button>
