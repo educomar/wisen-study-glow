@@ -1,3 +1,4 @@
+import { useLang } from "@/lib/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -91,6 +92,7 @@ const storyEvidence = [
 ];
 
 function Index() {
+  const { t } = useLang();
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="wisen-ambient" aria-hidden="true" />
@@ -101,25 +103,24 @@ function Index() {
         <section className="mx-auto grid max-w-7xl items-center gap-12 px-5 pt-6 pb-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:pt-8 lg:pb-24">
           <div className="max-w-2xl animate-fade-in">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground shadow-sm backdrop-blur">
-              <Landmark className="size-3.5 text-primary" /> Built for Faculty of Medicine · UFA Setif 1
+              <Landmark className="size-3.5 text-primary" /> {t("Built for Faculty of Medicine · UFA Setif 1")}
             </div>
             <h1 className="font-display text-[clamp(2.8rem,6.5vw,6.25rem)] leading-[0.9] text-foreground">
-              <span className="block whitespace-nowrap">Study <em className="text-primary">smarter.</em></span>
-              <span className="block whitespace-nowrap">Score <em className="higher-highlight text-primary">higher.</em></span>
-              <span className="block whitespace-nowrap"><em className="text-primary">Pass.</em></span>
+              <span className="block whitespace-nowrap">{t("Study")} <em className="text-primary">{t("smarter.")}</em></span>
+              <span className="block whitespace-nowrap">{t("Score")} <em className="higher-highlight text-primary">{t("higher.")}</em></span>
+              <span className="block whitespace-nowrap"><em className="text-primary">{t("Pass.")}</em></span>
             </h1>
             <p className="mt-8 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Wisen turns your medical courses into questions, explanations, and focused study — so
-              every study session takes you one step closer to mastery.
+              {t("hero.body")}
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Button asChild size="lg" className="h-12 rounded-md px-7 shadow-lg shadow-primary/15">
                 <a href="/app">
-                  Get started <ArrowRight />
+                  {t("Get started")} <ArrowRight />
                 </a>
               </Button>
               <Button asChild variant="outline" size="lg" className="h-12 rounded-md px-7">
-                <a href="#how-it-works">See how it works</a>
+                <a href="#how-it-works">{t("See how it works")}</a>
               </Button>
             </div>
           </div>
@@ -146,10 +147,10 @@ function Index() {
         <section id="how-it-works" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:py-28">
           <div className="max-w-2xl">
             <h2 className="font-display text-[clamp(2.4rem,4.5vw,4rem)] leading-[0.95]">
-              Four steps to <em className="text-primary">mastery.</em>
+              {t("Four steps to")} <em className="text-primary">{t("mastery.")}</em>
             </h2>
             <p className="mt-5 text-base leading-7 text-muted-foreground">
-              A simple study loop designed to turn medical content into lasting knowledge.
+              {t("steps.body")}
             </p>
           </div>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
