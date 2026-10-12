@@ -22,8 +22,7 @@ export function LibraryPage() {
   const shownDecks = decks.filter(deck => !needle || `${deck.name} ${deck.module} ${deck.cards.map(card => `${card.front} ${card.back} ${card.source ?? ''}`).join(' ')}`.toLowerCase().includes(needle));
   const shownSheets = sheets.filter(item => !needle || `${item.sheet.topic} ${item.sheet.subject} ${item.preview}`.toLowerCase().includes(needle));
   const showDecks = tab !== 'sheets';
-  const showSheets = tab !== 'decks';
-
+  
   const exportSheet = (item: (typeof sheets)[number]) => {
     const blob = new Blob([readableSheet(item.sheet)], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -40,7 +39,6 @@ export function LibraryPage() {
       <div className="library-tabs" role="tablist" aria-label="Library content type">
         <Button role="tab" variant="ghost" aria-selected={tab === 'all'} className={tab === 'all' ? 'is-active' : ''} onClick={() => setTab('all')}>All</Button>
         <Button role="tab" variant="ghost" aria-selected={tab === 'decks'} className={tab === 'decks' ? 'is-active' : ''} onClick={() => setTab('decks')}>Decks <span>{decks.length}</span></Button>
-        <Button role="tab" variant="ghost" aria-selected={tab === 'sheets'} className={tab === 'sheets' ? 'is-active' : ''} onClick={() => setTab('sheets')}>Sheets <span>{sheets.length}</span></Button>
       </div>
       <label className="library-search"><Search/><span className="sr-only">Search your library</span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by title, keyword, or module…"/></label>
     </section>
@@ -49,9 +47,6 @@ export function LibraryPage() {
       {shownDecks.length ? <div className="library-grid library-decks">{shownDecks.map(deck => <article className="library-card library-deck" key={deck.name}><div className="library-card-icon"><Layers/></div><div className="library-card-body"><span className="library-card-type">{deck.module}</span><h3>{deck.name}</h3><div className="library-deck-stats"><span><strong>{deck.cards.length}</strong> cards</span><span><strong>{deck.due}</strong> due</span></div></div><Button onClick={() => void navigate({ to: '/flashcards', search: { deck: deck.name } })}>Study Deck<ArrowRight/></Button></article>)}</div> : <EmptyState filtered={Boolean(needle)} kind="decks"/>}
     </section>}
 
-    {showSheets && <section className="library-section"><div className="library-section-title"><div><span>STUDY SHEETS</span><h2>Your faculty-grounded notes.</h2></div><Button asChild variant="ghost"><Link to="/sheets" search={{sheet:''}}><Sparkles/>Generate sheet</Link></Button></div>
-      {shownSheets.length ? <div className="library-grid library-sheets">{shownSheets.map(item => <article className="library-card library-sheet" key={item.noteId}><div className="library-sheet-top"><span className="library-subject"><BookOpen/>{englishSheetLabel(item.sheet.subject)}</span><time>{new Date(item.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</time></div><h3>{englishSheetLabel(item.sheet.topic)}</h3><p>{item.preview || 'Open this sheet to review its key points, memory hooks, exam traps and Kapsules.'}</p><div className="library-sheet-actions"><Button onClick={() => void navigate({ to: '/sheets', search: { sheet: item.noteId } })}><FileText/>Open Sheet</Button><Button variant="outline" onClick={() => void navigate({ to: '/app', search: { view: 'qbank', subject: item.sheet.subject, lesson: item.sheet.topic } })}><Play/>Practice QBank</Button><Button variant="ghost" onClick={() => exportSheet(item)}><Download/>Export</Button></div></article>)}</div> : <EmptyState filtered={Boolean(needle)} kind="sheets"/>}
-    </section>}
   </main>;
 }
 

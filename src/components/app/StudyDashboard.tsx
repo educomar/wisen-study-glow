@@ -22,7 +22,7 @@ export function StudyDashboard() {
   while (days.has(day.toDateString())) { streak++; day.setDate(day.getDate() - 1); }
   const due = Object.values(state.cards).filter(c => c.status !== 'new' && c.due <= now).length;
   const tools = [
-    { view: '/sheets', title: 'Study Sheet', eyebrow: 'RECOMMENDED STARTING POINT', description: 'Generate a high-yield, exam-ready study sheet from your medical course material.', footer: `${state.notes.filter(n=>n.source==='Study Sheet').length} saved sheets`, icon: FileText },
+    { view: '/workspace', title: 'Workspace', eyebrow: 'RECOMMENDED STARTING POINT', description: 'Read your official lectures beside Wisen AI, and turn passages into notes and Kapsules.', footer: 'Open your lectures', icon: FileText },
     { view: '/flashcards', title: 'Kapsules', eyebrow: 'STUDY TOOL', description: 'Build a spaced-repetition deck from your courses and review until it sticks.', footer: user ? `${due} due today · ${cards.length + state.customCards.length} Kapsules` : 'Sign in to track', icon: Layers },
     { view: '/qbank', title: 'QBank', eyebrow: 'STUDY TOOL', description: 'Practice faculty questions, generate new questions, and prepare for your next EMD.', footer: `${questions} questions this week`, icon: FlaskConical },
     { view: '/roadmap', title: 'Roadmap', eyebrow: 'YOUR CURRICULUM', description: 'Explore your medical subjects and lessons, and keep track of what you have practiced.', footer: 'Explore your curriculum', icon: BookOpen },
@@ -32,7 +32,7 @@ export function StudyDashboard() {
       <div><span className="reference-eyebrow"><span/>Your study space</span><h1>Make today’s study hour <em>count.</em></h1><p>Pick up where you left off, or start with a focused study session.</p></div>
       <div className="reference-session"><span>YOUR SESSION</span><strong>{state.qbank || state.exam.phase === 'run' ? 'Pick up where you left off' : 'Ready when you are'}</strong></div>
     </section>
-    {banner && <div className="reference-banner"><span className="reference-tool-icon"><Sparkles/></span><div><strong>Your next study session starts here</strong><p>Build a focused study sheet from your medical material.</p></div><Button asChild><Link to="/sheets" search={{sheet:''}}>Start studying</Link></Button><Button variant="ghost" size="icon" aria-label="Dismiss study reminder" onClick={() => setBanner(false)}><X/></Button></div>}
+    {banner && <div className="reference-banner"><span className="reference-tool-icon"><Sparkles/></span><div><strong>Your next study session starts here</strong><p>Open a lecture in your Workspace and study it with Wisen AI.</p></div><Button asChild><Link to="/workspace" search={{sheet:''}}>Start studying</Link></Button><Button variant="ghost" size="icon" aria-label="Dismiss study reminder" onClick={() => setBanner(false)}><X/></Button></div>}
     <section className="reference-progress" aria-label="Your progress"><h2>YOUR PROGRESS</h2><div className="reference-metrics">
       <div className="reference-metric"><span className="reference-metric-icon"><FileText/></span><strong>{questions}<span> questions this week</span></strong></div>
       <div className="reference-metric"><span className="reference-metric-icon kapsule"><Layers/></span>{user ? <strong>{reviewed}<span> Kapsules reviewed</span></strong> : <Link to="/login">Sign in to track</Link>}</div>
