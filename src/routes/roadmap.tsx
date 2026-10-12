@@ -42,7 +42,7 @@ function Roadmap() {
   }
   function practice(subject: string, lesson: string) {
     update(s => ({ ...s, qbank: { subject, lesson, difficulty: 'All', order: [], i: 0, answers: {}, startedAt: Date.now() } }));
-    void navigate({ to: '/app', search: { view: 'faculty', subject, lesson } });
+    void navigate({ to: '/qbank' });
   }
   return <main className="reference-page curriculum-page">
     <header className="tool-page-heading"><span className="tool-kicker">ACADEMIC CURRICULUM</span><h1>Roadmap</h1></header>
