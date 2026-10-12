@@ -445,18 +445,6 @@ export function CourseReader({
           <FileUp />
           {!parallel && "Upload file"}
         </Button>
-        {!isSample && (
-          <Button
-            size={parallel ? "icon" : "sm"}
-            variant="ghost"
-            aria-label="Download original file"
-            title="Download original file"
-            onClick={() => void downloadActiveDoc().then((ok) => { if (!ok) toast.error("The original file isn't available to download."); })}
-          >
-            <Download />
-            {!parallel && "Download"}
-          </Button>
-        )}
       </div>
       {parallel && (
         <Sheet open={showCourses} onOpenChange={setShowCourses}>
