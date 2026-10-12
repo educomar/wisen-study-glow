@@ -4,7 +4,7 @@ export type Lang = "darija" | "arabic" | "french" | "english";
 
 export const MODELS: Record<ModelKey, { label: string; remote: string; profile: string }> = {
   qwen: { label: "Qwen3", remote: "qwen/qwen3-235b-a22b", profile: "Multilingual generalist (Arabic, Algerian Darija, French, English). Warm, clear study explanations, translation and rephrasing." },
-  medgemma: { label: "MedGemma 27B", remote: "google/medgemma-27b-it", profile: "Medical specialist for anatomy, physiology, biochemistry, histology, embryology, pathology and pharmacology. Precise terminology and sound biomedical reasoning pitched at a 1st-year student." },
+  medgemma: { label: "MedGemma 27B", remote: "google/medgemma-27b-it", profile: "Medical specialist for anatomy, physiology, biochemistry, histology, embryology, pathology and pharmacology. Precise terminology and sound biomedical reasoning pitched at the student's academic year." },
   gemma27: { label: "Gemma 3 27B", remote: "google/gemma-3-27b-it", profile: "Multimodal analyst. Carefully describe and interpret images, diagrams, charts and tables before explaining them." },
   mistral: { label: "Mistral Small", remote: "mistralai/mistral-small-3.2-24b-instruct", profile: "Structured reasoner for complex, multi-step and comparative questions. Break the problem into clear numbered steps." },
   gemma4: { label: "Gemma 3 4B", remote: "google/gemma-3-4b-it", profile: "Fast responder for simple definitions, short explanations and quick translations. Be brief: 1–4 sentences." },

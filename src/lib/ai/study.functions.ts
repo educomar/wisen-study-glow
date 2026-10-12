@@ -3,6 +3,15 @@ import { z } from "zod";
 
 import { parseJson, wisenComplete } from "./gateway.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { audience } from "./prompt";
+
+type Sb = { from: (t: "profiles") => any };
+/** The caller's own department/year, read server-side under RLS (never trusted from the client). */
+async function studentAudience(sb: Sb, userId: string) {
+  const { data } = await sb.from("profiles").select("department,academic_year").eq("id", userId).maybeSingle();
+  const d = data as { department?: string; academic_year?: number } | null;
+  return audience(d && (d.department === "Medicine" || d.department === "Dentistry") && d.academic_year ? { department: d.department, year: d.academic_year } : undefined);
+}
 
 const material = z.array(z.object({ name: z.string().max(200), text: z.string().max(60000) })).min(1).max(12);
 
@@ -33,7 +42,8 @@ export const generateQuestions = createServerFn({ method: "POST" })
     const typeRule = data.qtype === "SCQ"
       ? "Each question is an SCQ (QCS): exactly ONE correct option among 4–5."
       : "Each question is an MCQ (QCM): 5 options (A–E) with ONE OR MORE correct options (usually 2–3).";
-    const system = `You are Wisen AI, writing ${data.mode === "exam" ? "an original EMD exam simulation" : "practice questions"} for 1st-year medical students at the Faculty of Medicine, Université Ferhat Abbas Sétif 1. ${STRICT} ${typeRule} Difficulty: ${data.difficulty}. ${LANG} ${NOTATION}
+    const who = await studentAudience(context.supabase as unknown as Sb, context.userId);
+    const system = `You are Wisen AI, writing ${data.mode === "exam" ? "an original EMD exam simulation" : "practice questions"} for ${who} at the Faculty of Medicine, Université Ferhat Abbas Sétif 1. Match their exact level. ${STRICT} ${typeRule} Difficulty: ${data.difficulty}. ${LANG} ${NOTATION}
 Return JSON only: {"questions":[{"stem":"...","options":["..."],"answers":[0-based indices of correct options],"explanation":"why the answer(s) are right and the others wrong","source":"file name and page/section if known"}]}`;
     const user = `Write exactly ${data.count} questions on: ${[data.subject, data.unit, data.lesson].filter(Boolean).join(" → ")}.\n\nCOURSE MATERIAL:\n${mat}${past}`;
     if (!total) throw new Error("The selected material has no readable text.");
@@ -58,7 +68,8 @@ export const generateFlashcards = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const per = Math.max(2000, Math.floor(90000 / data.material.length));
     const mat = data.material.map((m) => `### File: ${m.name}\n${m.text.slice(0, per)}`).join("\n\n");
-    const system = `You are Wisen AI, making active-recall Kapsules (active-recall cards) for 1st-year medical students (Faculty of Medicine, Sétif 1). ${STRICT} Cover the most important concepts, definitions, mechanisms, numbers and classic exam traps. Fronts are short questions or cloze prompts; backs are concise (1–3 lines). ${data.outputLanguage === 'English' ? 'Write every front, back and tip in English, even when the source material is in French or another language.' : LANG} ${NOTATION}
+    const who = await studentAudience(context.supabase as unknown as Sb, context.userId);
+    const system = `You are Wisen AI, making active-recall Kapsules (active-recall cards) for ${who} (Faculty of Medicine, Sétif 1), matching their exact level. ${STRICT} Cover the most important concepts, definitions, mechanisms, numbers and classic exam traps. Fronts are short questions or cloze prompts; backs are concise (1–3 lines). ${data.outputLanguage === 'English' ? 'Write every front, back and tip in English, even when the source material is in French or another language.' : LANG} ${NOTATION}
 Return JSON only: {"cards":[{"front":"...","back":"...","tip":"short high-yield tip or source (file/page)"}]}`;
     const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: `Make ${data.count} Kapsules (active-recall cards) for: ${data.scope}\n\nMATERIAL:\n${mat}` }], { json: true });
     if (!r.ok) throw new Error(r.error === "credits" ? "Wisen AI is out of credits right now." : r.error === "busy" ? "Wisen AI is busy — try again in a minute." : "Wisen AI couldn't generate Kapsules. Try again.");

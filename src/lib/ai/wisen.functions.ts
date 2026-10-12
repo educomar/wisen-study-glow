@@ -8,6 +8,7 @@ const schema = z.object({
   message: z.string().min(1).max(6000),
   action: z.string().max(40),
   outputLanguage: z.literal('english').optional(),
+  level: z.object({ department: z.enum(['Medicine', 'Dentistry']), year: z.number().int().min(1).max(7) }).optional(),
   subject: z.string().max(60),
   title: z.string().max(200),
   page: z.number().int(),

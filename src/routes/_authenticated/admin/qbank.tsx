@@ -51,7 +51,7 @@ function QBankAdmin() {
       {pick.l && (
         <div className="mt-6 space-y-3">
           <div className="flex flex-wrap gap-2"><Button onClick={() => setEdit({ v: structuredClone(blank) })}><Plus /> New question</Button><Button variant="outline" onClick={() => setBulk(true)}><FileUp /> Bulk / JSON import</Button></div>
-          {bulk && <QBankImporter lessonId={pick.l} context="UFAS1 1st-year Medicine" onClose={() => setBulk(false)} />}
+          {bulk && <QBankImporter lessonId={pick.l} context="UFAS1 Faculty of Medicine" onClose={() => setBulk(false)} />}
           {edit && (
             <div className="space-y-3 rounded-xl border border-primary/40 bg-card p-4">
               <textarea className={area} rows={3} placeholder="Question stem / vignette" value={edit.v.stem} onChange={(e) => setEdit({ ...edit, v: { ...edit.v, stem: e.target.value } })} />
