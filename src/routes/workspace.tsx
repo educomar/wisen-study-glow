@@ -3,7 +3,7 @@ import { ParallelWorkspace } from '@/components/app/ParallelWorkspace';
 import { studyMeta } from '@/lib/study-meta';
 
 export const Route = createFileRoute('/workspace')({
-  validateSearch: (search: Record<string, unknown>): { sheet: string; file?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { sheet: string; file?: string | undefined } => ({
     sheet: typeof search['sheet'] === 'string' ? search['sheet'] : '',
     file: typeof search['file'] === 'string' ? search['file'] : undefined,
   }),
