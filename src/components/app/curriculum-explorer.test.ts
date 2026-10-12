@@ -17,7 +17,7 @@ describe('academic explorer rules', () => {
 test('annual curricula (Year 2) list modules once without semesters', () => {
   const tree = [{ id: 's', name: 'Système Digestif', units: [{ id: 'u', name: 'Anatomie', lessons: [{ id: 'l', name: 'Foie', files: [] }] }] }] as never;
   const r = exploreCurriculum(tree, '', 'all');
-  expect(r.semestered).toBe(false);
-  expect(r.groups.map(g => g.semester)).toEqual(['all']);
-  expect(r.counts.modules).toBe(1);
+  strictEqual(r.semestered, false);
+  deepStrictEqual(r.groups.map(g => g.semester), ["all"]);
+  strictEqual(r.counts.modules, 1);
 });
