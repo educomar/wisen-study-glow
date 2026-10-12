@@ -952,3 +952,13 @@ button.emd-cell:not(:disabled):hover{transform:scale(1.15);border-color:var(--pr
   font-family: var(--font-display);
   font-weight: 500;
 }
+
+/* Word / PowerPoint pages in the lecture reader */
+.office-page { line-height: 1.65; }
+.office-page h1, .office-page h2, .office-page h3 { font-family: var(--font-display); font-weight: 500; margin: 0.5em 0 0.4em; line-height: 1.2; }
+.office-page h1 { font-size: 1.7em; } .office-page h2 { font-size: 1.4em; } .office-page h3 { font-size: 1.15em; }
+.office-page p { margin: 0.45em 0; }
+.office-page ul, .office-page ol { margin: 0.5em 0 0.5em 1.4em; list-style: revert; }
+.office-page table { width: 100%; border-collapse: collapse; margin: 0.8em 0; font-size: 0.92em; }
+.office-page td, .office-page th { border: 1px solid var(--border); padding: 0.35em 0.5em; vertical-align: top; }
+.office-page img { max-width: 100%; height: auto; margin: 0.8em auto; border-radius: 0.5rem; display: block; }

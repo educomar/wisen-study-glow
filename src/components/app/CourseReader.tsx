@@ -459,8 +459,6 @@ export function CourseReader({
             {!parallel && "Download"}
           </Button>
         )}
-        <Button className="hidden" aria-hidden tabIndex={-1}>
-        </Button>
       </div>
       {parallel && (
         <Sheet open={showCourses} onOpenChange={setShowCourses}>
