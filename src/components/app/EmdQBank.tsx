@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useSearch } from "@tanstack/react-router";
+import { Mistakes } from "./Mistakes";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ClipboardList, FileText, GraduationCap, Layers, Loader2, LogIn, Timer, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -183,9 +184,9 @@ function submitExam() {
 let poolRef: Question[] = [];
 const getPool = () => poolRef;
 
-function Simulator({ onBack }: { onBack: () => void }) {
+function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | null }) {
   const { tree } = useCurriculum();
-  const [sc, setSc] = useState<Scope>(emptyScope);
+  const [sc, setSc] = useState<Scope>(initial ?? emptyScope);
   const [mode, setMode] = useState<"practice" | "real">("practice");
   const [count, setCount] = useState(20);
   const [minutes, setMinutes] = useState(60);
@@ -339,8 +340,11 @@ export function EmdQBank() {
   const { user } = useSession();
   const { qs: ai } = useAi();
   poolRef = ai;
-  const e = useAppState().exam;
-  const [view, setView] = useState<"hub" | "past" | "sim">("hub");
+  const app = useAppState();
+  const e = app.exam;
+  const search = useSearch({ strict: false }) as { s?: string; u?: string; l?: string; view?: "mistakes" | "history" };
+  const initialScope: Scope | null = search.s ? { ...emptyScope, s: search.s, u: search.u ?? "", l: search.l ?? "" } : null;
+  const [view, setView] = useState<"hub" | "past" | "sim" | "mistakes" | "history">(search.view ?? (initialScope ? "sim" : "hub"));
   // A finished exam stays in the persisted state; only show the debrief when the exam was actually run during this visit, so /qbank always opens on the hub. An in-progress exam still resumes.
   const [sawRun, setSawRun] = useState(false);
   useEffect(() => { if (e.phase === "run") setSawRun(true); }, [e.phase]);
@@ -348,14 +352,24 @@ export function EmdQBank() {
   const realActive = (e.phase === "run" || e.phase === "done") && examQs.length > 0;
   if (!user) return <main className="reference-page emd-page"><div className="tool-signin"><span className="reference-tool-icon"><LogIn /></span><strong>Sign in to practise EMDs</strong><p>Your exams and results are saved to your account.</p><Button asChild><Link to="/login"><LogIn />Sign in</Link></Button></div></main>;
   if (realActive && e.phase === "run") return <RealExam qs={examQs} />;
+  const mistakes = Object.values(app.questionResults).filter((r) => !r.correct).length;
+  const back = <Button variant="ghost" onClick={() => setView("hub")}><ArrowLeft />Back to QBank</Button>;
   return (
     <main className="reference-page emd-page">
-      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} /> : (
+      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} initial={initialScope} /> : view === "mistakes" ? (
+        <>{back}<header className="tool-page-heading"><span className="tool-kicker">QBANK · REVIEW</span><h1>My Mistakes</h1><p>Retry the questions you missed and turn them into Kapsules.</p></header><Mistakes /></>
+      ) : view === "history" ? (
+        <>{back}<header className="tool-page-heading"><span className="tool-kicker">QBANK · ARCHIVE</span><h1>Exam History</h1><p>Every EMD simulation you completed, newest first.</p></header>
+          {app.examHistory.length ? <ul className="mx-auto max-w-3xl space-y-2">{[...app.examHistory].sort((a, b) => b.t - a.t).map((h) => <li key={`${h.t}-${h.subject}`} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"><div><strong className="block text-sm">{h.subject}</strong><span className="text-xs text-muted-foreground">{new Date(h.t).toLocaleString()}</span></div><span className="font-mono text-sm">{h.score}/{h.total} · {h.total ? ((h.score / h.total) * 20).toFixed(1) : "0"}/20</span></li>)}</ul> : <p className="py-16 text-center text-sm text-muted-foreground">No exams yet — sit an EMD simulation to see results here.</p>}
+        </>
+      ) : (
         <>
           <header className="tool-page-heading"><span className="tool-kicker">QBANK · FACULTY OF MEDICINE SÉTIF 1</span><h1>Train for the <em>EMD.</em></h1><p>Practise real past exams, or sit a full UFAS1 simulation.</p></header>
           <div className="emd-choices">
             <button type="button" className="emd-choice" onClick={() => setView("past")}><FileText /><strong>Past EMDs</strong><span>Previous years' official faculty exams by module and academic year, with instant feedback, explanations and Save as Kapsule.</span><em>Open past EMDs <ArrowRight /></em></button>
             <button type="button" className="emd-choice" onClick={() => setView("sim")}><Timer /><strong>EMD Simulator</strong><span>UFAS1 Simulation in Practice Mode (untimed, explained) or Real Exam (timed QCM grille, debrief out of 20).</span><em>Start a simulation <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("mistakes")}><X /><strong>My Mistakes</strong><span>{mistakes} questions to revisit — retry them quickly and convert them into Kapsules.</span><em>Review mistakes <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("history")}><ClipboardList /><strong>Exam History</strong><span>{app.examHistory.length} completed simulations with scores out of 20.</span><em>Open archive <ArrowRight /></em></button>
           </div>
         </>
       )}

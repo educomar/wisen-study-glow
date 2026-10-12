@@ -20,7 +20,7 @@ export function useCurriculum() {
         supabase.from("lessons").select("id,unit_id,name,position").order("position"),
         supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type,kind,subject_id,drive_created_at").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at"),
       ]);
-      setTree((s.data ?? []).map((sub) => ({
+      setTree((s.data ?? []).filter((sub) => !/deprecated/i.test(sub.name)).map((sub) => ({
         id: sub.id, name: sub.name,
         emds: (r.data ?? []).filter((f) => f.subject_id === sub.id && f.kind === "past_emd").map((f) => ({ id: f.id, file_name: f.file_name, subject: sub.name, unit: "", lesson: "", date: f.drive_created_at })),
         units: (un.data ?? []).filter((x) => x.subject_id === sub.id).map((unit) => ({

@@ -1,4 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { EmdQBank } from '@/components/app/EmdQBank';
 import { studyMeta } from '@/lib/study-meta';
-export const Route=createFileRoute('/qbank')({head:()=>studyMeta('QBank · EMD Practice','Practise past UFAS1 EMDs and sit timed EMD simulations with a QCM answer grid and a /20 debrief.'),component:EmdQBank});
+const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
+export const Route = createFileRoute('/qbank')({
+  validateSearch: (s: Record<string, unknown>): { s?: string | undefined; u?: string | undefined; l?: string | undefined; view?: 'mistakes' | 'history' | undefined } => ({ s: str(s['s']), u: str(s['u']), l: str(s['l']), view: str(s['view']) as 'mistakes' | 'history' | undefined }),
+  head: () => studyMeta('QBank · EMD Practice', 'Practise past UFAS1 EMDs, sit timed EMD simulations, review your mistakes and exam history.'),
+  component: EmdQBank,
+});
