@@ -28,6 +28,14 @@ export async function fetchProfile(uid: string) {
   return (data as Profile | null) ?? null;
 }
 
+/** The signed-in student's enrolled level; content outside it is never shown in student views (even for team accounts). */
+export async function fetchMyLevel(uid: string) {
+  const { data } = await supabase.from("profiles").select("faculty,department,academic_year").eq("id", uid).maybeSingle();
+  return data as { faculty: string; department: string; academic_year: number } | null;
+}
+export const inLevel = (lv: { faculty: string; department: string; academic_year: number } | null, s: { faculty?: string; department?: string; academic_year?: number }) =>
+  !!lv && s.department === lv.department && s.academic_year === lv.academic_year && (!s.faculty || s.faculty === lv.faculty);
+
 export async function saveProfile(user: User, patch: Partial<Profile>) {
   const { data, error } = await supabase
     .from("profiles")

@@ -2,6 +2,7 @@ import { ChevronRight, FileText, Library, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyLevel, inLevel } from "@/lib/profile";
 
 export type CurFile = { id: string; file_name: string; subject: string; unit: string; lesson: string; date?: string | null };
 export type Tree = { id: string; name: string; emds: CurFile[]; units: { id: string; name: string; lessons: { id: string; name: string; files: CurFile[] }[] }[] }[];
@@ -14,13 +15,14 @@ export function useCurriculum() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) { setSignedIn(false); setTree([]); return; }
-      const [s, un, l, r] = await Promise.all([
-        supabase.from("subjects").select("id,name,position").order("position"),
+      const [lv, s, un, l, r] = await Promise.all([
+        fetchMyLevel(u.user.id),
+        supabase.from("subjects").select("id,name,position,faculty,department,academic_year").order("position"),
         supabase.from("units").select("id,subject_id,name,position").order("position"),
         supabase.from("lessons").select("id,unit_id,name,position").order("position"),
         supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type,kind,subject_id,drive_created_at").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at"),
       ]);
-      setTree((s.data ?? []).filter((sub) => !/deprecated/i.test(sub.name)).map((sub) => ({
+      setTree((s.data ?? []).filter((sub) => inLevel(lv, sub) && !/deprecated/i.test(sub.name)).map((sub) => ({
         id: sub.id, name: sub.name,
         emds: (r.data ?? []).filter((f) => f.subject_id === sub.id && f.kind === "past_emd").map((f) => ({ id: f.id, file_name: f.file_name, subject: sub.name, unit: "", lesson: "", date: f.drive_created_at })),
         units: (un.data ?? []).filter((x) => x.subject_id === sub.id).map((unit) => ({
