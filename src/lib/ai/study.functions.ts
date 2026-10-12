@@ -11,7 +11,7 @@ async function studentAudience(sb: Sb, userId: string) {
   const { data } = await sb.from("profiles").select("department,academic_year,language").eq("id", userId).maybeSingle();
   const d = data as { department?: string; academic_year?: number; language?: string } | null;
   const lang = d?.language === "fr" ? FR_RULE : d?.language === "en" ? EN_RULE : "";
-  return { lang, who: audience(d && (d.department === "Medicine" || d.department === "Dentistry") && d.academic_year ? { department: d.department, year: d.academic_year } : undefined)) };
+  return { lang, who: audience(d && (d.department === "Medicine" || d.department === "Dentistry") && d.academic_year ? { department: d.department, year: d.academic_year } : undefined) };
 }
 
 const material = z.array(z.object({ name: z.string().max(200), text: z.string().max(60000) })).min(1).max(12);
