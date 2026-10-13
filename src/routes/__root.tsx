@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, syncClientLanguage } from '@/lib/i18n';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -118,6 +118,7 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => { syncClientLanguage(); }, []);
   useLang();
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({select:s=>s.location.pathname});

@@ -62,7 +62,7 @@ function Register() {
         <input className={inputCls} type="email" placeholder={translate("Email")} value={f.email} onChange={set("email")} autoComplete="email" />
         <input className={inputCls} type="password" placeholder={translate("Password")} value={f.pw} onChange={set("pw")} autoComplete="new-password" />
         <input className={inputCls} type="password" placeholder={translate("Confirm password")} value={f.pw2} onChange={set("pw2")} autoComplete="new-password" />
-        {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
+        {err && <p role="alert" className="text-sm text-destructive">{translate(err)}</p>}
         <Button type="submit" disabled={busy} className="h-11 w-full">{busy ? translate("Creating account…") : translate("Get started")}</Button>
       </form>
     </AuthCard>

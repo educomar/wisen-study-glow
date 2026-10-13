@@ -485,7 +485,7 @@ export function CourseReader({
           className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
           <AlertCircle className="size-4 shrink-0" />
-          <span className="flex-1">{err}</span>
+          <span className="flex-1">{translate(err)}</span>
           <button onClick={() => setErr(null)} aria-label={translate("Dismiss")}>
             <X className="size-4" />
           </button>

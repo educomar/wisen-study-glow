@@ -11,7 +11,7 @@ export function ProfileFields({ v, onChange, locked = false }: { v: Fields; onCh
   if (locked) return (
     <div className="space-y-5">
       <div><span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{translate("Enrolled level")}</span>
-        <p className="rounded-md border border-border bg-muted/40 px-3 py-2.5 text-sm">{v.faculty} · {v.department}  {translate("Department ·")} {ordinal(v.academic_year)}</p>
+        <p className="rounded-md border border-border bg-muted/40 px-3 py-2.5 text-sm">{translate(v.faculty)} · {translate(v.department)}  {translate("Department ·")} {translate(ordinal(v.academic_year))}</p>
         <p className="mt-1.5 text-xs text-muted-foreground">{translate("Your department and academic year are fixed once you enrol.")}</p></div>
       <div>
         <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{translate("Currently preparing for")}</span>
@@ -41,7 +41,7 @@ export function ProfileFields({ v, onChange, locked = false }: { v: Fields; onCh
         <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{translate("Academic year")}</span>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {Array.from({ length: YEARS[v.department] }, (_, i) => i + 1).map((y) => (
-            <button type="button" key={y} className={chip(v.academic_year === y)} onClick={() => onChange({ ...v, academic_year: y })}>{ordinal(y)}</button>
+            <button type="button" key={y} className={chip(v.academic_year === y)} onClick={() => onChange({ ...v, academic_year: y })}>{translate(ordinal(y))}</button>
           ))}
         </div>
       </div>

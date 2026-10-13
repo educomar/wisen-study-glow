@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, getLocale } from '@/lib/i18n';
 import { ChevronRight, NotebookPen, Target, Trash2, TrendingUp } from "lucide-react";
 import { useState } from "react";
 
@@ -71,7 +71,7 @@ export function ProgressView() {
             {s.activity.slice(0, 8).map((a) => (
               <li key={a.t + a.text} className="flex justify-between gap-3 border-b border-border pb-2 last:border-0">
                 <span>{a.text}</span>
-                <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{new Date(a.t).toLocaleDateString(undefined, { month: "short", day: "numeric" })} {new Date(a.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{new Date(a.t).toLocaleDateString(getLocale(), { month: "short", day: "numeric" })} {new Date(a.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
               </li>
             ))}
           </ul>

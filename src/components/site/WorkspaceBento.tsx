@@ -96,7 +96,7 @@ export function WorkspaceBento() {
 
         <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-lg border border-border bg-card/65 shadow-sm backdrop-blur">
           {metrics.map((metric) => (
-            <div key={metric.label} className="min-w-0 px-3 py-4 text-center sm:px-5">
+            <div key={translate(metric.label)} className="min-w-0 px-3 py-4 text-center sm:px-5">
               <strong className="block font-display text-xl leading-none text-primary sm:text-2xl">{translate(metric.value)}</strong>
               <span className="mt-1.5 block text-[9px] leading-3 text-muted-foreground sm:text-[10px]">{translate(metric.label)}</span>
             </div>

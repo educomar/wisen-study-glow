@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, getLocale } from '@/lib/i18n';
 import { useServerFn } from "@tanstack/react-start";
 import { Clock, Flag, Loader2, Wand2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -70,7 +70,7 @@ function AiExamSetup() {
         <select aria-label={translate("Question type")} value={qtype} onChange={(ev) => setQtype(ev.target.value as "SCQ" | "MCQ")} className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary"><option value="SCQ">{translate("SCQ · one answer")}</option><option value="MCQ">{translate("MCQ · several answers")}</option></select>
         <span className="text-xs text-muted-foreground">{Math.min(30, e.count)}  {translate("questions ·")} {e.minutes}  {translate("min (set below)")}</span>
       </div>
-      <Button className="w-full" disabled={!sc.s || !!busy} onClick={() => void run()}>{busy ? <><Loader2 className="animate-spin" /> {busy}</> : "Generate & start EMD"}</Button>
+      <Button className="w-full" disabled={!sc.s || !!busy} onClick={() => void run()}>{busy ? <><Loader2 className="animate-spin" /> {translate(busy)}</> : "Generate & start EMD"}</Button>
     </div>
   );
 }

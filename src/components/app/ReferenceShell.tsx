@@ -49,7 +49,7 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
           {links.map(item => <Link key={item.label} to={item.path} aria-current={item.active ? 'page' : undefined} onClick={() => setMenu(false)}>{t(item.label)}</Link>)}
         </nav>
         <div className="flex items-center gap-1">
-          {user && profile && <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground" title={t("Your enrolled level")}>{levelBadge(profile)}</span>}
+          {user && profile && <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground" title={t("Your enrolled level")}>{translate(profile.department)} · {translate(`${profile.academic_year}${profile.academic_year === 1 ? "st" : profile.academic_year === 2 ? "nd" : profile.academic_year === 3 ? "rd" : "th"} Year`)}</span>}
           {user && profile ? <Button variant="ghost" size="icon" aria-label={translate("Profile settings")} title={translate("Profile settings")} onClick={() => setEditing(true)}><UserRound/></Button> : <Button className="reference-signin" asChild><Link to="/login"><LogIn/>{t("Sign in")}</Link></Button>}
           <LangSwitch className="mr-1"/>
           <Button variant="ghost" size="icon" aria-label={dark ? translate('Switch to light mode') : translate('Switch to dark mode')} title={dark ? translate('Light mode') : translate('Dark mode')} onClick={toggle}>{dark ? <Sun/> : <Moon/>}</Button>

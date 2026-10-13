@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, getLocale } from '@/lib/i18n';
 import { currentLevel } from "@/lib/ai/client";
 import { Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, FileText, Layers, ListChecks, Loader2, RotateCcw, Sparkles as Wand, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -171,7 +171,7 @@ function AiGenerator() {
         <select aria-label={translate("Difficulty level")} className={sel} value={difficulty} onChange={(e) => setDiff(e.target.value as typeof difficulty)}>{["Easy", "Medium", "Hard"].map((d) => <option key={d} value={d}>{translate(d)}</option>)}</select>
         <select aria-label={translate("Number of questions")} className={sel} value={count} onChange={(e) => setCount(Number(e.target.value))}>{[5, 10, 15].map((n) => <option key={n} value={n}>{n}  {translate("questions")}</option>)}</select>
         <Button size="sm" disabled={!sc.s || !!busy} onClick={() => void run()}>{busy ? <Loader2 className="animate-spin" /> : <Wand />}  {translate("Generate")}</Button>
-        {busy && <span className="text-xs text-muted-foreground">{busy}</span>}
+        {busy && <span className="text-xs text-muted-foreground">{translate(busy)}</span>}
       </div>
     </div>
   );

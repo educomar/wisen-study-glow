@@ -107,7 +107,7 @@ function Index() {
               <Landmark className="size-3.5 text-primary" /> {t("Built for Faculty of Medicine · UFA Setif 1")}
             </div>
             <h1 className="font-display text-[clamp(2.8rem,6.5vw,6.25rem)] leading-[0.9] text-foreground">
-              <span className="block whitespace-nowrap">{t("Study")} <em className="text-primary">{t("smarter.")}</em></span>
+              <span className="block">{t("Study")} <em className="text-primary">{t("smarter.")}</em></span>
               <span className="block whitespace-nowrap">{t("Score")} <em className="higher-highlight text-primary">{t("higher.")}</em></span>
               <span className="block whitespace-nowrap"><em className="text-primary">{t("Pass.")}</em></span>
             </h1>
@@ -134,7 +134,7 @@ function Index() {
           <div className="marquee-track">
             {[...subjects, ...subjects].map((item, index) => (
               <span
-                key={`${item}-${index}`}
+                key={`${translate(item)}-${index}`}
                 className="flex shrink-0 items-center gap-8 font-mono text-[10px] font-bold uppercase tracking-[0.2em]"
               >
                 {item}
@@ -188,7 +188,7 @@ function Index() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {storyEvidence.map((item) => (
                   <article
-                    key={item.tag}
+                    key={translate(item.tag)}
                     className="min-h-44 rounded-lg border border-border bg-card/60 p-5 shadow-sm backdrop-blur transition-colors hover:border-primary/40"
                   >
                     <span className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-primary">

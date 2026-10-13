@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, getLocale } from '@/lib/i18n';
 import { Link, useSearch } from "@tanstack/react-router";
 import { Mistakes } from "./Mistakes";
 import { useServerFn } from "@tanstack/react-start";
@@ -242,7 +242,7 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
         {mode === "real" && <fieldset className="emd-card"><legend className="font-semibold">{translate("Choose your scoring system")}</legend>
           {SCORING.map((o) => <label key={o.key} className="flex items-start gap-2 py-1 cursor-pointer"><input type="radio" name="scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} className="mt-1" /><span><strong>{translate(o.label)}</strong><br /><small className="text-muted-foreground">{translate(o.hint)}</small></span></label>)}
         </fieldset>}
-        <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {busy}</> : mode === "real" ? "Generate & start Real Exam" : "Generate & start practice"}</Button>
+        <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {translate(busy)}</> : mode === "real" ? "Generate & start Real Exam" : "Generate & start practice"}</Button>
       </div>
     </section>
   );
@@ -370,7 +370,7 @@ export function EmdQBank() {
         <>{back}<header className="tool-page-heading"><span className="tool-kicker">{translate("QBANK · REVIEW")}</span><h1>{translate("My Mistakes")}</h1><p>{translate("Retry the questions you missed and turn them into Kapsules.")}</p></header><Mistakes /></>
       ) : view === "history" ? (
         <>{back}<header className="tool-page-heading"><span className="tool-kicker">{translate("QBANK · ARCHIVE")}</span><h1>{translate("Exam History")}</h1><p>{translate("Every EMD simulation you completed, newest first.")}</p></header>
-          {app.examHistory.length ? <ul className="mx-auto max-w-3xl space-y-2">{[...app.examHistory].sort((a, b) => b.t - a.t).map((h) => <li key={`${h.t}-${h.subject}`} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"><div><strong className="block text-sm">{h.subject}</strong><span className="text-xs text-muted-foreground">{new Date(h.t).toLocaleString()}</span></div><span className="font-mono text-sm">{h.score}/{h.total} · {h.total ? ((h.score / h.total) * 20).toFixed(1) : translate("0")}/20</span></li>)}</ul> : <p className="py-16 text-center text-sm text-muted-foreground">{translate("No exams yet — sit an EMD simulation to see results here.")}</p>}
+          {app.examHistory.length ? <ul className="mx-auto max-w-3xl space-y-2">{[...app.examHistory].sort((a, b) => b.t - a.t).map((h) => <li key={`${h.t}-${h.subject}`} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"><div><strong className="block text-sm">{h.subject}</strong><span className="text-xs text-muted-foreground">{new Date(h.t).toLocaleString(getLocale())}</span></div><span className="font-mono text-sm">{h.score}/{h.total} · {h.total ? ((h.score / h.total) * 20).toFixed(1) : translate("0")}/20</span></li>)}</ul> : <p className="py-16 text-center text-sm text-muted-foreground">{translate("No exams yet — sit an EMD simulation to see results here.")}</p>}
         </>
       ) : (
         <>

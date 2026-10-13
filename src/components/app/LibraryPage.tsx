@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, getLocale } from '@/lib/i18n';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Bookmark, Layers, NotebookPen, Search, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -39,7 +39,7 @@ export function LibraryPage() {
     </section>}
 
     {(tab === 'all' || tab === 'notes') && <section className="library-section"><div className="library-section-title"><div><span>{translate("LECTURE NOTES")}</span><h2>{translate("Passages you saved.")}</h2></div></div>
-      {notes.length ? <div className="library-grid">{notes.map(n => <article className="library-card" key={n.id}><div className="library-card-icon"><NotebookPen/></div><div className="library-card-body"><span className="library-card-type">{n.subject}{n.page ? translate(" · p.") + (n.page) : translate('')}</span><h3>{n.source}</h3><p className="line-clamp-3 text-sm text-muted-foreground">{n.text}</p><span className="text-xs text-muted-foreground">{new Date(n.t).toLocaleDateString()}</span></div></article>)}</div> : <Empty filtered={!!needle} icon={<NotebookPen/>} title={translate("No lecture notes yet.")} text={translate("Select a passage in Workspace and choose Save Note.")} to="/workspace" cta={translate("Open Workspace")}/>}
+      {notes.length ? <div className="library-grid">{notes.map(n => <article className="library-card" key={n.id}><div className="library-card-icon"><NotebookPen/></div><div className="library-card-body"><span className="library-card-type">{n.subject}{n.page ? translate(" · p.") + (n.page) : translate('')}</span><h3>{n.source}</h3><p className="line-clamp-3 text-sm text-muted-foreground">{n.text}</p><span className="text-xs text-muted-foreground">{new Date(n.t).toLocaleDateString(getLocale())}</span></div></article>)}</div> : <Empty filtered={!!needle} icon={<NotebookPen/>} title={translate("No lecture notes yet.")} text={translate("Select a passage in Workspace and choose Save Note.")} to="/workspace" cta={translate("Open Workspace")}/>}
     </section>}
 
     {(tab === 'all' || tab === 'bookmarks') && <section className="library-section"><div className="library-section-title"><div><span>{translate("BOOKMARKED QUESTIONS")}</span><h2>{translate("Questions worth another look.")}</h2></div></div>

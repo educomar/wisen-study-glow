@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, LangSwitch } from '@/lib/i18n';
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
@@ -12,6 +12,7 @@ export function AuthCard({ title, subtitle, children, footer }: { title: string;
       <div className="wisen-ambient" aria-hidden />
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card/80 p-7 shadow-2xl backdrop-blur-xl sm:p-9">
         <Link to="/" aria-label={translate("Wisen home")} className="mb-6 inline-block"><Logo /></Link>
+        <div className="mb-4 flex justify-end"><LangSwitch /></div>
         <h1 className="font-serif text-4xl">{translate(title)}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{translate(subtitle)}</p>
         <div className="mt-6">{children}</div>

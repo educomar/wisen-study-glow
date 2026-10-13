@@ -43,7 +43,7 @@ function Login() {
       <form onSubmit={submit} className="space-y-3">
         <input className={inputCls} type="email" required placeholder={translate("Email")} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
         <input className={inputCls} type="password" required placeholder={translate("Password")} value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" />
-        {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
+        {err && <p role="alert" className="text-sm text-destructive">{translate(err)}</p>}
         <Button type="submit" disabled={busy} className="h-11 w-full">{busy ? translate("Signing in…") : translate("Log in")}</Button>
       </form>
     </AuthCard>

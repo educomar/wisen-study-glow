@@ -49,7 +49,7 @@ function Onboarding() {
   return (
     <AuthCard title={translate("Your academic profile")} subtitle={translate("So Wisen can focus on what you're studying now. You can change this anytime.")} footer={<span>{translate("Signed in as")} {user.email}</span>}>
       <ProfileFields v={v} onChange={setV} />
-      {err && <p role="alert" className="mt-3 text-sm text-destructive">{err}</p>}
+      {err && <p role="alert" className="mt-3 text-sm text-destructive">{translate(err)}</p>}
       <Button onClick={finish} disabled={busy} className="mt-6 h-11 w-full">{busy ? translate("Saving…") : translate("Start studying")}</Button>
     </AuthCard>
   );

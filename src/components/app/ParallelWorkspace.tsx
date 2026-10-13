@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, getLocale } from '@/lib/i18n';
 import { BookOpen, Layers, NotebookPen, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -140,7 +140,7 @@ export function ParallelWorkspace() {
                 <article key={note.id} className="studio-note">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <span className="text-xs text-muted-foreground">
-                      {new Date(note.t).toLocaleDateString()}
+                      {new Date(note.t).toLocaleDateString(getLocale())}
                     </span>
                     {note.page && (
                       <Button

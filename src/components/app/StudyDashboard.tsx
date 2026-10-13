@@ -1,4 +1,4 @@
-import { translate, useLang } from '@/lib/i18n';
+import { translate, useLang, getLocale } from '@/lib/i18n';
 import { Link } from '@tanstack/react-router';
 import { ArrowRight, BookOpen, ChartNoAxesColumn, CheckCircle2, FileText, Flame, FlaskConical, Layers, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
