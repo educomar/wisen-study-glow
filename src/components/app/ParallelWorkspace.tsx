@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { BookOpen, Layers, NotebookPen, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import { jumpToPage, useDoc } from "./doc";
 import { addCard, addNote, flushStudentData, useAppState } from "./store";
 
 export function ParallelWorkspace() {
+  useLang();
   const { user, profile } = useSession();
   const { doc } = useDoc();
   const state = useAppState();
@@ -25,7 +27,7 @@ export function ParallelWorkspace() {
   async function action(name: string, selection: PassageSelection) {
     if (name === "Make Kapsule") {
       if (!user) {
-        toast.error("Sign in to save Kapsules.");
+        toast.error(translate("Sign in to save Kapsules."));
         return;
       }
       setCard(selection);
@@ -35,21 +37,21 @@ export function ParallelWorkspace() {
     }
     if (name === "Save Note") {
       if (!user) {
-        toast.error("Sign in to save your notes.");
+        toast.error(translate("Sign in to save your notes."));
         return;
       }
       addNote(selection.text, selection.subject, selection.title, selection.page);
       setTab("notes");
       try {
         await flushStudentData();
-        toast.success("Passage saved to your notes.");
+        toast.success(translate("Passage saved to your notes."));
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Your note could not be saved.");
+        toast.error(e instanceof Error ? e.message : translate("Your note could not be saved."));
       }
       return;
     }
     if (typing) {
-      toast("Wait for the current answer to finish.");
+      toast(translate("Wait for the current answer to finish."));
       return;
     }
     setTab("ai");
@@ -75,9 +77,9 @@ export function ParallelWorkspace() {
     try {
       await flushStudentData();
       setCard(null);
-      toast.success("Kapsule saved and ready to review.");
+      toast.success(translate("Kapsule saved and ready to review."));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Your Kapsule could not be saved.");
+      toast.error(e instanceof Error ? e.message : translate("Your Kapsule could not be saved."));
     } finally {
       setSaving(false);
     }
@@ -85,9 +87,9 @@ export function ParallelWorkspace() {
 
   return (
     <main className="parallel-workspace">
-      <h1 className="sr-only">Parallel Study Workspace</h1>
+      <h1 className="sr-only">{translate("Parallel Study Workspace")}</h1>
       <div className="parallel-panes">
-        <section aria-label="Lecture viewer" className="parallel-lecture">
+        <section aria-label={translate("Lecture viewer")} className="parallel-lecture">
           <CourseReader
             parallel
             onSelectionAction={(name, selection) => {
@@ -95,8 +97,8 @@ export function ParallelWorkspace() {
             }}
           />
         </section>
-        <aside aria-label="Contextual study assistant" className="parallel-assistant">
-          <div className="studio-copilot-tabs" role="tablist" aria-label="Workspace tools">
+        <aside aria-label={translate("Contextual study assistant")} className="parallel-assistant">
+          <div className="studio-copilot-tabs" role="tablist" aria-label={translate("Workspace tools")}>
             <Button
               role="tab"
               aria-selected={tab === "ai"}
@@ -104,8 +106,7 @@ export function ParallelWorkspace() {
               onClick={() => setTab("ai")}
             >
               <BookOpen />
-              Wisen AI
-            </Button>
+               {translate("Wisen AI")} </Button>
             <Button
               role="tab"
               aria-selected={tab === "notes"}
@@ -113,7 +114,7 @@ export function ParallelWorkspace() {
               onClick={() => setTab("notes")}
             >
               <NotebookPen />
-              Lecture Notes <span>{notes.length}</span>
+               {translate("Lecture Notes")} <span>{notes.length}</span>
             </Button>
           </div>
           <div className={tab === "ai" ? "parallel-chat" : "hidden"}>
@@ -125,14 +126,14 @@ export function ParallelWorkspace() {
           </div>
           {tab === "notes" && (
             <section
-              aria-label="Lecture notes"
+              aria-label={translate("Lecture notes")}
               className="studio-notebook min-h-0 flex-1 overflow-auto"
             >
               {!notes.length && (
                 <div className="studio-notebook-empty">
                   <NotebookPen />
-                  <h2>Lecture Notebook</h2>
-                  <p>No saved passages for this lecture yet.</p>
+                  <h2>{translate("Lecture Notebook")}</h2>
+                  <p>{translate("No saved passages for this lecture yet.")}</p>
                 </div>
               )}
               {notes.map((note) => (
@@ -147,7 +148,7 @@ export function ParallelWorkspace() {
                         variant="outline"
                         onClick={() => jumpToPage(note.page ?? 1)}
                       >
-                        Page {note.page}
+                         {translate("Page")} {note.page}
                       </Button>
                     )}
                   </div>
@@ -167,10 +168,9 @@ export function ParallelWorkspace() {
         <DialogContent className="study-theme reference-theme studio-kapsule-dialog">
           <DialogTitle className="flex items-center gap-2">
             <Layers className="text-primary" />
-            Make Kapsule
-          </DialogTitle>
+             {translate("Make Kapsule")} </DialogTitle>
           <DialogDescription>
-            From {card?.subject} · Page {card?.page}
+             {translate("From")} {card?.subject}  {translate("· Page")} {card?.page}
           </DialogDescription>
           {card && (
             <form
@@ -180,19 +180,17 @@ export function ParallelWorkspace() {
               }}
             >
               <label className="block text-sm font-medium">
-                Recall question
-                <input
+                 {translate("Recall question")} <input
                   autoFocus
                   value={front}
                   onChange={(e) => setFront(e.target.value)}
                   required
-                  placeholder="What do you want to remember?"
+                  placeholder={translate("What do you want to remember?")}
                   className="mt-2 w-full rounded-md border border-input bg-background px-3 py-3 text-sm"
                 />
               </label>
               <label className="mt-4 block text-sm font-medium">
-                Answer
-                <textarea
+                 {translate("Answer")} <textarea
                   value={card.text}
                   onChange={(e) => setCard({ ...card, text: e.target.value })}
                   required
@@ -201,7 +199,7 @@ export function ParallelWorkspace() {
                 />
               </label>
               <div className="studio-kapsule-preview">
-                <span>INSTANT PREVIEW · {previewAnswer ? "ANSWER" : "QUESTION"}</span>
+                <span>{translate("INSTANT PREVIEW ·")} {previewAnswer ? translate("ANSWER") : translate("QUESTION")}</span>
                 <p>{previewAnswer ? card.text : front.trim() || "Your recall question"}</p>
                 <Button
                   type="button"
@@ -209,7 +207,7 @@ export function ParallelWorkspace() {
                   size="sm"
                   onClick={() => setPreviewAnswer((v) => !v)}
                 >
-                  {previewAnswer ? "Show question" : "Reveal answer"}
+                  {previewAnswer ? translate("Show question") : translate("Reveal answer")}
                   <ArrowUpRight />
                 </Button>
               </div>
@@ -219,7 +217,7 @@ export function ParallelWorkspace() {
                 disabled={saving || !front.trim() || !card.text.trim()}
               >
                 <Layers />
-                {saving ? "Saving…" : "Save Kapsule"}
+                {saving ? translate("Saving…") : translate("Save Kapsule")}
               </Button>
             </form>
           )}

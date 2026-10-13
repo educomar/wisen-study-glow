@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { BookOpen, Loader2, NotebookPen, Paperclip, RotateCcw, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
 function McqView({ q }: { q: NonNullable<AiMsg["mcq"]> }) {
+  useLang();
   const [pick, setPick] = useState<string | null>(null);
   return (
     <div className="mt-2 rounded-lg border border-border bg-muted/40 p-3">
@@ -60,14 +62,13 @@ function McqView({ q }: { q: NonNullable<AiMsg["mcq"]> }) {
             onClick={() => setPick("x")}
             className="mt-2 rounded-md border border-border px-3 py-1 text-xs hover:border-primary"
           >
-            Reveal answer
-          </Button>
+             {translate("Reveal answer")} </Button>
         )
       )}
       {pick && (
         <p className="mt-2 text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">
-            {q.options ? `Answer: ${q.answer}. ` : ""}
+            {q.options ? translate("Answer: ") + (q.answer) + translate(". ") : translate("")}
           </span>
           {q.options ? q.explain : q.answer} {!q.options && q.explain}
         </p>
@@ -95,6 +96,7 @@ export function WisenChat({
   initialQuery?: string | undefined;
   onCitation?: (page: number) => void;
 }) {
+  useLang();
   const { msgs, typing } = useChat();
   const { doc, page } = useDoc();
   const [input, setInput] = useState("");
@@ -131,7 +133,7 @@ export function WisenChat({
     if (fileRef.current) fileRef.current.value = "";
     if (!f) return;
     if (f.size > 25 * 1024 * 1024) {
-      toast.error("Please attach a file under 25 MB.");
+      toast.error(translate("Please attach a file under 25 MB."));
       return;
     }
     setReading(true);
@@ -146,13 +148,13 @@ export function WisenChat({
         setAtt({ name: f.name, image });
       } else if (/\.pdf$/i.test(f.name) || f.type === "application/pdf") {
         const text = await fileText(f);
-        if (!text.trim()) toast.error("No readable text found in this PDF.");
+        if (!text.trim()) toast.error(translate("No readable text found in this PDF."));
         else setAtt({ name: f.name, text });
       } else if (f.type.startsWith("text/") || /\.(txt|md)$/i.test(f.name))
         setAtt({ name: f.name, text: (await f.text()).slice(0, 38000) });
-      else toast.error("Attach a PDF, image or text file.");
+      else toast.error(translate("Attach a PDF, image or text file."));
     } catch {
-      toast.error("Couldn't read this file.");
+      toast.error(translate("Couldn't read this file."));
     }
     setReading(false);
   };
@@ -188,10 +190,10 @@ export function WisenChat({
       <header className="studio-chat-header grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex">
         <Logo className="studio-copilot-logo" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Wisen AI</p>
+          <p className="text-sm font-semibold">{translate("Wisen AI")}</p>
           <p className="truncate text-xs text-muted-foreground">
-            Grounded in {doc.title}
-            {context ? ` · ${context}` : ""}
+             {translate("Grounded in")} {translate(doc.title)}
+            {context ? translate(" · ") + (context) : translate("")}
           </p>
         </div>
         <AiSettings />
@@ -201,16 +203,16 @@ export function WisenChat({
           disabled={typing}
           onClick={() => {
             clearChat();
-            toast("New conversation started");
+            toast(translate("New conversation started"));
             inputRef.current?.focus();
           }}
-          title="New conversation"
-          aria-label="New conversation"
+          title={translate("New conversation")}
+          aria-label={translate("New conversation")}
         >
           <RotateCcw className="size-4" />
         </Button>
         <span className="studio-context">
-          Page {page} · {doc.subject}
+           {translate("Page")} {page} · {doc.subject}
         </span>
       </header>
       <Conversation className="min-h-0 flex-1">
@@ -239,7 +241,7 @@ export function WisenChat({
                       key={s}
                       className="mr-1 mt-1 inline-flex rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 font-mono text-[11px] text-primary"
                     >
-                      Source: {s}
+                       {translate("Source:")} {translate(s)}
                     </p>
                   ))}
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -252,7 +254,7 @@ export function WisenChat({
                         }}
                         className="h-auto px-2 py-0.5 font-mono text-[11px] text-primary"
                       >
-                        [Source: {doc.subject} · Page {m.cite}]
+                         {translate("[Source:")} {doc.subject}  {translate("· Page")} {m.cite}]
                       </Button>
                     ) : null}
                     {k > 0 && (
@@ -265,19 +267,18 @@ export function WisenChat({
                             `Wisen AI · ${doc.title}`,
                             m.cite,
                           );
-                          toast("Saved to high-yield notes");
+                          toast(translate("Saved to high-yield notes"));
                         }}
                         className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
                       >
-                        <NotebookPen className="size-3" /> Save note
-                      </Button>
+                        <NotebookPen className="size-3" />  {translate("Save note")} </Button>
                     )}
                   </div>
                 </MessageContent>
               </Message>
             ),
           )}
-          {typing && <Shimmer>Thinking through your lecture…</Shimmer>}
+          {typing && <Shimmer>{translate("Thinking through your lecture…")}</Shimmer>}
           <div ref={endRef} />
         </ConversationContent>
         <ConversationScrollButton />
@@ -293,7 +294,7 @@ export function WisenChat({
               onClick={() => void chip(c)}
               className="studio-prompt-chip"
             >
-              {c}
+              {translate(c)}
             </Button>
           ))}
         </div>
@@ -305,7 +306,7 @@ export function WisenChat({
               variant="ghost"
               size="icon"
               onClick={() => setAtt(null)}
-              aria-label="Remove attachment"
+              aria-label={translate("Remove attachment")}
             >
               <X className="size-3.5" />
             </Button>
@@ -325,27 +326,27 @@ export function WisenChat({
             onChange={(e) => setInput(e.target.value)}
             dir="auto"
             placeholder={
-              studio ? "Ask about this lecture…" : "Ask in English, Français, العربية or Darija…"
+              studio ? translate("Ask about this lecture…") : translate("Ask in English, Français, العربية or Darija…")
             }
-            aria-label="Ask Wisen AI"
+            aria-label={translate("Ask Wisen AI")}
           />
           <PromptInputFooter>
             <Button
               type="button"
               size="icon"
               variant="ghost"
-              aria-label="Attach a file"
-              title="Attach a file"
+              aria-label={translate("Attach a file")}
+              title={translate("Attach a file")}
               disabled={reading || typing}
               onClick={() => fileRef.current?.click()}
             >
               {reading ? <Loader2 className="animate-spin" /> : <Paperclip />}
             </Button>
             <span className="text-xs text-muted-foreground">
-              {reading ? "Reading file…" : `Lecture context · Page ${page}`}
+              {reading ? translate("Reading file…") : translate("Lecture context · Page ") + (page)}
             </span>
             <PromptInputSubmit
-              aria-label="Send"
+              aria-label={translate("Send")}
               status={typing ? "submitted" : "ready"}
               disabled={typing || reading || (!input.trim() && !att)}
             />

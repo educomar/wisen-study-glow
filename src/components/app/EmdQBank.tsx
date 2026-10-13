@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { Link, useSearch } from "@tanstack/react-router";
 import { Mistakes } from "./Mistakes";
 import { useServerFn } from "@tanstack/react-start";
@@ -27,39 +28,41 @@ const setE = (patch: Partial<ExamSession>) => update((st) => ({ ...st, exam: { .
 
 /* ---------- shared pieces ---------- */
 function Grille({ qs, answers, i, flags, onJump, onToggle, reveal }: { qs: Question[]; answers: (number | null)[]; i: number; flags?: boolean[]; onJump: (k: number) => void; onToggle?: (qi: number, k: number) => void; reveal?: (qi: number) => boolean }) {
+  useLang();
   return (
-    <aside className="emd-grille" aria-label="QCM answer grid">
-      <header><h2>Grille QCM</h2><p>Select answers from the grid or the question. Click a number to jump to it.</p></header>
+    <aside className="emd-grille" aria-label={translate("QCM answer grid")}>
+      <header><h2>{translate("Grille QCM")}</h2><p>{translate("Select answers from the grid or the question. Click a number to jump to it.")}</p></header>
       <div className="emd-grille-table" role="table">
-        <div className="emd-grille-row emd-grille-head" role="row"><span>Q</span>{L.slice(0, 5).map((x) => <span key={x}>{x}</span>)}</div>
+        <div className="emd-grille-row emd-grille-head" role="row"><span>{translate("Q")}</span>{L.slice(0, 5).map((x) => <span key={x}>{translate(x)}</span>)}</div>
         {qs.map((q, qi) => {
           const shown = reveal?.(qi);
           return (
             <div key={q.id} role="row" className={`emd-grille-row ${qi === i ? "is-current" : ""}`}>
-              <button type="button" className="emd-grille-num" onClick={() => onJump(qi)} aria-label={`Go to question ${qi + 1}`}>{flags?.[qi] && <Bookmark className="size-3" />}{String(qi + 1).padStart(2, "0")}</button>
+              <button type="button" className="emd-grille-num" onClick={() => onJump(qi)} aria-label={translate("Go to question ") + (qi + 1)}>{flags?.[qi] && <Bookmark className="size-3" />}{String(qi + 1).padStart(2, "0")}</button>
               {L.slice(0, 5).map((_, k) => {
                 if (k >= q.options.length) return <span key={k} />;
                 const on = isPicked(answers[qi] ?? null, k, multiOf(q));
                 const cls = shown ? (isCorrectOption(q, k) ? "is-right" : on ? "is-wrong" : "") : on ? "is-on" : "";
-                return <button key={k} type="button" disabled={!onToggle || shown} className={`emd-cell ${cls}`} aria-label={`Question ${qi + 1} option ${L[k]}`} aria-pressed={on} onClick={() => onToggle?.(qi, k)} />;
+                return <button key={k} type="button" disabled={!onToggle || shown} className={`emd-cell ${cls}`} aria-label={translate("Question ") + (qi + 1) + translate(" option ") + (L[k])} aria-pressed={on} onClick={() => onToggle?.(qi, k)} />;
               })}
             </div>
           );
         })}
       </div>
-      <footer><span><i className="emd-cell" />Unanswered</span><span><i className="emd-cell is-on" />Answered</span><span><i className="emd-key-current" />Current</span><span><Bookmark className="size-3" />Marked</span></footer>
+      <footer><span><i className="emd-cell" />{translate("Unanswered")}</span><span><i className="emd-cell is-on" />{translate("Answered")}</span><span><i className="emd-key-current" />{translate("Current")}</span><span><Bookmark className="size-3" />{translate("Marked")}</span></footer>
     </aside>
   );
 }
 
 function QuestionPane({ q, n, total, picked, onToggle, reveal }: { q: Question; n: number; total: number; picked: number | null; onToggle?: (k: number) => void; reveal?: boolean }) {
+  useLang();
   const multi = multiOf(q);
   return (
     <div className="emd-question">
-      <div className="emd-question-top"><span className="emd-tag">{q.subject}</span><span className="emd-count">Q <b>{String(n).padStart(2, "0")}</b> / {total}</span></div>
-      <h2>Question {String(n).padStart(2, "0")}</h2>
+      <div className="emd-question-top"><span className="emd-tag">{q.subject}</span><span className="emd-count">{translate("Q")} <b>{String(n).padStart(2, "0")}</b> / {total}</span></div>
+      <h2>{translate("Question")} {String(n).padStart(2, "0")}</h2>
       <p className="emd-stem"><Inline text={q.stem} /></p>
-      <p className="emd-hint">{multi ? "Select every correct proposition." : "Select one answer."}</p>
+      <p className="emd-hint">{multi ? translate("Select every correct proposition.") : translate("Select one answer.")}</p>
       <ol className="emd-options">
         {q.options.map((o, k) => {
           const on = isPicked(picked, k, multi);
@@ -77,19 +80,21 @@ function QuestionPane({ q, n, total, picked, onToggle, reveal }: { q: Question; 
 }
 
 function Explanation({ q, picked }: { q: Question; picked: number | null }) {
+  useLang();
   const ok = picked !== null && picked === q.answer;
   return (
     <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
-      <p className="font-semibold">{ok ? "Correct" : picked === null ? "Not answered" : "Incorrect"} — answer: {correctText(q)}</p>
+      <p className="font-semibold">{ok ? translate("Correct") : picked === null ? translate("Not answered") : translate("Incorrect")}  {translate("— answer:")} {correctText(q)}</p>
       <div className="mt-2 text-sm"><RichText text={q.why || "No explanation available."} /></div>
-      {q.source && <p className="mt-2 text-xs text-muted-foreground">Source: {q.source}</p>}
-      <Button size="sm" variant="outline" className="mt-3" onClick={() => { saveKapsule(q); toast.success("Saved as Kapsule"); }}><Layers /> Save as Kapsule</Button>
+      {q.source && <p className="mt-2 text-xs text-muted-foreground">{translate("Source:")} {q.source}</p>}
+      <Button size="sm" variant="outline" className="mt-3" onClick={() => { saveKapsule(q); toast.success(translate("Saved as Kapsule")); }}><Layers />  {translate("Save as Kapsule")}</Button>
     </div>
   );
 }
 
 /* ---------- instant-feedback practice (Past EMDs + Practice Mode) ---------- */
 function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; onExit: () => void }) {
+  useLang();
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => qs.map(() => null));
   const [checked, setChecked] = useState<boolean[]>(() => qs.map(() => false));
@@ -101,15 +106,15 @@ function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; 
   const { correct } = scoreOn20(qs.map((x, k) => ({ answer: x.answer, picked: checked[k] ? answers[k] ?? null : -1 })));
   return (
     <div className="emd-run">
-      <div className="emd-run-bar"><Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft /> Back</Button><strong>{title}</strong><span>{done}/{qs.length} checked · {correct} correct</span></div>
+      <div className="emd-run-bar"><Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft />  {translate("Back")}</Button><strong>{translate(title)}</strong><span>{done}/{qs.length}  {translate("checked ·")} {correct}  {translate("correct")}</span></div>
       <div className="emd-panes">
         <Grille qs={qs} answers={answers} i={i} onJump={setI} onToggle={toggle} reveal={(k) => checked[k]!} />
         <section className="emd-main">
           <QuestionPane q={q} n={i + 1} total={qs.length} picked={answers[i] ?? null} onToggle={(k) => toggle(i, k)} reveal={!!checked[i]} />
           {checked[i] && <Explanation q={q} picked={answers[i] ?? null} />}
           <div className="emd-actions">
-            <Button variant="outline" disabled={!i} onClick={() => setI(i - 1)}><ArrowLeft /> Previous</Button>
-            {!checked[i] ? <Button disabled={answers[i] === null} onClick={check}>Submit answer</Button> : <Button disabled={i === qs.length - 1} onClick={() => setI(i + 1)}>Next <ArrowRight /></Button>}
+            <Button variant="outline" disabled={!i} onClick={() => setI(i - 1)}><ArrowLeft />  {translate("Previous")}</Button>
+            {!checked[i] ? <Button disabled={answers[i] === null} onClick={check}>{translate("Submit answer")}</Button> : <Button disabled={i === qs.length - 1} onClick={() => setI(i + 1)}>{translate("Next")} <ArrowRight /></Button>}
           </div>
         </section>
       </div>
@@ -119,6 +124,7 @@ function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; 
 
 /* ---------- Past EMDs ---------- */
 function PastEmds({ onBack }: { onBack: () => void }) {
+  useLang();
   const { tree } = useCurriculum();
   const { qs: ai } = useAi();
   const [mod, setMod] = useState("");
@@ -143,18 +149,18 @@ function PastEmds({ onBack }: { onBack: () => void }) {
       log(`Past EMD opened · ${f.subject} ${f.year}`);
     } catch (e) { toast.error((e as Error).message || "Couldn't open this EMD."); } finally { setBusy(null); }
   };
-  if (run) return <PracticeRunner qs={run.qs} title={run.title} onExit={() => setRun(null)} />;
+  if (run) return <PracticeRunner qs={run.qs} title={translate(run.title)} onExit={() => setRun(null)} />;
   return (
     <section className="emd-section">
-      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft /> QBank</Button>
-      <h2 className="emd-h2">Past EMDs</h2>
-      <p className="emd-sub">Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.</p>
+      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />  {translate("QBank")}</Button>
+      <h2 className="emd-h2">{translate("Past EMDs")}</h2>
+      <p className="emd-sub">{translate("Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.")}</p>
       <div className="emd-filters">
-        <select aria-label="Module" value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); }}><option value="">All modules</option>{mods.map((m) => <option key={m.id}>{m.name}</option>)}</select>
-        <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? "All years" : y}</button>)}</div>
+        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); }}><option value="">{translate("All modules")}</option>{mods.map((m) => <option key={m.id}>{m.name}</option>)}</select>
+        <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : translate(y)}</button>)}</div>
       </div>
-      {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" /> Loading…</p> : !shown.length ? (
-        <p className="emd-empty">No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.</p>
+      {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" />  {translate("Loading…")}</p> : !shown.length ? (
+        <p className="emd-empty">{translate("No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.")}</p>
       ) : (
         <div className="emd-file-grid">{shown.map((f) => (
           <button key={f.id} type="button" className="emd-file" disabled={!!busy} onClick={() => void open(f)}>
@@ -185,6 +191,7 @@ let poolRef: Question[] = [];
 const getPool = () => poolRef;
 
 function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | null }) {
+  useLang();
   const { tree } = useCurriculum();
   const [sc, setSc] = useState<Scope>(initial ?? emptyScope);
   const [mode, setMode] = useState<"practice" | "real">("practice");
@@ -196,7 +203,7 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
   const gen = useServerFn(generateQuestions);
   const go = async () => {
     const r = resolveScope(tree, sc);
-    if (!r.files.length) { toast.error("No course files in this selection yet."); return; }
+    if (!r.files.length) { toast.error(translate("No course files in this selection yet.")); return; }
     try {
       setBusy("Reading your course files…");
       const material = await extractMaterial(r.files, sc.f ? 1 : 6, (d, n) => setBusy(`Reading course files ${d}/${n}…`));
@@ -215,25 +222,25 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
       }
     } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setBusy(null); }
   };
-  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={practiceQs.title} onExit={() => setPracticeQs(null)} />;
+  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={translate(practiceQs.title)} onExit={() => setPracticeQs(null)} />;
   return (
     <section className="emd-section">
-      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft /> QBank</Button>
-      <h2 className="emd-h2">EMD Simulator <small>UFAS1 Simulation</small></h2>
-      <p className="emd-sub">Original QCM questions from your selected course files, modelled on previous-year EMD style — never copied from them.</p>
+      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />  {translate("QBank")}</Button>
+      <h2 className="emd-h2">{translate("EMD Simulator")} <small>{translate("UFAS1 Simulation")}</small></h2>
+      <p className="emd-sub">{translate("Original QCM questions from your selected course files, modelled on previous-year EMD style — never copied from them.")}</p>
       <div className="emd-modes">
         {([["practice", GraduationCap, "Practice Mode", "Untimed. Answer one by one; the correct answer and Wisen AI explanation appear after each submission."], ["real", Timer, "Real Exam", "Strict timed simulation with the QCM grille. No answers or hints until you submit."]] as const).map(([k, Icon, t, d]) => (
-          <button key={k} type="button" className={`emd-mode ${mode === k ? "is-on" : ""}`} onClick={() => setMode(k)}><Icon /><strong>{t}</strong><span>{d}</span></button>
+          <button key={k} type="button" className={`emd-mode ${mode === k ? "is-on" : ""}`} onClick={() => setMode(k)}><Icon /><strong>{translate(t)}</strong><span>{translate(d)}</span></button>
         ))}
       </div>
       <div className="emd-setup">
         <ScopePicker tree={tree} value={sc} onChange={setSc} />
         <div className="emd-setup-row">
-          <span>Questions</span><div className="emd-pills">{[10, 20, 30].map((n) => <button key={n} type="button" className={n === count ? "is-on" : ""} onClick={() => { setCount(n); setMinutes(n * 3); }}>{n}</button>)}</div>
-          {mode === "real" && <><span>Duration</span><select aria-label="Duration" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>{[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m} min</option>)}</select></>}
+          <span>{translate("Questions")}</span><div className="emd-pills">{[10, 20, 30].map((n) => <button key={n} type="button" className={n === count ? "is-on" : ""} onClick={() => { setCount(n); setMinutes(n * 3); }}>{n}</button>)}</div>
+          {mode === "real" && <><span>{translate("Duration")}</span><select aria-label={translate("Duration")} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>{[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m}  {translate("min")}</option>)}</select></>}
         </div>
-        {mode === "real" && <fieldset className="emd-card"><legend className="font-semibold">Choose your scoring system</legend>
-          {SCORING.map((o) => <label key={o.key} className="flex items-start gap-2 py-1 cursor-pointer"><input type="radio" name="scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} className="mt-1" /><span><strong>{o.label}</strong><br /><small className="text-muted-foreground">{o.hint}</small></span></label>)}
+        {mode === "real" && <fieldset className="emd-card"><legend className="font-semibold">{translate("Choose your scoring system")}</legend>
+          {SCORING.map((o) => <label key={o.key} className="flex items-start gap-2 py-1 cursor-pointer"><input type="radio" name="scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} className="mt-1" /><span><strong>{translate(o.label)}</strong><br /><small className="text-muted-foreground">{translate(o.hint)}</small></span></label>)}
         </fieldset>}
         <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {busy}</> : mode === "real" ? "Generate & start Real Exam" : "Generate & start practice"}</Button>
       </div>
@@ -242,6 +249,7 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
 }
 
 function RealExam({ qs }: { qs: Question[] }) {
+  useLang();
   const e = useAppState().exam;
   const [, tick] = useState(0);
   const [review, setReview] = useState(false);
@@ -258,11 +266,11 @@ function RealExam({ qs }: { qs: Question[] }) {
   return (
     <div className="emd-real">
       <header className="emd-real-head">
-        <div className="flex items-center gap-4"><Logo className="h-8 w-auto" /><span className="emd-divider" /><strong>EMD Simulator</strong></div>
+        <div className="flex items-center gap-4"><Logo className="h-8 w-auto" /><span className="emd-divider" /><strong>{translate("EMD Simulator")}</strong></div>
         <div className="emd-real-stats">
           <span className="emd-progress"><b>{answered}</b> / {qs.length}<i><em style={{ width: `${(answered / qs.length) * 100}%` }} /></i></span>
           <span className={`emd-timer ${left < 300 ? "is-low" : ""}`}><Timer className="size-4" />{fmt(left)}</span>
-          <span className="emd-marked"><Bookmark className="size-4" />{marked} marked</span>
+          <span className="emd-marked"><Bookmark className="size-4" />{marked}  {translate("marked")}</span>
         </div>
       </header>
       <div className="emd-panes">
@@ -270,28 +278,28 @@ function RealExam({ qs }: { qs: Question[] }) {
         <section className="emd-main">
           <QuestionPane q={q} n={e.i + 1} total={qs.length} picked={e.answers[e.i] ?? null} onToggle={(k) => toggle(e.i, k)} />
           <div className="emd-actions">
-            <Button variant="outline" disabled={!e.i} onClick={() => setE({ i: e.i - 1 })}><ArrowLeft /> Previous</Button>
-            <Button variant={e.flags[e.i] ? "default" : "outline"} onClick={() => setE({ flags: e.flags.map((f, j) => (j === e.i ? !f : f)) })}>{e.flags[e.i] ? <BookmarkCheck /> : <Bookmark />}{e.flags[e.i] ? "Marked" : "Mark for review"}</Button>
-            <Button variant="outline" disabled={e.i === qs.length - 1} onClick={() => setE({ i: e.i + 1 })}>Next <ArrowRight /></Button>
+            <Button variant="outline" disabled={!e.i} onClick={() => setE({ i: e.i - 1 })}><ArrowLeft />  {translate("Previous")}</Button>
+            <Button variant={e.flags[e.i] ? "default" : "outline"} onClick={() => setE({ flags: e.flags.map((f, j) => (j === e.i ? !f : f)) })}>{e.flags[e.i] ? <BookmarkCheck /> : <Bookmark />}{e.flags[e.i] ? translate("Marked") : translate("Mark for review")}</Button>
+            <Button variant="outline" disabled={e.i === qs.length - 1} onClick={() => setE({ i: e.i + 1 })}>{translate("Next")} <ArrowRight /></Button>
           </div>
           <div className="emd-footer-bar">
-            <Button variant="outline" onClick={() => setReview(true)}><ClipboardList /> Review Exam</Button>
-            <Button size="lg" onClick={() => setConfirm(true)}>Submit Exam <ArrowRight /></Button>
+            <Button variant="outline" onClick={() => setReview(true)}><ClipboardList />  {translate("Review Exam")}</Button>
+            <Button size="lg" onClick={() => setConfirm(true)}>{translate("Submit Exam")} <ArrowRight /></Button>
           </div>
         </section>
       </div>
       <Dialog open={review} onOpenChange={setReview}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Review exam</DialogTitle><DialogDescription>{answered} answered · {qs.length - answered} unanswered · {marked} marked</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{translate("Review exam")}</DialogTitle><DialogDescription>{answered}  {translate("answered ·")} {qs.length - answered}  {translate("unanswered ·")} {marked}  {translate("marked")}</DialogDescription></DialogHeader>
           {pending.length ? <div className="emd-review-list">{pending.map((k) => (
-            <button key={k} type="button" onClick={() => { setE({ i: k }); setReview(false); }}><b>Q{String(k + 1).padStart(2, "0")}</b><span>{e.answers[k] === null ? "Unanswered" : "Answered"}</span>{e.flags[k] && <Bookmark className="size-4" />}</button>
-          ))}</div> : <p className="text-sm text-muted-foreground">Every question is answered and none are marked.</p>}
+            <button key={k} type="button" onClick={() => { setE({ i: k }); setReview(false); }}><b>{translate("Q")}{String(k + 1).padStart(2, "0")}</b><span>{e.answers[k] === null ? translate("Unanswered") : translate("Answered")}</span>{e.flags[k] && <Bookmark className="size-4" />}</button>
+          ))}</div> : <p className="text-sm text-muted-foreground">{translate("Every question is answered and none are marked.")}</p>}
         </DialogContent>
       </Dialog>
       <Dialog open={confirm} onOpenChange={setConfirm}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Submit your exam?</DialogTitle><DialogDescription>{qs.length - answered ? `${qs.length - answered} question(s) are still unanswered. ` : ""}You can't change your answers after submitting.</DialogDescription></DialogHeader>
-          <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setConfirm(false)}>Keep working</Button><Button onClick={() => { setConfirm(false); submitExam(); }}>Submit Exam</Button></div>
+          <DialogHeader><DialogTitle>{translate("Submit your exam?")}</DialogTitle><DialogDescription>{qs.length - answered ? (qs.length - answered) + translate(" question(s) are still unanswered. ") : translate("")}{translate("You can't change your answers after submitting.")}</DialogDescription></DialogHeader>
+          <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setConfirm(false)}>{translate("Keep working")}</Button><Button onClick={() => { setConfirm(false); submitExam(); }}>{translate("Submit Exam")}</Button></div>
         </DialogContent>
       </Dialog>
     </div>
@@ -299,6 +307,7 @@ function RealExam({ qs }: { qs: Question[] }) {
 }
 
 function Debrief({ qs }: { qs: Question[] }) {
+  useLang();
   const e = useAppState().exam;
   const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
   const graded = qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) }));
@@ -311,32 +320,33 @@ function Debrief({ qs }: { qs: Question[] }) {
   return (
     <section className="emd-section">
       <div className="emd-score-grid">
-        {[["Score", `${official.v} / 20`], ["Accuracy", `${r.accuracy}%`], ["Correct", `${r.correct} / ${r.total}`], ["Time used", fmt(e.usedSec)]].map(([k, v]) => <div key={k}><span>{k}</span><strong>{v}</strong></div>)}
+        {[["Score", `${official.v} / 20`], ["Accuracy", `${r.accuracy}%`], ["Correct", `${r.correct} / ${r.total}`], ["Time used", fmt(e.usedSec)]].map(([k, v]) => <div key={k}><span>{translate(k)}</span><strong>{v}</strong></div>)}
       </div>
-      <div className="emd-card"><h3>Your Results</h3>
-        {all.map((o) => <div key={o.key} className={`flex justify-between rounded-md px-3 py-2 ${o.key === sel ? "bg-primary/10 font-semibold" : ""}`}><span>{o.label}{o.key === sel && " · official"}</span><b>{o.v} / 20</b></div>)}
-        <p className="mt-2 text-sm">Your selected scoring system: <strong>{official.label}</strong> — your score: <strong>{official.v} / 20</strong></p>
+      <div className="emd-card"><h3>{translate("Your Results")}</h3>
+        {all.map((o) => <div key={o.key} className={`flex justify-between rounded-md px-3 py-2 ${o.key === sel ? "bg-primary/10 font-semibold" : ""}`}><span>{translate(o.label)}{o.key === sel && " · official"}</span><b>{o.v} / 20</b></div>)}
+        <p className="mt-2 text-sm">{translate("Your selected scoring system:")} <strong>{translate(official.label)}</strong>  {translate("— your score:")} <strong>{official.v} / 20</strong></p>
       </div>
-      <div className="emd-card"><h3>Breakdown by module</h3>{Object.entries(mods).map(([k, v]) => (
-        <div key={k} className="emd-bar"><div><span>{k}</span><b>{v.c}/{v.n}</b></div><i><em style={{ width: `${(v.c / v.n) * 100}%` }} /></i></div>
+      <div className="emd-card"><h3>{translate("Breakdown by module")}</h3>{Object.entries(mods).map(([k, v]) => (
+        <div key={k} className="emd-bar"><div><span>{translate(k)}</span><b>{v.c}/{v.n}</b></div><i><em style={{ width: `${(v.c / v.n) * 100}%` }} /></i></div>
       ))}</div>
       <div className="emd-card">
-        <div className="flex flex-wrap items-center justify-between gap-2"><h3>Correction key</h3><Button variant="outline" disabled={!wrong.length} onClick={() => { wrong.forEach(saveKapsule); toast.success(`${wrong.length} mistakes saved to Kapsules`); }}><Layers /> Save mistakes to Kapsules</Button></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h3>{translate("Correction key")}</h3><Button variant="outline" disabled={!wrong.length} onClick={() => { wrong.forEach(saveKapsule); toast.success((wrong.length) + translate(" mistakes saved to Kapsules")); }}><Layers />  {translate("Save mistakes to Kapsules")}</Button></div>
         {qs.map((q, k) => (
           <details key={q.id} className="emd-key" open={e.answers[k] !== q.answer}>
-            <summary><span className={e.answers[k] === q.answer ? "text-primary" : "text-destructive"}>{e.answers[k] === q.answer ? <Check className="size-4" /> : <X className="size-4" />}</span><b>Q{String(k + 1).padStart(2, "0")}</b><Inline text={q.stem} /></summary>
+            <summary><span className={e.answers[k] === q.answer ? "text-primary" : "text-destructive"}>{e.answers[k] === q.answer ? <Check className="size-4" /> : <X className="size-4" />}</span><b>{translate("Q")}{String(k + 1).padStart(2, "0")}</b><Inline text={q.stem} /></summary>
             <QuestionPane q={q} n={k + 1} total={qs.length} picked={e.answers[k] ?? null} reveal />
             <Explanation q={q} picked={e.answers[k] ?? null} />
           </details>
         ))}
       </div>
-      <Button variant="outline" onClick={() => setE({ phase: "setup" })}>New simulation</Button>
+      <Button variant="outline" onClick={() => setE({ phase: "setup" })}>{translate("New simulation")}</Button>
     </section>
   );
 }
 
 /* ---------- page ---------- */
 export function EmdQBank() {
+  useLang();
   const { user } = useSession();
   const { qs: ai } = useAi();
   poolRef = ai;
@@ -350,26 +360,26 @@ export function EmdQBank() {
   useEffect(() => { if (e.phase === "run") setSawRun(true); }, [e.phase]);
   const examQs = useMemo(() => e.qids.map((id) => ai.find((q) => q.id === id)).filter((q): q is AiQuestion => !!q), [e.qids, ai]);
   const realActive = (e.phase === "run" || e.phase === "done") && examQs.length > 0;
-  if (!user) return <main className="reference-page emd-page"><div className="tool-signin"><span className="reference-tool-icon"><LogIn /></span><strong>Sign in to practise EMDs</strong><p>Your exams and results are saved to your account.</p><Button asChild><Link to="/login"><LogIn />Sign in</Link></Button></div></main>;
+  if (!user) return <main className="reference-page emd-page"><div className="tool-signin"><span className="reference-tool-icon"><LogIn /></span><strong>{translate("Sign in to practise EMDs")}</strong><p>{translate("Your exams and results are saved to your account.")}</p><Button asChild><Link to="/login"><LogIn />{translate("Sign in")}</Link></Button></div></main>;
   if (realActive && e.phase === "run") return <RealExam qs={examQs} />;
   const mistakes = Object.values(app.questionResults).filter((r) => !r.correct).length;
-  const back = <Button variant="ghost" onClick={() => setView("hub")}><ArrowLeft />Back to QBank</Button>;
+  const back = <Button variant="ghost" onClick={() => setView("hub")}><ArrowLeft />{translate("Back to QBank")}</Button>;
   return (
     <main className="reference-page emd-page">
       {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} initial={initialScope} /> : view === "mistakes" ? (
-        <>{back}<header className="tool-page-heading"><span className="tool-kicker">QBANK · REVIEW</span><h1>My Mistakes</h1><p>Retry the questions you missed and turn them into Kapsules.</p></header><Mistakes /></>
+        <>{back}<header className="tool-page-heading"><span className="tool-kicker">{translate("QBANK · REVIEW")}</span><h1>{translate("My Mistakes")}</h1><p>{translate("Retry the questions you missed and turn them into Kapsules.")}</p></header><Mistakes /></>
       ) : view === "history" ? (
-        <>{back}<header className="tool-page-heading"><span className="tool-kicker">QBANK · ARCHIVE</span><h1>Exam History</h1><p>Every EMD simulation you completed, newest first.</p></header>
-          {app.examHistory.length ? <ul className="mx-auto max-w-3xl space-y-2">{[...app.examHistory].sort((a, b) => b.t - a.t).map((h) => <li key={`${h.t}-${h.subject}`} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"><div><strong className="block text-sm">{h.subject}</strong><span className="text-xs text-muted-foreground">{new Date(h.t).toLocaleString()}</span></div><span className="font-mono text-sm">{h.score}/{h.total} · {h.total ? ((h.score / h.total) * 20).toFixed(1) : "0"}/20</span></li>)}</ul> : <p className="py-16 text-center text-sm text-muted-foreground">No exams yet — sit an EMD simulation to see results here.</p>}
+        <>{back}<header className="tool-page-heading"><span className="tool-kicker">{translate("QBANK · ARCHIVE")}</span><h1>{translate("Exam History")}</h1><p>{translate("Every EMD simulation you completed, newest first.")}</p></header>
+          {app.examHistory.length ? <ul className="mx-auto max-w-3xl space-y-2">{[...app.examHistory].sort((a, b) => b.t - a.t).map((h) => <li key={`${h.t}-${h.subject}`} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"><div><strong className="block text-sm">{h.subject}</strong><span className="text-xs text-muted-foreground">{new Date(h.t).toLocaleString()}</span></div><span className="font-mono text-sm">{h.score}/{h.total} · {h.total ? ((h.score / h.total) * 20).toFixed(1) : translate("0")}/20</span></li>)}</ul> : <p className="py-16 text-center text-sm text-muted-foreground">{translate("No exams yet — sit an EMD simulation to see results here.")}</p>}
         </>
       ) : (
         <>
-          <header className="tool-page-heading"><span className="tool-kicker">QBANK · FACULTY OF MEDICINE SÉTIF 1</span><h1>Train for the <em>EMD.</em></h1><p>Practise real past exams, or sit a full UFAS1 simulation.</p></header>
+          <header className="tool-page-heading"><span className="tool-kicker">{translate("QBANK · FACULTY OF MEDICINE SÉTIF 1")}</span><h1>{translate("Train for the")} <em>{translate("EMD.")}</em></h1><p>{translate("Practise real past exams, or sit a full UFAS1 simulation.")}</p></header>
           <div className="emd-choices">
-            <button type="button" className="emd-choice" onClick={() => setView("past")}><FileText /><strong>Past EMDs</strong><span>Previous years' official faculty exams by module and academic year, with instant feedback, explanations and Save as Kapsule.</span><em>Open past EMDs <ArrowRight /></em></button>
-            <button type="button" className="emd-choice" onClick={() => setView("sim")}><Timer /><strong>EMD Simulator</strong><span>UFAS1 Simulation in Practice Mode (untimed, explained) or Real Exam (timed QCM grille, debrief out of 20).</span><em>Start a simulation <ArrowRight /></em></button>
-            <button type="button" className="emd-choice" onClick={() => setView("mistakes")}><TriangleAlert /><strong>My Mistakes</strong><span>{mistakes} questions to revisit — retry them quickly and convert them into Kapsules.</span><em>Review mistakes <ArrowRight /></em></button>
-            <button type="button" className="emd-choice" onClick={() => setView("history")}><Archive /><strong>Exam History</strong><span>{app.examHistory.length} completed simulations with scores out of 20.</span><em>Open archive <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("past")}><FileText /><strong>{translate("Past EMDs")}</strong><span>{translate("Previous years' official faculty exams by module and academic year, with instant feedback, explanations and Save as Kapsule.")}</span><em>{translate("Open past EMDs")} <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("sim")}><Timer /><strong>{translate("EMD Simulator")}</strong><span>{translate("UFAS1 Simulation in Practice Mode (untimed, explained) or Real Exam (timed QCM grille, debrief out of 20).")}</span><em>{translate("Start a simulation")} <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("mistakes")}><TriangleAlert /><strong>{translate("My Mistakes")}</strong><span>{mistakes}  {translate("questions to revisit — retry them quickly and convert them into Kapsules.")}</span><em>{translate("Review mistakes")} <ArrowRight /></em></button>
+            <button type="button" className="emd-choice" onClick={() => setView("history")}><Archive /><strong>{translate("Exam History")}</strong><span>{app.examHistory.length}  {translate("completed simulations with scores out of 20.")}</span><em>{translate("Open archive")} <ArrowRight /></em></button>
           </div>
         </>
       )}

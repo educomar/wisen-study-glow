@@ -9,9 +9,10 @@ import { ProfileDialog } from './ProfileDialog';
 import { studySearch } from './study-navigation';
 import { Toaster } from '@/components/ui/sonner';
 import { MedicalBackdrop } from './MedicalBackdrop';
-import { LangSwitch, useLang } from '@/lib/i18n';
+import { LangSwitch, useLang, translate } from '@/lib/i18n';
 
 export function ReferenceShell({ children }: { children: ReactNode }) {
+  useLang();
   const { dark, toggle } = useTheme();
   const { t } = useLang();
   const { user, profile, setProfile } = useSession();
@@ -43,16 +44,16 @@ export function ReferenceShell({ children }: { children: ReactNode }) {
   return <div className="study-theme reference-theme min-h-dvh bg-background text-foreground">
     <header className="reference-header">
       <div className="reference-nav">
-        <Link to="/dashboard" className="reference-brand" aria-label="Wisen dashboard"><Logo className="reference-logo"/></Link>
-        <nav className={`reference-links ${menu ? 'is-open' : ''}`} aria-label="Study navigation">
+        <Link to="/dashboard" className="reference-brand" aria-label={translate("Wisen dashboard")}><Logo className="reference-logo"/></Link>
+        <nav className={`reference-links ${menu ? 'is-open' : ''}`} aria-label={translate("Study navigation")}>
           {links.map(item => <Link key={item.label} to={item.path} aria-current={item.active ? 'page' : undefined} onClick={() => setMenu(false)}>{t(item.label)}</Link>)}
         </nav>
         <div className="flex items-center gap-1">
           {user && profile && <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground" title={t("Your enrolled level")}>{levelBadge(profile)}</span>}
-          {user && profile ? <Button variant="ghost" size="icon" aria-label="Profile settings" title="Profile settings" onClick={() => setEditing(true)}><UserRound/></Button> : <Button className="reference-signin" asChild><Link to="/login"><LogIn/>{t("Sign in")}</Link></Button>}
+          {user && profile ? <Button variant="ghost" size="icon" aria-label={translate("Profile settings")} title={translate("Profile settings")} onClick={() => setEditing(true)}><UserRound/></Button> : <Button className="reference-signin" asChild><Link to="/login"><LogIn/>{t("Sign in")}</Link></Button>}
           <LangSwitch className="mr-1"/>
-          <Button variant="ghost" size="icon" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} title={dark ? 'Light mode' : 'Dark mode'} onClick={toggle}>{dark ? <Sun/> : <Moon/>}</Button>
-          <Button variant="ghost" size="icon" className="reference-menu" aria-label="Toggle navigation" aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X/> : <Menu/>}</Button>
+          <Button variant="ghost" size="icon" aria-label={dark ? translate('Switch to light mode') : translate('Switch to dark mode')} title={dark ? translate('Light mode') : translate('Dark mode')} onClick={toggle}>{dark ? <Sun/> : <Moon/>}</Button>
+          <Button variant="ghost" size="icon" className="reference-menu" aria-label={translate("Toggle navigation")} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X/> : <Menu/>}</Button>
         </div>
       </div>
     </header>

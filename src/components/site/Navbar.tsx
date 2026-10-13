@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Logo } from "@/components/site/Logo";
 import { useTheme } from "@/components/site/theme";
 import { Button } from "@/components/ui/button";
-import { LangSwitch, useLang } from "@/lib/i18n";
+import { LangSwitch, useLang, translate } from "@/lib/i18n";
 
 const links = [
   { label: "How it works", href: "#how-it-works" },
@@ -13,6 +13,7 @@ const links = [
 ];
 
 export function Navbar() {
+  useLang();
   const { dark, toggle } = useTheme();
   const { t } = useLang();
   const [open, setOpen] = useState(false);
@@ -20,7 +21,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <a href="#top" aria-label="Wisen home" className="shrink-0">
+        <a href="#top" aria-label={translate("Wisen home")} className="shrink-0">
           <Logo />
         </a>
 
@@ -38,7 +39,7 @@ export function Navbar() {
             variant="ghost"
             size="icon"
             onClick={toggle}
-            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={dark ? translate("Switch to light mode") : translate("Switch to dark mode")}
             className="rounded-full border border-border bg-background/70 shadow-sm"
           >
             {dark ? <Sun /> : <Moon />}
@@ -55,7 +56,7 @@ export function Navbar() {
             variant="ghost"
             size="icon"
             className="rounded-full border border-border md:hidden"
-            aria-label="Open menu"
+            aria-label={translate("Open menu")}
             aria-expanded={open}
             onClick={() => setOpen((value) => !value)}
           >
