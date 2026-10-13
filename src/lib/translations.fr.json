@@ -873,5 +873,9 @@
   "Barème Dégressif (Standard EMD)": "Barème dégressif (EMD standard)",
   "Per QCM: 0 errors = 1, 1 error = 0.5, 2 errors = 0.2, 3+ errors = 0 (missed + wrong choices).": "Par QCM : 0 erreur = 1, 1 erreur = 0,5, 2 erreurs = 0,2, 3+ erreurs = 0 (oublis + choix faux).",
   "Negative Marking": "Points négatifs",
-  "Per QCM: +0.2 per correct choice, −0.25 per incorrect choice, floor 0.": "Par QCM : +0,2 par bonne réponse, −0,25 par mauvaise réponse, minimum 0."
+  "Per QCM: +0.2 per correct choice, −0.25 per incorrect choice, floor 0.": "Par QCM : +0,2 par bonne réponse, −0,25 par mauvaise réponse, minimum 0.",
+  "Scoring system": "Système de notation",
+  "pts": "pts",
+  "Practice summary": "Bilan de l’entraînement",
+  "Points earned:": "Points obtenus :"
 }

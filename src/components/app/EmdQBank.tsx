@@ -13,7 +13,7 @@ import { generateQuestions, transcribePastEmd } from "@/lib/ai/study.functions";
 import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
 import { useCurriculum, type CurFile } from "./Curriculum";
 import type { Question } from "./data";
-import { emdYear, isPicked, scoreOn20, scoreWith, SCORING, toggleOption, type Scoring } from "./emd-exam";
+import { emdYear, isPicked, questionCredit, scoreOn20, scoreWith, SCORING, toggleOption, type Scoring } from "./emd-exam";
 import { Inline, RichText } from "./RichText";
 import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
 import { addCard, getState, log, recordQuestion, update, useAppState, type ExamSession } from "./store";
@@ -93,8 +93,9 @@ function Explanation({ q, picked }: { q: Question; picked: number | null }) {
 }
 
 /* ---------- instant-feedback practice (Past EMDs + Practice Mode) ---------- */
-function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; onExit: () => void }) {
+function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { qs: Question[]; title: string; onExit: () => void; initialScoring?: Scoring }) {
   const { t: translate } = useLang();
+  const [scoring, setScoring] = useState<Scoring>(initialScoring);
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => qs.map(() => null));
   const [checked, setChecked] = useState<boolean[]>(() => qs.map(() => false));
@@ -103,14 +104,22 @@ function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; 
   const toggle = (qi: number, k: number) => !checked[qi] && setAnswers((a) => a.map((x, j) => (j === qi ? toggleOption(x, k, multiOf(qs[qi]!)) : x)));
   const check = () => { recordQuestion(q, answers[i] ?? null); setChecked((c) => c.map((x, j) => (j === i ? true : x))); };
   const done = checked.filter(Boolean).length;
-  const { correct } = scoreOn20(qs.map((x, k) => ({ answer: x.answer, picked: checked[k] ? answers[k] ?? null : -1 })));
+  const credit = (k: number) => questionCredit({ answer: qs[k]!.answer, picked: answers[k] ?? null, multi: multiOf(qs[k]!) }, scoring);
+  const pts = qs.reduce((a, _, k) => a + (checked[k] ? credit(k) : 0), 0);
+  const on20 = done ? Math.round((pts / done) * 2000) / 100 : 0;
+  const correct = qs.filter((x, k) => checked[k] && answers[k] === x.answer).length;
+  const fmt = (n: number) => (n > 0 ? `+${n.toFixed(2).replace(/0$/, "")}` : "0");
   return (
     <div className="emd-run">
-      <div className="emd-run-bar"><Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft />  {translate("Back")}</Button><strong>{translate(title)}</strong><span>{done}/{qs.length}  {translate("checked ·")} {correct}  {translate("correct")}</span></div>
+      <div className="emd-run-bar"><Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft />  {translate("Back")}</Button><strong>{translate(title)}</strong>
+        <select aria-label={translate("Scoring system")} value={scoring} onChange={(e) => setScoring(e.target.value as Scoring)} className="rounded-md border border-border bg-background px-2 py-1 text-xs">{SCORING.map((o) => <option key={o.key} value={o.key}>{translate(o.label)}</option>)}</select>
+        <span>{done}/{qs.length}  {translate("checked ·")} {correct}  {translate("correct")} · <strong>{Math.round(pts * 100) / 100} {translate("pts")} · {on20} / 20</strong></span></div>
+      {done === qs.length && <div className="emd-card mx-auto my-3 max-w-3xl text-sm"><strong>{translate("Practice summary")}</strong> — {translate(SCORING.find((o) => o.key === scoring)!.label)}: <strong>{on20} / 20</strong> ({Math.round(pts * 100) / 100} / {qs.length} {translate("pts")}) · {correct}/{qs.length} {translate("correct")}</div>}
       <div className="emd-panes">
         <Grille qs={qs} answers={answers} i={i} onJump={setI} onToggle={toggle} reveal={(k) => checked[k]!} />
         <section className="emd-main">
           <QuestionPane q={q} n={i + 1} total={qs.length} picked={answers[i] ?? null} onToggle={(k) => toggle(i, k)} reveal={!!checked[i]} />
+          {checked[i] && <p className={`text-sm font-semibold ${credit(i) >= 1 ? "text-primary" : credit(i) > 0 ? "text-foreground" : "text-destructive"}`}>{translate("Points earned:")} {fmt(credit(i))} <span className="font-normal text-muted-foreground">({translate(SCORING.find((o) => o.key === scoring)!.label)})</span></p>}
           {checked[i] && <Explanation q={q} picked={answers[i] ?? null} />}
           <div className="emd-actions">
             <Button variant="outline" disabled={!i} onClick={() => setI(i - 1)}><ArrowLeft />  {translate("Previous")}</Button>
@@ -222,7 +231,7 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
       }
     } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setBusy(null); }
   };
-  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={translate(practiceQs.title)} onExit={() => setPracticeQs(null)} />;
+  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={translate(practiceQs.title)} initialScoring={scoring} onExit={() => setPracticeQs(null)} />;
   return (
     <section className="emd-section">
       <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />  {translate("QBank")}</Button>
@@ -239,9 +248,9 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
           <span>{translate("Questions")}</span><div className="emd-pills">{[10, 20, 30].map((n) => <button key={n} type="button" className={n === count ? "is-on" : ""} onClick={() => { setCount(n); setMinutes(n * 3); }}>{n}</button>)}</div>
           {mode === "real" && <><span>{translate("Duration")}</span><select aria-label={translate("Duration")} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>{[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m}  {translate("min")}</option>)}</select></>}
         </div>
-        {mode === "real" && <fieldset className="emd-card"><legend className="font-semibold">{translate("Choose your scoring system")}</legend>
+        <fieldset className="emd-card"><legend className="font-semibold">{translate("Choose your scoring system")}</legend>
           {SCORING.map((o) => <label key={o.key} className="flex items-start gap-2 py-1 cursor-pointer"><input type="radio" name="scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} className="mt-1" /><span><strong>{translate(o.label)}</strong><br /><small className="text-muted-foreground">{translate(o.hint)}</small></span></label>)}
-        </fieldset>}
+        </fieldset>
         <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {translate(busy)}</> : mode === "real" ? translate("Generate & start Real Exam") : translate("Generate & start practice")}</Button>
       </div>
     </section>
