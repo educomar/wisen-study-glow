@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { Logo } from "@/components/site/Logo";
 
 const columns: { title: string; links: string[] }[] = [
@@ -8,6 +9,7 @@ const columns: { title: string; links: string[] }[] = [
 ];
 
 export function Footer() {
+  const { t: translate } = useLang();
   return (
     <footer className="relative z-10 border-t border-border bg-background px-5 py-16 sm:px-8">
       <div className="mx-auto max-w-7xl">
@@ -15,19 +17,17 @@ export function Footer() {
           <div>
             <Logo className="h-11 w-auto" />
             <p className="mt-5 max-w-xs font-display text-2xl leading-tight">
-              Study smarter.
-              <br />
-              Remember longer.
-            </p>
+               {translate("Study smarter.")} <br />
+               {translate("Remember longer.")} </p>
           </div>
           {columns.map((column) => (
             <div key={column.title}>
-              <h2 className="mb-5 text-xs font-bold uppercase tracking-[0.15em]">{column.title}</h2>
+              <h2 className="mb-5 text-xs font-bold uppercase tracking-[0.15em]">{translate(column.title)}</h2>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {column.links.map((link) => (
                   <li key={link}>
                     <a href="#top" className="transition-colors hover:text-primary">
-                      {link}
+                      {translate(link)}
                     </a>
                   </li>
                 ))}
@@ -35,7 +35,7 @@ export function Footer() {
             </div>
           ))}
         </div>
-        <p className="pt-7 text-xs text-muted-foreground">© 2026 Wisen. Built for medical students.</p>
+        <p className="pt-7 text-xs text-muted-foreground">{translate("© 2026 Wisen. Built for medical students.")}</p>
       </div>
     </footer>
   );

@@ -1,4 +1,4 @@
-import { useLang } from "@/lib/i18n";
+import { useLang, translate } from "@/lib/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -93,6 +93,7 @@ const storyEvidence = [
 
 function Index() {
   const { t } = useLang();
+  const translate = t;
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="wisen-ambient" aria-hidden="true" />
@@ -106,7 +107,7 @@ function Index() {
               <Landmark className="size-3.5 text-primary" /> {t("Built for Faculty of Medicine · UFA Setif 1")}
             </div>
             <h1 className="font-display text-[clamp(2.8rem,6.5vw,6.25rem)] leading-[0.9] text-foreground">
-              <span className="block whitespace-nowrap">{t("Study")} <em className="text-primary">{t("smarter.")}</em></span>
+              <span className="block">{t("Study")} <em className="text-primary">{t("smarter.")}</em></span>
               <span className="block whitespace-nowrap">{t("Score")} <em className="higher-highlight text-primary">{t("higher.")}</em></span>
               <span className="block whitespace-nowrap"><em className="text-primary">{t("Pass.")}</em></span>
             </h1>
@@ -133,7 +134,7 @@ function Index() {
           <div className="marquee-track">
             {[...subjects, ...subjects].map((item, index) => (
               <span
-                key={`${item}-${index}`}
+                key={`${translate(item)}-${index}`}
                 className="flex shrink-0 items-center gap-8 font-mono text-[10px] font-bold uppercase tracking-[0.2em]"
               >
                 {item}
@@ -162,8 +163,8 @@ function Index() {
                 <span className="font-mono text-xs font-bold tracking-[0.2em] text-primary">
                   {step.number}
                 </span>
-                <h3 className="mt-5 font-display text-2xl leading-tight">{step.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.body}</p>
+                <h3 className="mt-5 font-display text-2xl leading-tight">{translate(step.title)}</h3>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{translate(step.body)}</p>
               </article>
             ))}
           </div>
@@ -175,12 +176,10 @@ function Index() {
         <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:py-28">
           <div>
             <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-              Built as evidence, used since day one
-            </p>
+               {translate("Built as evidence, used since day one")} </p>
             <h2 className="mt-4 font-display text-[clamp(2.4rem,4.5vw,4.2rem)] leading-[0.95]">
-              Started as a student problem.
-              <br />
-              Grew into a <em className="text-primary">platform.</em>
+               {translate("Started as a student problem.")} <br />
+               {translate("Grew into a")} <em className="text-primary">{translate("platform.")}</em>
             </h2>
           </div>
 
@@ -189,14 +188,14 @@ function Index() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {storyEvidence.map((item) => (
                   <article
-                    key={item.tag}
+                    key={translate(item.tag)}
                     className="min-h-44 rounded-lg border border-border bg-card/60 p-5 shadow-sm backdrop-blur transition-colors hover:border-primary/40"
                   >
                     <span className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
                       {item.tag}
                     </span>
-                    <h3 className="mt-5 text-base font-bold text-foreground">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                    <h3 className="mt-5 text-base font-bold text-foreground">{translate(item.title)}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{translate(item.body)}</p>
                   </article>
                 ))}
               </div>
@@ -206,14 +205,13 @@ function Index() {
               <div className="relative aspect-[16/10] overflow-hidden rounded-md">
                 <img
                   src={facultyPhoto.url}
-                  alt="Entrance of the Faculty of Medicine at University Ferhat Abbas Setif 1"
+                  alt={translate("Entrance of the Faculty of Medicine at University Ferhat Abbas Setif 1")}
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-foreground/80 px-4 py-4 text-background backdrop-blur-sm sm:px-5">
                   <figcaption className="flex items-start gap-3 text-xs leading-5 sm:text-sm">
                     <Landmark className="mt-0.5 size-4 shrink-0 text-primary" />
-                    Born on the steps of Faculty of Medicine University Ferhat Abbas Setif 1
-                  </figcaption>
+                     {translate("Born on the steps of Faculty of Medicine University Ferhat Abbas Setif 1")} </figcaption>
                 </div>
               </div>
             </figure>
@@ -224,27 +222,21 @@ function Index() {
         <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 lg:pb-28">
           <div className="rounded-lg border border-border bg-card/60 p-8 shadow-sm backdrop-blur sm:p-14">
             <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-              Founder
-            </p>
+               {translate("Founder")} </p>
             <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_1fr] lg:gap-16">
               <h2 className="font-display text-[clamp(2rem,3.6vw,3.4rem)] leading-tight">
-                Built by a student who <em className="text-primary">understands the problem.</em>
+                 {translate("Built by a student who")} <em className="text-primary">{translate("understands the problem.")}</em>
               </h2>
               <div className="space-y-5 text-base leading-7 text-muted-foreground">
                 <Quote className="size-6 text-primary" />
                 <p>
-                  I built Wisen because studying medicine should not mean drowning in disorganized
-                  PDFs, endless recordings, and last-minute panic.
-                </p>
+                   {translate("I built Wisen because studying medicine should not mean drowning in disorganized PDFs, endless recordings, and last-minute panic.")} </p>
                 <p>
-                  I experienced the same problem — searching for the right material, trying to
-                  practice enough questions, and spending too much time finding where an answer came
-                  from.
-                </p>
-                <p>So I built the platform I wished I had as a medical student.</p>
+                   {translate("I experienced the same problem — searching for the right material, trying to practice enough questions, and spending too much time finding where an answer came from.")} </p>
+                <p>{translate("So I built the platform I wished I had as a medical student.")}</p>
                 <div className="pt-2">
-                  <strong className="block text-sm text-foreground">Tebib Omar Abdelkafi</strong>
-                  <small className="text-xs text-muted-foreground">Founder &amp; CEO, Wisen</small>
+                  <strong className="block text-sm text-foreground">{translate("Tebib Omar Abdelkafi")}</strong>
+                  <small className="text-xs text-muted-foreground">{translate("Founder & CEO, Wisen")}</small>
                 </div>
               </div>
             </div>
@@ -255,16 +247,14 @@ function Index() {
         <section id="final-cta" className="mx-auto max-w-7xl scroll-mt-24 px-5 pb-24 sm:px-8">
           <div className="rounded-lg border border-border bg-card/60 px-6 py-16 text-center shadow-sm backdrop-blur sm:px-14 sm:py-20">
             <h2 className="mx-auto max-w-3xl font-display text-[clamp(2.6rem,5vw,4.6rem)] leading-[0.92]">
-              Study <em className="text-primary">smarter.</em> Remember{" "}
-              <em className="text-primary">longer.</em>
+               {translate("Study")} <em className="text-primary">{translate("smarter.")}</em>  {translate("Remember")}{translate(" ")}
+              <em className="text-primary">{translate("longer.")}</em>
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-muted-foreground">
-              Turn your medical study time into focused practice, clearer understanding, and lasting
-              knowledge.
-            </p>
+               {translate("Turn your medical study time into focused practice, clearer understanding, and lasting knowledge.")} </p>
             <Button asChild size="lg" className="mt-9 h-12 rounded-md px-8 shadow-lg shadow-primary/15">
               <a href="/app">
-                Get started <ArrowRight />
+                 {translate("Get started")} <ArrowRight />
               </a>
             </Button>
           </div>

@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function Onboarding() {
+  const { t: translate } = useLang();
   const nav = useNavigate();
   const { user, profile, loading } = useSession();
   const [v, setV] = useState<Fields>(DEFAULTS);
@@ -34,7 +36,7 @@ function Onboarding() {
     else if (profile?.onboarded) nav({ to: "/dashboard" });
   }, [loading, user, profile, nav]);
 
-  if (loading || !user || profile?.onboarded) return <div className="grid min-h-dvh place-items-center bg-background text-sm text-muted-foreground">Loading…</div>;
+  if (loading || !user || profile?.onboarded) return <div className="grid min-h-dvh place-items-center bg-background text-sm text-muted-foreground">{translate("Loading…")}</div>;
 
   const finish = async () => {
     setBusy(true); setErr("");
@@ -45,10 +47,10 @@ function Onboarding() {
   };
 
   return (
-    <AuthCard title="Your academic profile" subtitle="So Wisen can focus on what you're studying now. You can change this anytime." footer={<span>Signed in as {user.email}</span>}>
+    <AuthCard title={translate("Your academic profile")} subtitle={translate("So Wisen can focus on what you're studying now. You can change this anytime.")} footer={<span>{translate("Signed in as")} {user.email}</span>}>
       <ProfileFields v={v} onChange={setV} />
-      {err && <p role="alert" className="mt-3 text-sm text-destructive">{err}</p>}
-      <Button onClick={finish} disabled={busy} className="mt-6 h-11 w-full">{busy ? "Saving…" : "Start studying"}</Button>
+      {err && <p role="alert" className="mt-3 text-sm text-destructive">{translate(err)}</p>}
+      <Button onClick={finish} disabled={busy} className="mt-6 h-11 w-full">{busy ? translate("Saving…") : translate("Start studying")}</Button>
     </AuthCard>
   );
 }

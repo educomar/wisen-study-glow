@@ -15,3 +15,10 @@ test('English-only sheet requests override French detection and forbid bilingual
 test('other Wisen requests retain automatic language detection', () => {
   strictEqual(prepare(request).route.lang, 'french');
 });
+
+test('French selection overrides English input for Wisen explanations', () => {
+  const result = prepare({ ...request, message: 'Explain neural development.', outputLanguage: 'french' });
+  strictEqual(result.route.lang, 'french');
+  ok(result.system.includes('Respond exclusively in French'));
+  strictEqual(result.system.includes('Respond exclusively in English'), false);
+});

@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { ArrowUpRight, BookOpen, Check, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -13,6 +14,7 @@ const options = [
 const CORRECT = 1;
 
 export function QuestionCard() {
+  const { t: translate } = useLang();
   const [stage, setStage] = useState(0);
 
   useEffect(() => {
@@ -32,8 +34,8 @@ export function QuestionCard() {
           <Sparkles className="size-4" />
         </span>
         <span>
-          <strong className="block text-xs">AI explanation ready</strong>
-          <small className="text-[10px] text-muted-foreground">Grounded in your material</small>
+          <strong className="block text-xs">{translate("AI explanation ready")}</strong>
+          <small className="text-[10px] text-muted-foreground">{translate("Grounded in your material")}</small>
         </span>
       </div>
 
@@ -41,12 +43,11 @@ export function QuestionCard() {
         <figure className="faculty-badge overflow-hidden rounded-md border border-primary/40 bg-background p-1 ring-4 ring-background/80">
           <img
             src={facultyPhoto.url}
-            alt="Facade of the Faculty of Medicine at Setif 1"
+            alt={translate("Facade of the Faculty of Medicine at Setif 1")}
             className="aspect-[16/9] w-full rounded-sm object-cover object-center"
           />
           <figcaption className="px-1 py-1.5 text-center font-mono text-[9px] font-semibold leading-tight text-foreground sm:text-[10px]">
-            Faculty of Medicine · Sétif 1
-          </figcaption>
+             {translate("Faculty of Medicine · Sétif 1")} </figcaption>
         </figure>
       </div>
 
@@ -54,16 +55,14 @@ export function QuestionCard() {
         <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-question-border pb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-question-muted">
           <span className="flex min-w-0 flex-wrap items-center gap-2 leading-5">
             <span className="rounded-sm border border-question-accent/50 bg-question-accent/10 px-2 py-0.5 text-[8px] text-question-accent">
-              Faculty of Medicine Setif 1 · EMD
-            </span>
-            <span className="whitespace-nowrap">Question 14 · Embryology</span>
+               {translate("Faculty of Medicine Setif 1 · EMD")} </span>
+            <span className="whitespace-nowrap">{translate("Question 14 · Embryology")}</span>
           </span>
           <span className="shrink-0 text-question-accent">14 / 40</span>
         </div>
 
         <p className="font-mono text-sm leading-6 text-question-foreground/90">
-          What is the main function of the notochord?
-        </p>
+           {translate("What is the main function of the notochord?")} </p>
 
         <div className="mt-5 space-y-2">
           {options.map((item, index) => {
@@ -92,12 +91,9 @@ export function QuestionCard() {
             className={`transition-all duration-500 ${revealed ? "opacity-100" : "pointer-events-none h-0 overflow-hidden opacity-0"}`}
           >
             <p className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-question-accent">
-              B. Induces neural development
-            </p>
+               {translate("B. Induces neural development")} </p>
             <p className="mt-3 font-mono text-[11px] leading-5 text-question-foreground/85">
-              The notochord plays an important role in inducing the overlying ectoderm to form the
-              neural plate during neurulation.
-            </p>
+               {translate("The notochord plays an important role in inducing the overlying ectoderm to form the neural plate during neurulation.")} </p>
           </div>
 
           <div
@@ -111,21 +107,20 @@ export function QuestionCard() {
               </span>
               <span>
                 <small className="block font-mono text-[9px] uppercase tracking-[0.18em] text-question-muted">
-                  Source
-                </small>
-                <strong className="text-xs font-semibold">Faculty of Medicine Setif 1 · Embryology · Page 42</strong>
+                   {translate("Source")} </small>
+                <strong className="text-xs font-semibold">{translate("Faculty of Medicine Setif 1 · Embryology · Page 42")}</strong>
               </span>
             </div>
             <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-question-accent">
-              Open source <ArrowUpRight className="size-3.5" />
+               {translate("Open source")} <ArrowUpRight className="size-3.5" />
             </span>
           </div>
         </div>
       </div>
 
       <div className="absolute -bottom-6 right-4 rounded-md border border-border bg-background px-4 py-3 shadow-xl sm:right-[-1rem]">
-        <strong className="block text-sm text-primary">Page-cited answers</strong>
-        <small className="text-[10px] text-muted-foreground">Straight from your course</small>
+        <strong className="block text-sm text-primary">{translate("Page-cited answers")}</strong>
+        <small className="text-[10px] text-muted-foreground">{translate("Straight from your course")}</small>
       </div>
     </div>
   );

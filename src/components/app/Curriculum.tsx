@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { ChevronRight, FileText, Library, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -67,11 +68,12 @@ export async function downloadCurriculumFile(f: CurFile) {
 }
 
 export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tree: Tree | null; signedIn: boolean; activeTitle: string; onOpen: (f: CurFile) => void }) {
+  const { t: translate } = useLang();
   const [sub, setSub] = useState<string | null>(null);
   const [unit, setUnit] = useState<string | null>(null);
-  if (!tree) return <p className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading your courses…</p>;
-  if (!signedIn) return <p className="p-4 text-sm text-muted-foreground">Sign in to browse your faculty courses.</p>;
-  if (!tree.length) return <p className="p-4 text-sm text-muted-foreground">No courses yet for your year.</p>;
+  if (!tree) return <p className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />  {translate("Loading your courses…")}</p>;
+  if (!signedIn) return <p className="p-4 text-sm text-muted-foreground">{translate("Sign in to browse your faculty courses.")}</p>;
+  if (!tree.length) return <p className="p-4 text-sm text-muted-foreground">{translate("No courses yet for your year.")}</p>;
   const s = tree.find((x) => x.id === sub);
   const u = s?.units.find((x) => x.id === unit);
   const crumb = "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground";
@@ -79,12 +81,12 @@ export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tre
   return (
     <div className="space-y-2 p-3">
       <div className="flex flex-wrap items-center gap-1 px-1">
-        <button className={crumb} onClick={() => { setSub(null); setUnit(null); }}><Library className="size-3.5" /> Courses</button>
-        {s && <><ChevronRight className="size-3 text-muted-foreground" /><button className={crumb} onClick={() => setUnit(null)}>{s.name}</button></>}
+        <button className={crumb} onClick={() => { setSub(null); setUnit(null); }}><Library className="size-3.5" />  {translate("Courses")}</button>
+        {s && <><ChevronRight className="size-3 text-muted-foreground" /><button className={crumb} onClick={() => setUnit(null)}>{translate(s.name)}</button></>}
         {u && <><ChevronRight className="size-3 text-muted-foreground" /><span className="text-xs">{u.name}</span></>}
       </div>
-      {!s && tree.map((x) => <button key={x.id} className={row} onClick={() => setSub(x.id)}><span>{x.name}</span><span className="font-mono text-[10px] text-muted-foreground">{x.units.length} units <ChevronRight className="inline size-3" /></span></button>)}
-      {s && !u && s.units.map((x) => <button key={x.id} className={row} onClick={() => setUnit(x.id)}><span>{x.name}</span><span className="font-mono text-[10px] text-muted-foreground">{x.lessons.length} lessons <ChevronRight className="inline size-3" /></span></button>)}
+      {!s && tree.map((x) => <button key={x.id} className={row} onClick={() => setSub(x.id)}><span>{translate(x.name)}</span><span className="font-mono text-[10px] text-muted-foreground">{x.units.length}  {translate("units")} <ChevronRight className="inline size-3" /></span></button>)}
+      {s && !u && s.units.map((x) => <button key={x.id} className={row} onClick={() => setUnit(x.id)}><span>{x.name}</span><span className="font-mono text-[10px] text-muted-foreground">{x.lessons.length}  {translate("lessons")} <ChevronRight className="inline size-3" /></span></button>)}
       {u && u.lessons.map((les) => (
         <div key={les.id} className="rounded-md border border-border p-2">
           <p className="px-1 text-sm font-medium">{les.name}</p>
@@ -94,7 +96,7 @@ export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tre
                 <FileText className="size-3.5 shrink-0 text-primary" /><span className="truncate">{f.file_name}</span>
               </button>
             </div>
-          )) : <p className="px-1 text-xs text-muted-foreground">No file yet</p>}
+          )) : <p className="px-1 text-xs text-muted-foreground">{translate("No file yet")}</p>}
         </div>
       ))}
     </div>

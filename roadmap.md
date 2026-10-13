@@ -1,5 +1,10 @@
 # Roadmap
 
+## Full French interface — October 13
+- [x] Translate public, authentication and student pages, including toolbars, filters and dialogs.
+- [x] Preserve EN / FR persistence and selected-language AI generation.
+- [x] Verify French landing, sign-in, dashboard, Roadmap, Workspace, QBank simulator/history/mistakes, Kapsules and Library with authenticated data and English/French switching; no browser errors, build OK and 23 targeted tests pass.
+
 ## Academic naming cleanup — October 11
 - [x] Review supplied naming map; standardize all 27 units, 159 lessons and 150 resource labels while preserving original file extensions and medical terminology.
 - [x] Apply name-only database updates; unchanged integrity fingerprint confirms IDs, relationships, storage paths and other resource/curriculum fields remain intact. Update 95 AI question lesson labels and 28 Kapsule scope labels without changing content or counts.

@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import {
   AlertCircle,
   CheckCircle2,
@@ -83,6 +84,7 @@ const WORKSPACE_ACTIONS = [
 export type PassageSelection = { text: string; page: number; subject: string; title: string };
 
 function Diagram({ kind }: { kind?: Slide["diagram"] }) {
+  const { t: translate } = useLang();
   if (!kind) return null;
   const c = "h-28 w-full text-primary";
   if (kind === "layers")
@@ -90,16 +92,13 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
       <svg viewBox="0 0 300 110" className={c}>
         <rect x="10" y="12" width="280" height="22" rx="4" fill="currentColor" opacity=".25" />
         <text x="20" y="27" fontSize="10" fill="currentColor">
-          Ectoderm → neural plate
-        </text>
+           {translate("Ectoderm → neural plate")} </text>
         <circle cx="150" cy="55" r="11" fill="currentColor" opacity=".7" />
         <text x="168" y="58" fontSize="10" fill="currentColor">
-          Notochord (SHH, noggin, chordin)
-        </text>
+           {translate("Notochord (SHH, noggin, chordin)")} </text>
         <rect x="10" y="76" width="280" height="22" rx="4" fill="currentColor" opacity=".12" />
         <text x="20" y="91" fontSize="10" fill="currentColor">
-          Endoderm
-        </text>
+           {translate("Endoderm")} </text>
       </svg>
     );
   if (kind === "tube")
@@ -114,8 +113,7 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
         />
         <circle cx="150" cy="60" r="18" fill="none" stroke="currentColor" strokeWidth="3" />
         <text x="130" y="100" fontSize="10" fill="currentColor">
-          Neural tube · day 22–28
-        </text>
+           {translate("Neural tube · day 22–28")} </text>
       </svg>
     );
   if (kind === "crest")
@@ -127,8 +125,7 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
         ))}
         <path d="M135 42 L100 30 M165 42 L200 30" stroke="currentColor" strokeDasharray="3 3" />
         <text x="95" y="102" fontSize="10" fill="currentColor">
-          Crest cells migrate (EMT)
-        </text>
+           {translate("Crest cells migrate (EMT)")} </text>
       </svg>
     );
   return (
@@ -157,8 +154,7 @@ function Diagram({ kind }: { kind?: Slide["diagram"] }) {
         </g>
       ))}
       <text x="210" y="60" fontSize="10" fill="currentColor">
-        Somite pairs
-      </text>
+         {translate("Somite pairs")} </text>
     </svg>
   );
 }
@@ -170,6 +166,7 @@ export function CourseReader({
   parallel?: boolean;
   onSelectionAction?: (action: string, selection: PassageSelection) => void;
 }) {
+  const { t: translate } = useLang();
   const { doc, page, jump, restoring } = useDoc();
   const subject = doc.subject;
   const [sel, setSel] = useState<{ text: string; page: number; x: number; y: number } | null>(null);
@@ -305,7 +302,7 @@ export function CourseReader({
       return;
     }
     const q = `“${sel.text.slice(0, 110)}${sel.text.length > 110 ? "…" : ""}”`;
-    const label = `${a} · ${doc.subject} · Page ${sel.page}: ${q}`;
+    const label = `${a} · ${translate(doc.subject)} · Page ${sel.page}: ${q}`;
     if (a === "Make Kapsule") {
       const ctx = sentences(doc.pages.find((p) => p.pageNumber === sel.page)?.text ?? "")[0] ?? "";
       addCard(
@@ -326,7 +323,7 @@ export function CourseReader({
       );
     } else if (a === "Save note") {
       addNote(sel.text, doc.subject, doc.title, sel.page);
-      toast("Saved to high-yield notes");
+      toast(translate("Saved to high-yield notes"));
     } else {
       void ask(a, sel.text, label, sel.page);
       setTab("ai");
@@ -364,8 +361,8 @@ export function CourseReader({
       setErr(
         `We couldn't open “${f.file_name}” in the reader: ${e instanceof Error ? e.message : "please try again in a moment."}`,
       );
-      toast("You can still download the original file.", {
-        action: { label: "Download", onClick: () => void downloadCurriculumFile(f).catch(() => toast.error("Download failed.")) },
+      toast(translate("You can still download the original file."), {
+        action: { label: "Download", onClick: () => void downloadCurriculumFile(f).catch(() => toast.error(translate("Download failed."))) },
       });
     }
   }
@@ -410,20 +407,18 @@ export function CourseReader({
           onClick={() => setShowCourses(!showCourses)}
         >
           <Library />
-          {parallel ? doc.subject : "My courses"}
+          {parallel ? translate(doc.subject) : translate("My courses")}
           {parallel && <ChevronDown />}
         </Button>
         <div className="studio-title flex min-w-0 flex-1 items-center gap-2 px-1">
           <FileText className="size-4 shrink-0 text-primary" />
-          <p className="truncate text-sm font-semibold">{doc.title}</p>
+          <p className="truncate text-sm font-semibold">{translate(doc.title)}</p>
           <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
-            · {doc.pages.length} pages
-          </span>
+            · {doc.pages.length}  {translate("pages")} </span>
         </div>
         {restoring && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Loader2 className="size-3 animate-spin" /> Restoring your document…
-          </span>
+            <Loader2 className="size-3 animate-spin" />  {translate("Restoring your document…")} </span>
         )}
         {!isSample && !parallel && (
           <Button
@@ -435,8 +430,7 @@ export function CourseReader({
               pushMsgs({ role: "ai", text: `Switched back to “${sampleDoc.title}”.`, cite: 12 });
             }}
           >
-            Sample lecture
-          </Button>
+             {translate("Sample lecture")} </Button>
         )}
         <input
           ref={fileRef}
@@ -448,8 +442,8 @@ export function CourseReader({
         <Button
           size={parallel ? "icon" : "sm"}
           variant="ghost"
-          aria-label="Upload PDF, Word or PowerPoint"
-          title="Upload PDF, Word or PowerPoint"
+          aria-label={translate("Upload PDF, Word or PowerPoint")}
+          title={translate("Upload PDF, Word or PowerPoint")}
           onClick={() => fileRef.current?.click()}
           disabled={!!stage}
         >
@@ -461,8 +455,8 @@ export function CourseReader({
         <Sheet open={showCourses} onOpenChange={setShowCourses}>
           <SheetContent side="left" className="study-theme reference-theme studio-course-drawer">
             <SheetHeader>
-              <SheetTitle>Faculty lectures</SheetTitle>
-              <SheetDescription>UFAS1 Sétif · Courses & materials</SheetDescription>
+              <SheetTitle>{translate("Faculty lectures")}</SheetTitle>
+              <SheetDescription>{translate("UFAS1 Sétif · Courses & materials")}</SheetDescription>
             </SheetHeader>
             <CurriculumBrowser
               tree={tree}
@@ -491,8 +485,8 @@ export function CourseReader({
           className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
           <AlertCircle className="size-4 shrink-0" />
-          <span className="flex-1">{err}</span>
-          <button onClick={() => setErr(null)} aria-label="Dismiss">
+          <span className="flex-1">{translate(err)}</span>
+          <button onClick={() => setErr(null)} aria-label={translate("Dismiss")}>
             <X className="size-4" />
           </button>
         </div>
@@ -520,28 +514,28 @@ export function CourseReader({
             }
           >
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
-              {doc.subject} · {isSample ? `${lecture.faculty}` : "Course file"}
+              {doc.subject} · {isSample ? (lecture.faculty) : translate("Course file")}
             </p>
             <span className="font-mono text-xs text-muted-foreground">
-              Page {page} / {isSample ? (doc.pages.at(-1)?.pageNumber ?? 1) : doc.pages.length}
+               {translate("Page")} {page} / {isSample ? (doc.pages.at(-1)?.pageNumber ?? 1) : doc.pages.length}
             </span>
           </header>
           {parallel && (
-            <div className="studio-reader-controls" aria-label="Reader controls">
+            <div className="studio-reader-controls" aria-label={translate("Reader controls")}>
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Previous page"
+                  aria-label={translate("Previous page")}
                   disabled={pageIndex <= 0}
                   onClick={() => goTo(doc.pages[pageIndex - 1]?.pageNumber ?? page)}
                 >
                   <ChevronLeft />
                 </Button>
                 <label className="studio-page-switcher">
-                  Page{" "}
+                   {translate("Page")}{translate(" ")}
                   <select
-                    aria-label="Lecture page"
+                    aria-label={translate("Lecture page")}
                     value={page}
                     onChange={(e) => goTo(Number(e.target.value))}
                     className="rounded border border-input bg-background px-2 py-1"
@@ -552,12 +546,12 @@ export function CourseReader({
                       </option>
                     ))}
                   </select>
-                  <span>of {doc.pages.length}</span>
+                  <span>{translate("of")} {doc.pages.length}</span>
                 </label>
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Next page"
+                  aria-label={translate("Next page")}
                   disabled={pageIndex >= doc.pages.length - 1}
                   onClick={() => goTo(doc.pages[pageIndex + 1]?.pageNumber ?? page)}
                 >
@@ -568,7 +562,7 @@ export function CourseReader({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Zoom out"
+                  aria-label={translate("Zoom out")}
                   disabled={zoom <= 60}
                   onClick={() => setZoom((z) => z - 20)}
                 >
@@ -578,7 +572,7 @@ export function CourseReader({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Zoom in"
+                  aria-label={translate("Zoom in")}
                   disabled={zoom >= 180}
                   onClick={() => setZoom((z) => z + 20)}
                 >
@@ -587,8 +581,8 @@ export function CourseReader({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Fit width"
-                  title="Fit width"
+                  aria-label={translate("Fit width")}
+                  title={translate("Fit width")}
                   onClick={() => setZoom(100)}
                 >
                   <ScanLine />
@@ -598,13 +592,12 @@ export function CourseReader({
           )}
           {drag && (
             <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-background/80 text-sm font-semibold text-primary">
-              Drop your PDF to upload
-            </div>
+               {translate("Drop your PDF to upload")} </div>
           )}
           <div
             ref={readerRef}
             tabIndex={-1}
-            aria-label="Document pages"
+            aria-label={translate("Document pages")}
             onScroll={() => {
               if (parallel) setSel(null);
             }}
@@ -615,7 +608,7 @@ export function CourseReader({
             {sel && (
               <div
                 role="toolbar"
-                aria-label="Selected passage actions"
+                aria-label={translate("Selected passage actions")}
                 className={`${parallel ? "studio-selection fixed z-50" : "absolute z-20 -translate-x-1/2 -translate-y-[112%]"} flex w-max max-w-[min(33rem,calc(100vw-16px))] flex-wrap gap-1 rounded-lg border border-border bg-popover p-1 shadow-xl`}
                 style={{
                   left: parallel
@@ -634,7 +627,7 @@ export function CourseReader({
                     onClick={() => act(l)}
                     className="gap-1 px-2 text-xs"
                   >
-                    <Icon className="size-3.5 text-primary" /> {l}
+                    <Icon className="size-3.5 text-primary" /> {translate(l)}
                   </Button>
                 ))}
               </div>
@@ -649,7 +642,7 @@ export function CourseReader({
                     style={{ maxWidth: width ? Math.round((width * zoom) / 100) : undefined, fontSize: `${zoom}%` }}
                   >
                     <p className="font-mono text-xs text-muted-foreground">
-                      {doc.office!.kind === "pptx" ? "Slide" : "Page"} {p.pageNumber}
+                      {doc.office!.kind === "pptx" ? translate("Slide") : translate("Page")} {p.pageNumber}
                     </p>
                     <div dangerouslySetInnerHTML={{ __html: doc.office!.html[p.pageNumber] ?? "" }} />
                   </article>
@@ -678,14 +671,14 @@ export function CourseReader({
                       data-page={s.n}
                       className="rounded-lg border border-border bg-card p-5 sm:p-7"
                     >
-                      <p className="font-mono text-xs text-muted-foreground">Page {s.n}</p>
-                      <h2 className="mt-1 font-serif text-3xl">{s.title}</h2>
+                      <p className="font-mono text-xs text-muted-foreground">{translate("Page")} {s.n}</p>
+                      <h2 className="mt-1 font-serif text-3xl">{translate(s.title)}</h2>
                       <div className="my-4 rounded-lg border border-border bg-muted/40 p-3">
                         <Diagram kind={s.diagram} />
                       </div>
                       <div className="space-y-3 text-[15px] leading-relaxed">
                         {s.body.map((b) => (
-                          <p key={b}>{b}</p>
+                          <p key={translate(b)}>{translate(b)}</p>
                         ))}
                       </div>
                       <div className="mt-5 flex flex-wrap gap-2">
@@ -694,15 +687,14 @@ export function CourseReader({
                             key={k}
                             className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs text-primary"
                           >
-                            {k}
+                            {translate(k)}
                           </span>
                         ))}
                       </div>
                       <div className="mt-5 rounded-lg border-l-4 border-primary bg-primary/5 p-4 text-sm">
                         <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-primary">
-                          High-yield note
-                        </p>
-                        {s.highYield}
+                           {translate("High-yield note")} </p>
+                        {translate(s.highYield)}
                       </div>
                     </article>
                   ),
@@ -717,7 +709,7 @@ export function CourseReader({
         <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm">
           <div className="w-[min(92vw,24rem)] rounded-xl border border-border bg-card p-6 shadow-2xl">
             <p className="truncate font-semibold">{stage.name}</p>
-            <p className="mb-4 text-xs text-muted-foreground">{subject} · processing your course</p>
+            <p className="mb-4 text-xs text-muted-foreground">{subject}  {translate("· processing your course")}</p>
             <ol className="space-y-2.5">
               {STAGES.map((s, k) => (
                 <li
@@ -731,7 +723,7 @@ export function CourseReader({
                   ) : (
                     <span className="size-4 rounded-full border border-border" />
                   )}
-                  {s}
+                  {translate(s)}
                   {k === 0 && stage.total > 0 && (
                     <span className="ml-auto font-mono text-xs text-muted-foreground">
                       {stage.done}/{stage.total}
