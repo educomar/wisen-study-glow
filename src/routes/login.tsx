@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
+  useLang();
   const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -36,13 +38,13 @@ function Login() {
   };
 
   return (
-    <AuthCard title="Welcome back" subtitle="Log in to continue your study session." footer={<>New to Wisen? <Link to="/register" className="text-primary hover:underline">Create an account</Link> · <Link to="/app" className="hover:underline">Browse as guest</Link></>}>
+    <AuthCard title={translate("Welcome back")} subtitle={translate("Log in to continue your study session.")} footer={<>{translate("New to Wisen?")} <Link to="/register" className="text-primary hover:underline">{translate("Create an account")}</Link> · <Link to="/app" className="hover:underline">{translate("Browse as guest")}</Link></>}>
       <GoogleButton onError={setErr} />
       <form onSubmit={submit} className="space-y-3">
-        <input className={inputCls} type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-        <input className={inputCls} type="password" required placeholder="Password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" />
+        <input className={inputCls} type="email" required placeholder={translate("Email")} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+        <input className={inputCls} type="password" required placeholder={translate("Password")} value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" />
         {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
-        <Button type="submit" disabled={busy} className="h-11 w-full">{busy ? "Signing in…" : "Log in"}</Button>
+        <Button type="submit" disabled={busy} className="h-11 w-full">{busy ? translate("Signing in…") : translate("Log in")}</Button>
       </form>
     </AuthCard>
   );

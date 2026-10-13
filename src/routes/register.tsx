@@ -1,3 +1,4 @@
+import { translate, useLang } from '@/lib/i18n';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/register")({
 });
 
 function Register() {
+  useLang();
   const [f, setF] = useState({ name: "", email: "", pw: "", pw2: "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -47,21 +49,21 @@ function Register() {
   };
 
   if (sent) return (
-    <AuthCard title="Check your email" subtitle={`We sent a confirmation link to ${f.email}.`} footer={<Link to="/login" className="text-primary hover:underline">Back to log in</Link>}>
-      <p className="text-sm text-muted-foreground">Open the link to confirm your account — you'll then set up your academic profile.</p>
+    <AuthCard title={translate("Check your email")} subtitle={translate("We sent a confirmation link to ") + (f.email) + translate(".")} footer={<Link to="/login" className="text-primary hover:underline">{translate("Back to log in")}</Link>}>
+      <p className="text-sm text-muted-foreground">{translate("Open the link to confirm your account — you'll then set up your academic profile.")}</p>
     </AuthCard>
   );
 
   return (
-    <AuthCard title="Create your account" subtitle="Built for students of the Faculty of Medicine Setif 1." footer={<>Already have an account? <Link to="/login" className="text-primary hover:underline">Log in</Link></>}>
+    <AuthCard title={translate("Create your account")} subtitle={translate("Built for students of the Faculty of Medicine Setif 1.")} footer={<>{translate("Already have an account?")} <Link to="/login" className="text-primary hover:underline">{translate("Log in")}</Link></>}>
       <GoogleButton onError={setErr} />
       <form onSubmit={submit} className="space-y-3" noValidate>
-        <input className={inputCls} placeholder="Full name" value={f.name} onChange={set("name")} autoComplete="name" />
-        <input className={inputCls} type="email" placeholder="Email" value={f.email} onChange={set("email")} autoComplete="email" />
-        <input className={inputCls} type="password" placeholder="Password" value={f.pw} onChange={set("pw")} autoComplete="new-password" />
-        <input className={inputCls} type="password" placeholder="Confirm password" value={f.pw2} onChange={set("pw2")} autoComplete="new-password" />
+        <input className={inputCls} placeholder={translate("Full name")} value={f.name} onChange={set("name")} autoComplete="name" />
+        <input className={inputCls} type="email" placeholder={translate("Email")} value={f.email} onChange={set("email")} autoComplete="email" />
+        <input className={inputCls} type="password" placeholder={translate("Password")} value={f.pw} onChange={set("pw")} autoComplete="new-password" />
+        <input className={inputCls} type="password" placeholder={translate("Confirm password")} value={f.pw2} onChange={set("pw2")} autoComplete="new-password" />
         {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
-        <Button type="submit" disabled={busy} className="h-11 w-full">{busy ? "Creating account…" : "Get started"}</Button>
+        <Button type="submit" disabled={busy} className="h-11 w-full">{busy ? translate("Creating account…") : translate("Get started")}</Button>
       </form>
     </AuthCard>
   );
