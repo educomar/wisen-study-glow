@@ -32,3 +32,14 @@ test("positive partial: A+B+D 1/3", () => {
   assert.equal(Math.floor(questionCredit({ answer: ABC, picked: 0b1011, multi: true }, "positive") * 100), 33);
   assert.equal(scoreWith([{ answer: ABC, picked: ABC, multi: true }, { answer: ABC, picked: null, multi: true }], "positive"), 10);
 });
+test("barème dégressif: 0/1/2/3 errors → 1/0.5/0.2/0", () => {
+  assert.equal(questionCredit({ answer: ABC, picked: ABC, multi: true }, "degressive"), 1);
+  assert.equal(questionCredit({ answer: ABC, picked: 0b011, multi: true }, "degressive"), 0.5);
+  assert.equal(questionCredit({ answer: ABC, picked: 0b1011, multi: true }, "degressive"), 0.2);
+  assert.equal(questionCredit({ answer: ABC, picked: 0b11001, multi: true }, "degressive"), 0);
+  assert.equal(questionCredit({ answer: 2, picked: 1 }, "degressive"), 0);
+});
+test("negative marking: 0.2 per hit, -0.25 per wrong, floor 0", () => {
+  assert.equal(Math.round(questionCredit({ answer: ABC, picked: 0b1011, multi: true }, "negative") * 100), 15);
+  assert.equal(questionCredit({ answer: ABC, picked: 0b11001, multi: true }, "negative"), 0);
+});

@@ -1,10 +1,12 @@
 /** Pure helpers for EMD practice and the real-exam simulator. */
 export type Graded = { answer: number; picked: number | null; multi?: boolean };
-export type Scoring = "aon" | "partial" | "positive";
+export type Scoring = "degressive" | "aon" | "partial" | "positive" | "negative";
 export const SCORING: { key: Scoring; label: string; hint: string }[] = [
+  { key: "degressive", label: "Barème Dégressif (Standard EMD)", hint: "Per QCM: 0 errors = 1, 1 error = 0.5, 2 errors = 0.2, 3+ errors = 0 (missed + wrong choices)." },
   { key: "aon", label: "All-or-Nothing", hint: "Strict scoring — all correct answers required." },
   { key: "partial", label: "Partial Scoring", hint: "Partial credit for incomplete answers, but incorrect choices give 0." },
   { key: "positive", label: "Improved / Positive Partial Scoring", hint: "Partial credit with penalties for incorrect choices." },
+  { key: "negative", label: "Negative Marking", hint: "Per QCM: +0.2 per correct choice, −0.25 per incorrect choice, floor 0." },
 ];
 
 const bits = (n: number) => { let c = 0; for (let x = n; x; x &= x - 1) c++; return c; };
@@ -15,6 +17,8 @@ export function questionCredit(g: Graded, mode: Scoring) {
   if (!g.multi) return g.picked === g.answer ? 1 : 0;
   const n = bits(g.answer); if (!n) return 0;
   const hits = bits(g.picked & g.answer), wrong = bits(g.picked & ~g.answer);
+  if (mode === "degressive") { const errors = wrong + (n - hits); return errors === 0 ? 1 : errors === 1 ? 0.5 : errors === 2 ? 0.2 : 0; }
+  if (mode === "negative") return Math.min(1, Math.max(0, hits * 0.2 - wrong * 0.25));
   if (mode === "aon") return g.picked === g.answer ? 1 : 0;
   if (mode === "partial") return wrong ? 0 : hits / n;
   return Math.max(0, (hits - wrong) / n);
