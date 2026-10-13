@@ -22,7 +22,7 @@ import { academicName } from '@/components/app/academic-names';
 export const Route=createFileRoute('/app')({validateSearch:studySearch,head:()=>({meta:[{title:'Study Environment — Wisen'},{name:'description',content:'Read your lectures, practice faculty and Wisen questions, review Kapsules and track your medical study progress.'},{property:'og:title',content:'Study Environment — Wisen'},{property:'og:description',content:'Your connected study room, practice, Kapsules and progress.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:AppShell});
 const labels = Object.fromEntries([...practiceItems,...kapsuleItems,...progressItems,['courses','My Courses'],['ai','Wisen AI']]);
 function AppShell(){
-  useLang();const search=Route.useSearch(),nav=useNavigate();useRemoteQuestions();useAi();const {user,profile,loading}=useSession();const view=search.view??'courses';const label=labels[view]??'My Courses';
+  const { t: translate } = useLang();const search=Route.useSearch(),nav=useNavigate();useRemoteQuestions();useAi();const {user,profile,loading}=useSession();const view=search.view??'courses';const label=labels[view]??'My Courses';
  useEffect(()=>{if(!loading&&user&&profile&&!profile.onboarded)nav({to:'/onboarding'});},[loading,user,profile,nav]);
  useEffect(()=>{if(view==='faculty')nav({to:'/qbank',replace:true});},[view,nav]);
  useEffect(()=>{const tab=view==='courses'?'courses':view==='ai'?'ai':['cards','new','decks','reviews'].includes(view)?'cards':['exam','history'].includes(view)?'exam':['progress'].includes(view)?'progress':view==='saved'?'saved':'qbank';update(s=>({...s,tab}));},[view]);

@@ -79,7 +79,7 @@ const compactFeatures = [
 ];
 
 export function WorkspaceBento() {
-  useLang();
+  const { t: translate } = useLang();
   return (
     <section id="features" className="mx-auto max-w-7xl scroll-mt-24 px-5 pb-10 sm:px-8">
       <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">

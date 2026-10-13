@@ -10,7 +10,7 @@ import { practice, update, useAppState } from "./store";
 import { Button } from "@/components/ui/button";
 
 export function ProgressView() {
-  useLang();
+  const { t: translate } = useLang();
   const s = useAppState();
   const pool = allQuestions(s);
   const lessons = Object.entries(s.attempts).filter(([, a]) => a.total > 0).map(([t, a]) => ({ t, subject: pool.find((q) => q.topic === t)?.subject ?? "Course", pct: Math.round((a.correct / a.total) * 100), n: a.total }));
@@ -84,7 +84,7 @@ export function ProgressView() {
 const FILTERS = ["All", "Questions", "Kapsules", "Notes"] as const;
 
 export function Saved() {
-  useLang();
+  const { t: translate } = useLang();
   const s = useAppState();
   const ai = useAi();
   const [f, setF] = useState<(typeof FILTERS)[number]>("All");

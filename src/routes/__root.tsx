@@ -17,7 +17,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
-  useLang();
+  const { t: translate } = useLang();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -38,7 +38,7 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
-  useLang();
+  const { t: translate } = useLang();
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -103,7 +103,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  useLang();
+  const { t: translate } = useLang();
   return (
     <html lang="en">
       <head>
@@ -119,7 +119,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   useEffect(() => { syncClientLanguage(); }, []);
-  useLang();
+  const { t: translate } = useLang();
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({select:s=>s.location.pathname});
   const student = ['/app', '/dashboard', '/roadmap', '/workspace', '/flashcards', '/qbank', '/library'].includes(pathname);

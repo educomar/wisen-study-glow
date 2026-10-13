@@ -37,7 +37,7 @@ const correctText = (q: Question) => q.options.filter((_, k) => isCorrectOption(
 const pickedText = (q: Question, a: number) => ((q as AiQuestion).multi ? q.options.filter((_, k) => (a >> k) & 1).join(" · ") : q.options[a]);
 
 function AiExamSetup() {
-  useLang();
+  const { t: translate } = useLang();
   const e = useAppState().exam;
   const { tree, signedIn } = useCurriculum();
   const [sc, setSc] = useState<Scope>(emptyScope);
@@ -76,7 +76,7 @@ function AiExamSetup() {
 }
 
 export function Exam() {
-  useLang();
+  const { t: translate } = useLang();
   const s = useAppState();
   useAi();
   const e = s.exam;

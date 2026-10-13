@@ -8,7 +8,7 @@ import { useAppState } from './store';
 import { useAi } from './ai-store';
 
 export function StudyDashboard() {
-  useLang();
+  const { t: translate } = useLang();
   const state = useAppState();
   const { cards } = useAi();
   const { user } = useSession();

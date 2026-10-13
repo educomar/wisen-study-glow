@@ -28,7 +28,7 @@ const setE = (patch: Partial<ExamSession>) => update((st) => ({ ...st, exam: { .
 
 /* ---------- shared pieces ---------- */
 function Grille({ qs, answers, i, flags, onJump, onToggle, reveal }: { qs: Question[]; answers: (number | null)[]; i: number; flags?: boolean[]; onJump: (k: number) => void; onToggle?: (qi: number, k: number) => void; reveal?: (qi: number) => boolean }) {
-  useLang();
+  const { t: translate } = useLang();
   return (
     <aside className="emd-grille" aria-label={translate("QCM answer grid")}>
       <header><h2>{translate("Grille QCM")}</h2><p>{translate("Select answers from the grid or the question. Click a number to jump to it.")}</p></header>
@@ -55,7 +55,7 @@ function Grille({ qs, answers, i, flags, onJump, onToggle, reveal }: { qs: Quest
 }
 
 function QuestionPane({ q, n, total, picked, onToggle, reveal }: { q: Question; n: number; total: number; picked: number | null; onToggle?: (k: number) => void; reveal?: boolean }) {
-  useLang();
+  const { t: translate } = useLang();
   const multi = multiOf(q);
   return (
     <div className="emd-question">
@@ -80,7 +80,7 @@ function QuestionPane({ q, n, total, picked, onToggle, reveal }: { q: Question; 
 }
 
 function Explanation({ q, picked }: { q: Question; picked: number | null }) {
-  useLang();
+  const { t: translate } = useLang();
   const ok = picked !== null && picked === q.answer;
   return (
     <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
@@ -94,7 +94,7 @@ function Explanation({ q, picked }: { q: Question; picked: number | null }) {
 
 /* ---------- instant-feedback practice (Past EMDs + Practice Mode) ---------- */
 function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; onExit: () => void }) {
-  useLang();
+  const { t: translate } = useLang();
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => qs.map(() => null));
   const [checked, setChecked] = useState<boolean[]>(() => qs.map(() => false));
@@ -124,7 +124,7 @@ function PracticeRunner({ qs, title, onExit }: { qs: Question[]; title: string; 
 
 /* ---------- Past EMDs ---------- */
 function PastEmds({ onBack }: { onBack: () => void }) {
-  useLang();
+  const { t: translate } = useLang();
   const { tree } = useCurriculum();
   const { qs: ai } = useAi();
   const [mod, setMod] = useState("");
@@ -191,7 +191,7 @@ let poolRef: Question[] = [];
 const getPool = () => poolRef;
 
 function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | null }) {
-  useLang();
+  const { t: translate } = useLang();
   const { tree } = useCurriculum();
   const [sc, setSc] = useState<Scope>(initial ?? emptyScope);
   const [mode, setMode] = useState<"practice" | "real">("practice");
@@ -249,7 +249,7 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
 }
 
 function RealExam({ qs }: { qs: Question[] }) {
-  useLang();
+  const { t: translate } = useLang();
   const e = useAppState().exam;
   const [, tick] = useState(0);
   const [review, setReview] = useState(false);
@@ -307,7 +307,7 @@ function RealExam({ qs }: { qs: Question[] }) {
 }
 
 function Debrief({ qs }: { qs: Question[] }) {
-  useLang();
+  const { t: translate } = useLang();
   const e = useAppState().exam;
   const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
   const graded = qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) }));
@@ -346,7 +346,7 @@ function Debrief({ qs }: { qs: Question[] }) {
 
 /* ---------- page ---------- */
 export function EmdQBank() {
-  useLang();
+  const { t: translate } = useLang();
   const { user } = useSession();
   const { qs: ai } = useAi();
   poolRef = ai;

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/register")({
 });
 
 function Register() {
-  useLang();
+  const { t: translate } = useLang();
   const [f, setF] = useState({ name: "", email: "", pw: "", pw2: "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);

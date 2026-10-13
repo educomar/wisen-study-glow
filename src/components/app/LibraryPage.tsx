@@ -10,7 +10,7 @@ import { useAppState } from './store';
 type LibraryTab = 'all' | 'decks' | 'notes' | 'bookmarks';
 
 export function LibraryPage() {
-  useLang();
+  const { t: translate } = useLang();
   const state = useAppState();
   const ai = useAi();
   const navigate = useNavigate();
@@ -49,6 +49,6 @@ export function LibraryPage() {
 }
 
 function Empty({ filtered, icon, title, text, to, cta }: { filtered: boolean; icon: React.ReactNode; title: string; text: string; to: '/flashcards' | '/workspace' | '/qbank'; cta: string }) {
-  useLang();
+  const { t: translate } = useLang();
   return <div className="library-empty"><span>{icon}</span><h3>{filtered ? translate('No matches') : translate(title)}</h3><p>{filtered ? translate('Try another title, keyword, or module.') : translate(text)}</p>{!filtered && <Button asChild>{to === '/flashcards' ? <Link to="/flashcards" search={{deck:''}}>{translate(cta)}<ArrowRight/></Link> : to === '/workspace' ? <Link to="/workspace" search={{sheet:''}}>{translate(cta)}<ArrowRight/></Link> : <Link to="/qbank">{translate(cta)}<ArrowRight/></Link>}</Button>}</div>;
 }

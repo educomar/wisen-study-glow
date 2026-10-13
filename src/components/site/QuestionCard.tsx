@@ -14,7 +14,7 @@ const options = [
 const CORRECT = 1;
 
 export function QuestionCard() {
-  useLang();
+  const { t: translate } = useLang();
   const [stage, setStage] = useState(0);
 
   useEffect(() => {

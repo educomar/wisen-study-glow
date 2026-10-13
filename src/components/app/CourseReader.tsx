@@ -84,7 +84,7 @@ const WORKSPACE_ACTIONS = [
 export type PassageSelection = { text: string; page: number; subject: string; title: string };
 
 function Diagram({ kind }: { kind?: Slide["diagram"] }) {
-  useLang();
+  const { t: translate } = useLang();
   if (!kind) return null;
   const c = "h-28 w-full text-primary";
   if (kind === "layers")
@@ -166,7 +166,7 @@ export function CourseReader({
   parallel?: boolean;
   onSelectionAction?: (action: string, selection: PassageSelection) => void;
 }) {
-  useLang();
+  const { t: translate } = useLang();
   const { doc, page, jump, restoring } = useDoc();
   const subject = doc.subject;
   const [sel, setSel] = useState<{ text: string; page: number; x: number; y: number } | null>(null);

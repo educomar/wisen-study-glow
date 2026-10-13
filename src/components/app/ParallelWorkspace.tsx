@@ -12,7 +12,7 @@ import { jumpToPage, useDoc } from "./doc";
 import { addCard, addNote, flushStudentData, useAppState } from "./store";
 
 export function ParallelWorkspace() {
-  useLang();
+  const { t: translate } = useLang();
   const { user, profile } = useSession();
   const { doc } = useDoc();
   const state = useAppState();

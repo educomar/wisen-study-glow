@@ -10,7 +10,7 @@ import { ProfileDialog } from './ProfileDialog';
 import { practiceItems } from './StudentSections';
 import type { StudyView } from './study-navigation';
 export function StudentNav({home=false,view}:{home?:boolean;view?:StudyView}) {
-  useLang();
+  const { t: translate } = useLang();
  const {dark,toggle}=useTheme(),{user,profile,setProfile}=useSession();
  const {state,isMobile,setOpenMobile}=useSidebar();
  const [editing,setEditing]=useState(false),[expanded,setExpanded]=useState<boolean|null>(null);

@@ -23,7 +23,7 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function Onboarding() {
-  useLang();
+  const { t: translate } = useLang();
   const nav = useNavigate();
   const { user, profile, loading } = useSession();
   const [v, setV] = useState<Fields>(DEFAULTS);

@@ -12,9 +12,9 @@ import { MedicalBackdrop } from './MedicalBackdrop';
 import { LangSwitch, useLang, translate } from '@/lib/i18n';
 
 export function ReferenceShell({ children }: { children: ReactNode }) {
-  useLang();
   const { dark, toggle } = useTheme();
   const { t } = useLang();
+  const translate = t;
   const { user, profile, setProfile } = useSession();
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);

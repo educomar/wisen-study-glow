@@ -17,7 +17,7 @@ export function resolveScope(tree: Tree | null, sc: Scope) {
 }
 
 export function ScopePicker({ tree, value, onChange, fileLevel = true, lessonLevel = true, formatLabel = (label: string) => label }: { tree: Tree | null; value: Scope; onChange: (v: Scope) => void; fileLevel?: boolean; lessonLevel?: boolean; formatLabel?: (label: string) => string }) {
-  useLang();
+  const { t: translate } = useLang();
   const s = tree?.find((x) => x.id === value.s);
   const u = s?.units.find((x) => x.id === value.u);
   const l = u?.lessons.find((x) => x.id === value.l);

@@ -8,7 +8,7 @@ import { DEFAULT_BASE, getRemote, setRemote } from "@/lib/ai/client";
 import { MODELS, type ModelKey } from "@/lib/ai/router";
 
 export function AiSettings() {
-  useLang();
+  const { t: translate } = useLang();
   const [base, setBase] = useState(DEFAULT_BASE);
   const [key, setKey] = useState("");
   const [models, setModels] = useState<Partial<Record<ModelKey, string>>>({});

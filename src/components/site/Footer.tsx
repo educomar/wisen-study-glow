@@ -9,7 +9,7 @@ const columns: { title: string; links: string[] }[] = [
 ];
 
 export function Footer() {
-  useLang();
+  const { t: translate } = useLang();
   return (
     <footer className="relative z-10 border-t border-border bg-background px-5 py-16 sm:px-8">
       <div className="mx-auto max-w-7xl">

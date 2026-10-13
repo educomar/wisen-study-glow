@@ -12,7 +12,7 @@ import { useAi } from './ai-store';
 import { useRemoteQuestions } from './remote';
 import { studyMetrics } from './study-metrics';
 export function HomeDashboard(){
-  useLang();
+  const { t: translate } = useLang();
  const {profile}=useSession(),s=useAppState(),ai=useAi();useRemoteQuestions();const p=usePlanner(),nav=useNavigate();
  const [planner,setPlanner]=useState(false),[query,setQuery]=useState(''),[panel,setPanel]=useState('Today');
  const today=p.tasks.filter(t=>t.task_date===dateKey(new Date())),done=today.filter(t=>t.completed),up= today.filter(t=>!t.completed),pool=allQuestions(s),m=studyMetrics(s,pool);

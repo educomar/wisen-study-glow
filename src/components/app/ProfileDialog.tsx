@@ -12,11 +12,11 @@ import { flushStudentData } from "./store";
 import { useLang, translate } from "@/lib/i18n";
 
 export function ProfileDialog({ open, onOpenChange, user, profile, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; user: User; profile: Profile; onSaved: (p: Profile) => void }) {
-  useLang();
   const [v, setV] = useState<Fields>(profile);
   const [name, setName] = useState(profile.full_name);
   const [busy, setBusy] = useState(false);
   const { t } = useLang();
+  const translate = t;
   useEffect(() => { if (open) { setV(profile); setName(profile.full_name); } }, [open, profile]);
 
   const save = async () => {

@@ -21,17 +21,17 @@ export function usePlanner() {
  return {tasks:user?q.data ?? []:[],user,loading:q.isLoading,error:q.error,toggle:(t:Task)=>mutate(()=>supabase.from('study_tasks').update({completed:!t.completed}).eq('id',t.id)),remove:(t:Task)=>mutate(()=>supabase.from('study_tasks').delete().eq('id',t.id)),add:(t:Omit<Task,'id'|'user_id'|'created_at'|'updated_at'>)=>user?mutate(()=>supabase.from('study_tasks').insert({...t,user_id:user.id})):Promise.resolve(false)};
 }
 export function ProgressRing({value,label,caption}:{value:number;label:string;caption:string}) {
-  useLang();
+  const { t: translate } = useLang();
  return <div className="relative grid size-28 shrink-0 place-items-center"><svg className="absolute inset-0 size-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="43" fill="none" stroke="currentColor" strokeWidth="6" className="text-muted" /><circle cx="50" cy="50" r="43" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeDasharray="270.18" strokeDashoffset={270.18*(1-value/100)} className="text-primary" /></svg><div className="text-center"><strong className="block text-2xl">{translate(label)}</strong><span className="font-mono text-[9px] uppercase text-muted-foreground">{caption}</span></div></div>;
 }
 export function FocusSession(){
-  useLang();
+  const { t: translate } = useLang();
  const [left,setLeft]=useState(25*60),[running,setRunning]=useState(false);
  useEffect(()=>{if(!running)return;const end=Date.now()+left*1000;const timer=setInterval(()=>{const next=Math.max(0,Math.ceil((end-Date.now())/1000));setLeft(next);if(!next){setRunning(false);toast.success(translate('Focus session complete'));}},1000);return()=>clearInterval(timer);},[running]);
  return <div className="flex items-center gap-4"><Target className="size-5 shrink-0 text-primary"/><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{translate("Focus Session")}</p><p className="font-mono text-xs text-muted-foreground">{String(Math.floor(left/60)).padStart(2,'0')}:{String(left%60).padStart(2,'0')}</p></div><Button size="icon" variant="ghost" aria-label={running ? translate('Pause focus') : translate('Start focus')} onClick={()=>{if(!left)setLeft(1500);setRunning(!running);}}>{running?<Pause/>:<Play/>}</Button><Button size="icon" variant="ghost" aria-label={translate("Reset focus")} onClick={()=>{setRunning(false);setLeft(1500);}}><RotateCcw/></Button></div>;
 }
 export function PlannerDialog({open,onOpenChange}:{open:boolean;onOpenChange:(v:boolean)=>void}) {
-  useLang();
+  const { t: translate } = useLang();
  const p=usePlanner();
  const [selected,setSelected]=useState(dateKey(new Date())),[weekOffset,setWeekOffset]=useState(0),[adding,setAdding]=useState(false),[busy,setBusy]=useState(false);
  const [title,setTitle]=useState(''),[time,setTime]=useState('08:00'),[mins,setMins]=useState(30),[slot,setSlot]=useState<Task['slot']>('Morning'),[kind,setKind]=useState<Task['kind']>('REVIEW');

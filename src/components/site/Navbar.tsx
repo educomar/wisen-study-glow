@@ -13,9 +13,9 @@ const links = [
 ];
 
 export function Navbar() {
-  useLang();
   const { dark, toggle } = useTheme();
   const { t } = useLang();
+  const translate = t;
   const [open, setOpen] = useState(false);
 
   return (

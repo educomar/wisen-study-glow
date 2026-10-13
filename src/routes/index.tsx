@@ -92,8 +92,8 @@ const storyEvidence = [
 ];
 
 function Index() {
-  useLang();
   const { t } = useLang();
+  const translate = t;
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="wisen-ambient" aria-hidden="true" />

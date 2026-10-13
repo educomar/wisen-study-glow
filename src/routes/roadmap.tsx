@@ -22,7 +22,7 @@ function subjectIcon(name: string) {
   return GraduationCap;
 }
 function Roadmap() {
-  useLang();
+  const { t: translate } = useLang();
   const { tree, signedIn } = useCurriculum();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');

@@ -7,7 +7,7 @@ export const DEFAULTS: Fields = { faculty: FACULTIES[0]!, department: "Medicine"
 const chip = (on: boolean) => `rounded-md border px-3 py-2 text-sm transition ${on ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`;
 
 export function ProfileFields({ v, onChange, locked = false }: { v: Fields; onChange: (v: Fields) => void; locked?: boolean }) {
-  useLang();
+  const { t: translate } = useLang();
   if (locked) return (
     <div className="space-y-5">
       <div><span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{translate("Enrolled level")}</span>

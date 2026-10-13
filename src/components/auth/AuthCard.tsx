@@ -6,7 +6,7 @@ import { Logo } from "@/components/site/Logo";
 import { lovable } from "@/integrations/lovable/index";
 
 export function AuthCard({ title, subtitle, children, footer }: { title: string; subtitle: string; children: ReactNode; footer: ReactNode }) {
-  useLang();
+  const { t: translate } = useLang();
   return (
     <div className="relative flex min-h-dvh items-center justify-center bg-background px-4 py-10 text-foreground">
       <div className="wisen-ambient" aria-hidden />
@@ -28,7 +28,7 @@ export async function googleSignIn(setErr: (e: string) => void) {
 }
 
 export function GoogleButton({ onError }: { onError: (e: string) => void }) {
-  useLang();
+  const { t: translate } = useLang();
   return (
     <>
       <button type="button" onClick={() => googleSignIn(onError)} className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-border bg-background text-sm font-medium hover:bg-accent">

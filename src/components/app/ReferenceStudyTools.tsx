@@ -19,11 +19,11 @@ import { useRemoteQuestions } from './remote';
 
 const topics = [['MI','Myocardial Infarction','Cardiology'],['PN','Pneumonia','Pulmonology'],['DKA','Diabetic Ketoacidosis','Endocrinology'],['CVA','Ischemic Stroke','Neurology'],['NS','Nephrotic Syndrome','Nephrology'],['SEP','Sepsis','Critical Care']];
 export function ReferenceStudyTool({ kind }: { kind: 'sheets'|'cards'|'qbank' }) {
-  useLang();
+  const { t: translate } = useLang();
   return kind === 'cards' ? <Flashcards/> : <LegacyStudyTool kind={kind}/>;
 }
 function LegacyStudyTool({ kind }: { kind: 'sheets'|'qbank' }) {
-  useLang();
+  const { t: translate } = useLang();
   const { user } = useSession(); const { tree } = useCurriculum(); useRemoteQuestions();
   const [topic,setTopic] = useState(''), [notes,setNotes] = useState(''), [sc,setSc] = useState(emptyScope);
   const [count,setCount] = useState(12), [difficulty,setDifficulty] = useState('Board-style'), [focus,setFocus] = useState('General');

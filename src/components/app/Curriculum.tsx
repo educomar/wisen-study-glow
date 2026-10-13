@@ -68,7 +68,7 @@ export async function downloadCurriculumFile(f: CurFile) {
 }
 
 export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tree: Tree | null; signedIn: boolean; activeTitle: string; onOpen: (f: CurFile) => void }) {
-  useLang();
+  const { t: translate } = useLang();
   const [sub, setSub] = useState<string | null>(null);
   const [unit, setUnit] = useState<string | null>(null);
   if (!tree) return <p className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />  {translate("Loading your courses…")}</p>;

@@ -26,7 +26,7 @@ const sel = "h-11 min-w-0 w-full rounded-md border border-input bg-card px-3 tex
 const fmt = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
 export function QuestionView({ q, picked: pickedProp, onPick, onNext, onPrev }: { q: Question; picked?: number | null; onPick?: (k: number) => void; onNext?: (() => void) | undefined; onPrev?: (() => void) | undefined }) {
-  useLang();
+  const { t: translate } = useLang();
   const s = useAppState();
   const [local, setLocal] = useState<number | null>(null);
   const picked = onPick ? (pickedProp ?? null) : local;
@@ -115,17 +115,17 @@ function filtered(pool: Question[], f: Pick<QSession, "subject" | "lesson" | "di
 }
 
 function ListChecksIcon(){
-  useLang();return <span className="grid size-16 place-items-center rounded-full bg-background text-muted-foreground"><ListChecks className="size-7"/></span>;}
+  const { t: translate } = useLang();return <span className="grid size-16 place-items-center rounded-full bg-background text-muted-foreground"><ListChecks className="size-7"/></span>;}
 
 export function QBank(props: { context?: string | undefined; defaultSubject?: string | undefined; defaultLesson?: string | undefined; source?: "ai" | "faculty" | "past" }) {
-  useLang();
+  const { t: translate } = useLang();
   if (props.source === "past") return <PastEmds />;
   if (props.source === "faculty") return <Practice {...props} />;
   if (props.source === "ai") return <div className="space-y-4"><AiGenerator /><Practice {...props} /></div>;
   return <LegacyQBank {...props} />;
 }
 function LegacyQBank(props: { context?: string | undefined; defaultSubject?: string | undefined }) {
-  useLang();
+  const { t: translate } = useLang();
   const [tab, setTabQ] = useState<"ai" | "emd">("ai");
   const t = (k: typeof tab, l: string) => <button onClick={() => setTabQ(k)} className={`rounded-md px-3 py-1.5 text-sm font-medium ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>{translate(l)}</button>;
   return (
@@ -137,7 +137,7 @@ function LegacyQBank(props: { context?: string | undefined; defaultSubject?: str
 }
 
 function AiGenerator() {
-  useLang();
+  const { t: translate } = useLang();
   const { tree, signedIn } = useCurriculum();
   const [sc, setSc] = useState<Scope>(emptyScope);
   const [qtype, setQtype] = useState<"SCQ" | "MCQ">("SCQ");
@@ -178,7 +178,7 @@ function AiGenerator() {
 }
 
 function PastEmds() {
-  useLang();
+  const { t: translate } = useLang();
   const { tree, signedIn } = useCurriculum();
   const [opening, setOpening] = useState<string | null>(null);
   const open = async (f: CurFile, subject: string) => {
@@ -204,7 +204,7 @@ function PastEmds() {
 }
 
 export function Practice({ defaultSubject, defaultLesson, source }: { context?: string | undefined; defaultSubject?: string | undefined; defaultLesson?: string | undefined; source?: "ai" | "faculty" | "past" }) {
-  useLang();
+  const { t: translate } = useLang();
   const s = useAppState();
   const ai = useAi();
   const faculty = remoteQuestions();

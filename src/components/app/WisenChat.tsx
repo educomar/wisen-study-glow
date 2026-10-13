@@ -27,7 +27,7 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
 function McqView({ q }: { q: NonNullable<AiMsg["mcq"]> }) {
-  useLang();
+  const { t: translate } = useLang();
   const [pick, setPick] = useState<string | null>(null);
   return (
     <div className="mt-2 rounded-lg border border-border bg-muted/40 p-3">
@@ -96,7 +96,7 @@ export function WisenChat({
   initialQuery?: string | undefined;
   onCitation?: (page: number) => void;
 }) {
-  useLang();
+  const { t: translate } = useLang();
   const { msgs, typing } = useChat();
   const { doc, page } = useDoc();
   const [input, setInput] = useState("");
