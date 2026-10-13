@@ -4,6 +4,7 @@ import { z } from "zod";
 import { parseJson, wisenComplete } from "./gateway.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { audience } from "./prompt";
+import { EXAM_SPEC, FORMAT_RULE } from "./exam-spec";
 
 type Sb = { from: (t: "profiles") => any };
 /** The caller's own department/year, read server-side under RLS (never trusted from the client). */
@@ -42,12 +43,10 @@ export const generateQuestions = createServerFn({ method: "POST" })
     const per = Math.max(2000, Math.floor(90000 / data.material.length));
     const mat = data.material.map((m) => `### File: ${m.name}\n${m.text.slice(0, per)}`).join("\n\n");
     const past = data.pastEmds.length ? `\n\nPREVIOUS-YEAR EMDs (style reference ONLY — study their structure, wording, difficulty and frequently tested concepts; NEVER copy or lightly reword their questions):\n${data.pastEmds.map((p) => `### ${p.name}\n${p.text.slice(0, 12000)}`).join("\n\n")}` : "";
-    const typeRule = data.qtype === "SCQ"
-      ? "Each question is an SCQ (QCS): exactly ONE correct option among 4–5."
-      : "Each question is an MCQ (QCM): 5 options (A–E) with ONE OR MORE correct options (usually 2–3).";
+    const typeRule = `${FORMAT_RULE[data.qtype]}\n${EXAM_SPEC}`;
     const { who, lang: LANG_NOW } = await studentAudience(context.supabase as unknown as Sb, context.userId);
     const system = `You are Wisen AI, writing ${data.mode === "exam" ? "an original EMD exam simulation" : "practice questions"} for ${who} at the Faculty of Medicine, Université Ferhat Abbas Sétif 1. Match their exact level. ${STRICT} ${typeRule} Difficulty: ${data.difficulty}. ${LANG_NOW || LANG} ${NOTATION}
-Return JSON only: {"questions":[{"stem":"...","options":["..."],"answers":[0-based indices of correct options],"explanation":"why the answer(s) are right and the others wrong","source":"file name and page/section if known"}]}`;
+Return JSON only: {"questions":[{"stem":"...","options":["..."],"answers":[0-based indices of correct options],"explanation":"why the answer(s) are right and the others wrong","source":"file name and page/section if known","format":"QCS|QCM_MULTI|QCM_REGRP|CAS_CLIN","trap":"Inversion|Absolute Determinator|Plausible Detail|Numerical Shift|Phase Swap"}]}`;
     const user = `Write exactly ${data.count} questions on: ${[data.subject, data.unit, data.lesson].filter(Boolean).join(" → ")}.\n\nCOURSE MATERIAL:\n${mat}${past}`;
     if (!total) throw new Error("The selected material has no readable text.");
     const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: user }], { json: true });
