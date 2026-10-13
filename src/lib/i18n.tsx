@@ -16,6 +16,7 @@ export function syncClientLanguage() {
 }
 
 export const getLang = () => current;
+export const getLocale = () => current === "fr" ? "fr-FR" : "en-GB";
 
 /** Changes the UI language; persists to local storage and (when signed in) the student's profile. */
 export function setLang(l: Lang, persist = true) {
@@ -77,7 +78,8 @@ const EN: Record<string, string> = {
   "steps.body": "A simple study loop designed to turn medical content into lasting knowledge.",
 };
 
-export function translate(key: string, l: Lang = current): string {
+export function translate(value: string | number, l: Lang = current): string {
+  const key = String(value);
   if (l === "en") return EN[key] ?? key;
   const trimmed = key.trim();
   const exact = FR[trimmed];
