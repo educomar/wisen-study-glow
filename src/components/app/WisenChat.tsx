@@ -116,7 +116,7 @@ export function WisenChat({
   const pageText = (doc.pages.find((p) => p.pageNumber === page)?.text ?? "").slice(0, 1500);
   const chip = (c: string) => {
     if (studio)
-      return ask("Ask", `${c}: use the current lecture and page ${page}. ${pageText}`, c, page);
+      return ask("Ask", `${translate(c)}: use the current lecture and page ${page}. ${pageText}`, translate(c), page);
     if (c.startsWith("EMD &"))
       return ask("Ask", "EMD dates, QCM correction and module coefficients at UFAS1 1ère année", c);
     const action = c.startsWith("Summarize")

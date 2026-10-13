@@ -78,8 +78,8 @@ const EN: Record<string, string> = {
   "steps.body": "A simple study loop designed to turn medical content into lasting knowledge.",
 };
 
-export function translate(value: string | number, l: Lang = current): string {
-  const key = String(value);
+export function translate(value: string | number | undefined, l: Lang = current): string {
+  const key = value === undefined ? "" : String(value);
   if (l === "en") return EN[key] ?? key;
   const trimmed = key.trim();
   const exact = FR[trimmed];

@@ -16,7 +16,7 @@ export function AuthCard({ title, subtitle, children, footer }: { title: string;
         <h1 className="font-serif text-4xl">{translate(title)}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{translate(subtitle)}</p>
         <div className="mt-6">{children}</div>
-        <div className="mt-6 text-center text-sm text-muted-foreground">{translate(footer)}</div>
+        <div className="mt-6 text-center text-sm text-muted-foreground">{footer}</div>
       </div>
     </div>
   );
