@@ -302,7 +302,7 @@ export function CourseReader({
       return;
     }
     const q = `“${sel.text.slice(0, 110)}${sel.text.length > 110 ? "…" : ""}”`;
-    const label = `${a} · ${doc.subject} · Page ${sel.page}: ${q}`;
+    const label = `${a} · ${translate(doc.subject)} · Page ${sel.page}: ${q}`;
     if (a === "Make Kapsule") {
       const ctx = sentences(doc.pages.find((p) => p.pageNumber === sel.page)?.text ?? "")[0] ?? "";
       addCard(
@@ -407,7 +407,7 @@ export function CourseReader({
           onClick={() => setShowCourses(!showCourses)}
         >
           <Library />
-          {parallel ? doc.subject : translate("My courses")}
+          {parallel ? translate(doc.subject) : translate("My courses")}
           {parallel && <ChevronDown />}
         </Button>
         <div className="studio-title flex min-w-0 flex-1 items-center gap-2 px-1">
@@ -678,7 +678,7 @@ export function CourseReader({
                       </div>
                       <div className="space-y-3 text-[15px] leading-relaxed">
                         {s.body.map((b) => (
-                          <p key={b}>{translate(b)}</p>
+                          <p key={translate(b)}>{translate(b)}</p>
                         ))}
                       </div>
                       <div className="mt-5 flex flex-wrap gap-2">
@@ -694,7 +694,7 @@ export function CourseReader({
                       <div className="mt-5 rounded-lg border-l-4 border-primary bg-primary/5 p-4 text-sm">
                         <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-primary">
                            {translate("High-yield note")} </p>
-                        {s.highYield}
+                        {translate(s.highYield)}
                       </div>
                     </article>
                   ),

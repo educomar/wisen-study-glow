@@ -84,6 +84,8 @@ export function translate(value: string | number | undefined, l: Lang = current)
   const trimmed = key.trim();
   const exact = FR[trimmed];
   if (exact) return key.replace(trimmed, exact);
+  const progress = trimmed.match(/^(\d+) (questions this week|due today)(.*)$/);
+  if (progress) return progress[1] + " " + (progress[2] === "due today" ? "à réviser aujourd’hui" : "questions cette semaine") + progress[3];
   const year = trimmed.match(/^(\d+)(?:st|nd|rd|th) Year$/);
   if (year) return `${year[1]}${year[1] === "1" ? "re" : "e"} année`;
   const reading = trimmed.match(/^Reading (course files|lecture material) (\d+)\/(\d+)…$/);
@@ -99,7 +101,7 @@ export function translate(value: string | number | undefined, l: Lang = current)
 
 export function useLang() {
   const lang = useSyncExternalStore(subscribe, getLang, () => "en" as Lang);
-  return { lang, setLang, t: (k: string) => translate(k, lang) };
+  return { lang, setLang, t: (k: string | number | undefined) => translate(k, lang) };
 }
 
 export function LangSwitch({ className = "" }: { className?: string }) {

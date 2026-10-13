@@ -82,10 +82,10 @@ export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tre
     <div className="space-y-2 p-3">
       <div className="flex flex-wrap items-center gap-1 px-1">
         <button className={crumb} onClick={() => { setSub(null); setUnit(null); }}><Library className="size-3.5" />  {translate("Courses")}</button>
-        {s && <><ChevronRight className="size-3 text-muted-foreground" /><button className={crumb} onClick={() => setUnit(null)}>{s.name}</button></>}
+        {s && <><ChevronRight className="size-3 text-muted-foreground" /><button className={crumb} onClick={() => setUnit(null)}>{translate(s.name)}</button></>}
         {u && <><ChevronRight className="size-3 text-muted-foreground" /><span className="text-xs">{u.name}</span></>}
       </div>
-      {!s && tree.map((x) => <button key={x.id} className={row} onClick={() => setSub(x.id)}><span>{x.name}</span><span className="font-mono text-[10px] text-muted-foreground">{x.units.length}  {translate("units")} <ChevronRight className="inline size-3" /></span></button>)}
+      {!s && tree.map((x) => <button key={x.id} className={row} onClick={() => setSub(x.id)}><span>{translate(x.name)}</span><span className="font-mono text-[10px] text-muted-foreground">{x.units.length}  {translate("units")} <ChevronRight className="inline size-3" /></span></button>)}
       {s && !u && s.units.map((x) => <button key={x.id} className={row} onClick={() => setUnit(x.id)}><span>{x.name}</span><span className="font-mono text-[10px] text-muted-foreground">{x.lessons.length}  {translate("lessons")} <ChevronRight className="inline size-3" /></span></button>)}
       {u && u.lessons.map((les) => (
         <div key={les.id} className="rounded-md border border-border p-2">

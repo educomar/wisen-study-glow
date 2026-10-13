@@ -20,9 +20,9 @@ export function LibraryPage() {
   const decks = useMemo(() => groupLibraryDecks([...state.customCards, ...ai.cards], state.cards, now), [state.customCards, state.cards, ai.cards, now]);
   const needle = query.trim().toLowerCase();
   const has = (t: string) => !needle || t.toLowerCase().includes(needle);
-  const shownDecks = decks.filter(deck => has(`${deck.name} ${deck.module} ${deck.cards.map(card => `${card.front} ${card.back} ${card.source ?? ''}`).join(' ')}`));
-  const notes = state.notes.filter(n => has(`${n.text} ${n.subject} ${n.source}`));
-  const bookmarked = state.bookmarks.map(id => ai.qs.find(q => q.id === id) ?? state.questionResults[id]?.question ?? state.customQuestions.find(q => q.id === id)).filter((q): q is NonNullable<typeof q> => !!q).filter(q => has(`${q.stem} ${q.subject} ${q.topic}`));
+  const shownDecks = decks.filter(deck => has(`${translate(deck.name)} ${translate(deck.module)} ${deck.cards.map(card => `${card.front} ${card.back} ${card.source ?? ''}`).join(' ')}`));
+  const notes = state.notes.filter(n => has(`${n.text} ${translate(n.subject)} ${n.source}`));
+  const bookmarked = state.bookmarks.map(id => ai.qs.find(q => q.id === id) ?? state.questionResults[id]?.question ?? state.customQuestions.find(q => q.id === id)).filter((q): q is NonNullable<typeof q> => !!q).filter(q => has(`${q.stem} ${translate(q.subject)} ${q.topic}`));
   const tabs: [LibraryTab, string, number | null][] = [['all', 'All', null], ['decks', 'Decks', decks.length], ['notes', 'Notes', state.notes.length], ['bookmarks', 'Bookmarks', bookmarked.length]];
 
   return <main className="library-page">

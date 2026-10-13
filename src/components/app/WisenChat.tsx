@@ -159,7 +159,7 @@ export function WisenChat({
     setReading(false);
   };
   const send = () => {
-    const t = input.trim() || (att ? "Analyse this file and explain its key points." : "");
+    const t = input.trim() || (att ? translate("Analyse this file and explain its key points.") : "");
     if (!t || typing || reading) return;
     setInput("");
     inputRef.current?.focus({ preventScroll: true });
@@ -212,7 +212,7 @@ export function WisenChat({
           <RotateCcw className="size-4" />
         </Button>
         <span className="studio-context">
-           {translate("Page")} {page} · {doc.subject}
+           {translate("Page")} {page} · {translate(doc.subject)}
         </span>
       </header>
       <Conversation className="min-h-0 flex-1">
@@ -225,7 +225,7 @@ export function WisenChat({
             ) : (
               <Message key={k} from="assistant">
                 <MessageContent>
-                  <MessageResponse>{m.text}</MessageResponse>
+                  <MessageResponse>{m.text.startsWith("Hi! I\'m Wisen AI.") ? translate("Welcome to Wisen AI. Ask a question about your lecture.") : m.text}</MessageResponse>
                   {m.points && (
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-foreground/90">
                       {m.points.map((p) => (

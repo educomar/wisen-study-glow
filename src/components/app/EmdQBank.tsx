@@ -85,7 +85,7 @@ function Explanation({ q, picked }: { q: Question; picked: number | null }) {
   return (
     <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
       <p className="font-semibold">{ok ? translate("Correct") : picked === null ? translate("Not answered") : translate("Incorrect")}  {translate("— answer:")} {correctText(q)}</p>
-      <div className="mt-2 text-sm"><RichText text={q.why || "No explanation available."} /></div>
+      <div className="mt-2 text-sm"><RichText text={q.why || translate("No explanation available.")} /></div>
       {q.source && <p className="mt-2 text-xs text-muted-foreground">{translate("Source:")} {q.source}</p>}
       <Button size="sm" variant="outline" className="mt-3" onClick={() => { saveKapsule(q); toast.success(translate("Saved as Kapsule")); }}><Layers />  {translate("Save as Kapsule")}</Button>
     </div>
@@ -242,7 +242,7 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
         {mode === "real" && <fieldset className="emd-card"><legend className="font-semibold">{translate("Choose your scoring system")}</legend>
           {SCORING.map((o) => <label key={o.key} className="flex items-start gap-2 py-1 cursor-pointer"><input type="radio" name="scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} className="mt-1" /><span><strong>{translate(o.label)}</strong><br /><small className="text-muted-foreground">{translate(o.hint)}</small></span></label>)}
         </fieldset>}
-        <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {translate(busy)}</> : mode === "real" ? "Generate & start Real Exam" : "Generate & start practice"}</Button>
+        <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {translate(busy)}</> : mode === "real" ? translate("Generate & start Real Exam") : translate("Generate & start practice")}</Button>
       </div>
     </section>
   );
