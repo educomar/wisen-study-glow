@@ -1,5 +1,10 @@
 # Roadmap
 
+## Full French interface — October 13
+- [ ] Translate public, authentication and student pages, including toolbars, filters and dialogs.
+- [ ] Preserve EN / FR persistence and selected-language AI generation.
+- [ ] Verify French navigation and study flows, English switching and existing tests.
+
 ## Academic naming cleanup — October 11
 - [x] Review supplied naming map; standardize all 27 units, 159 lessons and 150 resource labels while preserving original file extensions and medical terminology.
 - [x] Apply name-only database updates; unchanged integrity fingerprint confirms IDs, relationships, storage paths and other resource/curriculum fields remain intact. Update 95 AI question lesson labels and 28 Kapsule scope labels without changing content or counts.
