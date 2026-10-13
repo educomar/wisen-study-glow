@@ -19,6 +19,6 @@ test('other Wisen requests retain automatic language detection', () => {
 test('French selection overrides English input for Wisen explanations', () => {
   const result = prepare({ ...request, message: 'Explain neural development.', outputLanguage: 'french' });
   strictEqual(result.route.lang, 'french');
-  ok(result.system.includes('Réponds en français'));
+  ok(result.system.includes('Respond exclusively in French'));
   strictEqual(result.system.includes('Respond exclusively in English'), false);
 });
