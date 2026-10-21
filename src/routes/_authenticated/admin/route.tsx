@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { BookOpen, Brain, CloudDownload, FileText, GraduationCap, Layers, LayoutDashboard, ListChecks, LogOut, Users } from "lucide-react";
+import { Archive, BookOpen, Brain, Sparkles, CloudDownload, FileText, GraduationCap, Layers, LayoutDashboard, ListChecks, LogOut, Users } from "lucide-react";
 import { useState } from "react";
 
 import { TeamCtx } from "@/components/admin/team-context";
@@ -28,6 +28,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, admin: false },
   { to: "/admin/qbank", label: "QBank", icon: ListChecks, admin: false },
+  { to: "/admin/past-emds", label: "Past EMDs", icon: Archive, admin: false },
+  { to: "/admin/ai-exams", label: "AI Exams", icon: Sparkles, admin: false },
   { to: "/admin/subjects", label: "Subjects", icon: BookOpen, admin: false },
   { to: "/admin/files", label: "Files & Sources", icon: FileText, admin: false },
   { to: "/admin/drive-import", label: "Drive Importer", icon: CloudDownload, admin: false },
