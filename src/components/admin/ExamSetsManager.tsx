@@ -32,7 +32,7 @@ export function ExamSetsManager({ kind }: { kind: Kind }) {
   const subjName = (id: string) => { const s = h?.subjects.find((x) => x.id === id); return s ? `${s.name} · ${s.department} Y${s.academic_year}` : "—"; };
   const current = open && open !== "new" ? list.data?.find((r) => r.id === open) : undefined;
 
-  if (open) return <Editor key={open} kind={kind} set={current} onClose={() => setOpen(null)} onCreated={setOpen} />;
+  if (open) return <Editor key={open} kind={kind} set={current as SetRow | undefined} onClose={() => setOpen(null)} onCreated={setOpen} />;
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
@@ -78,7 +78,7 @@ function StatusBadge({ s }: { s: string }) {
 
 type SetRow = { id: string; status: string; resource_id: string | null } & Meta;
 
-function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set?: SetRow; onClose: () => void; onCreated: (id: string) => void }) {
+function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | undefined; onClose: () => void; onCreated: (id: string) => void }) {
   const { data: h } = useHierarchy();
   const act = useAction();
   const [m, setM] = useState<Meta>(set ? { title: set.title, subject_id: set.subject_id, unit_id: set.unit_id, exam_year: set.exam_year, session: set.session, emd_number: set.emd_number, has_corrige: set.has_corrige } : blank);
