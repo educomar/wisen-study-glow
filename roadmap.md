@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Past EMD academic scope — October 21
-- [ ] Share subject/module selection across Past EMDs and exam-file uploads, retaining existing hierarchy and IDs.
-- [ ] Validate subject/unit ownership and show published module exams under the correct student scope.
-- [ ] Test Year 1/2/3 selections and authenticated upload/readback.
+- [x] Share subject/module selection across Past EMDs and exam-file uploads, retaining existing hierarchy and IDs.
+- [x] Validate subject/unit ownership and show published module exams under the correct student scope.
+- [x] Test Year 1/2/3 selections: 18 scope/import/scoring tests pass.
+- [ ] Verify authenticated admin upload/readback — blocked because the available preview account has no Team access.
 
 ## Full French interface — October 13
 - [x] Translate public, authentication and student pages, including toolbars, filters and dialogs.
