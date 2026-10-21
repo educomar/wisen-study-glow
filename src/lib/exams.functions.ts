@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { EXAM_SPEC } from "./ai/exam-spec";
 import { audit, requireTeam } from "./team.server";
+import { validateExamScope } from "./exam-scope";
 
 const qZ = z.object({
   stem: z.string().trim().min(1).max(4000),
@@ -31,6 +32,12 @@ export const saveExamSet = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const t = await requireTeam(context.supabase, context.userId);
     const { id, ...vals } = data;
+    const [{ data: subject, error: subjectError }, { data: unit, error: unitError }] = await Promise.all([
+      context.supabase.from("subjects").select("id,name,department,academic_year").eq("id", vals.subject_id).single(),
+      vals.unit_id ? context.supabase.from("units").select("id,name,subject_id").eq("id", vals.unit_id).single() : Promise.resolve({ data: null, error: null }),
+    ]);
+    if (subjectError || unitError) throw new Error("Choose a valid curriculum subject and module.");
+    validateExamScope(subject, unit, vals);
     if (id) {
       const { error } = await context.supabase.from("exam_sets").update(vals).eq("id", id);
       if (error) throw new Error(error.message);

@@ -8,6 +8,7 @@ import { LessonPicker, PageHead, sel, useAction, useHierarchy, useServerFn } fro
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteResource, resourceDownloadUrl, resourceUploadUrl, saveResource } from "@/lib/team.functions";
+import { ExamScopePicker } from "@/components/admin/ExamScopePicker";
 
 export const Route = createFileRoute("/_authenticated/admin/files")({ head: () => ({ meta: [{"title": "Files & Sources \u2014 Wisen"}, {"name": "description", "content": "Manage Wisen course files and previous-year EMD sources."}, {"property": "og:title", "content": "Files & Sources \u2014 Wisen"}, {"property": "og:description", "content": "Manage Wisen course files and previous-year EMD sources."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }), component: Files });
 
@@ -67,15 +68,15 @@ function Files() {
     <>
       <PageHead title="Files & Sources" sub="QBank resource files attached to a unit or lesson. Files are private to the Team." />
       <div className="flex flex-wrap items-center gap-2">
-        <select aria-label="Department" className={sel} value={dept} onChange={(e) => { setDept(e.target.value); setYear(0); setPick({ s: "", u: "", l: "" }); }}>
+        {kind === "course" && <><select aria-label="Department" className={sel} value={dept} onChange={(e) => { setDept(e.target.value); setYear(0); setPick({ s: "", u: "", l: "" }); }}>
           <option value="">All departments</option>
           {[...new Set((h?.subjects ?? []).map((x) => x.department))].map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
         <select aria-label="Study year" className={sel} value={year} onChange={(e) => { setYear(Number(e.target.value)); setPick({ s: "", u: "", l: "" }); }}>
           <option value={0}>All years</option>
           {Array.from({ length: dept === "Dentistry" ? 6 : 7 }, (_, i) => i + 1).map((y) => <option key={y} value={y}>Year {y}</option>)}
-        </select>
-        <LessonPicker value={pick} onChange={setPick} allowUnitOnly department={dept || undefined} year={year || undefined} />
+        </select></>}
+        {kind === "past_emd" ? <ExamScopePicker value={{ subject_id: pick.s, unit_id: pick.u || null }} onChange={(scope) => { const s = h?.subjects.find((x) => x.id === scope.subject_id); setDept(s?.department ?? ""); setYear(s?.academic_year ?? 0); setPick({ s: scope.subject_id, u: scope.unit_id ?? "", l: "" }); }} /> : <LessonPicker value={pick} onChange={setPick} allowUnitOnly department={dept || undefined} year={year || undefined} />}
         <select aria-label="File type" className={sel} value={kind} onChange={(e) => setKind(e.target.value as "course" | "past_emd")}><option value="course">Course file</option><option value="past_emd">Previous-year EMD (unit optional)</option></select>
         <Button disabled={busy || !pick.s || (kind !== "past_emd" && !pick.u)} onClick={() => { replaceId.current = undefined; input.current?.click(); }}><Upload /> {busy ? "Uploading…" : "Upload file"}</Button>
         <input ref={input} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void onFile(f); }} />

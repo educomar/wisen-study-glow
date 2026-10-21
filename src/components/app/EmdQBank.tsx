@@ -142,11 +142,12 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [run, setRun] = useState<{ title: string; qs: Question[] } | null>(null);
   const transcribe = useServerFn(transcribePastEmd);
-  type PubSet = { id: string; kind: string; title: string; subject_id: string; resource_id: string | null; exam_year: string; session: string; emd_number: string };
+  type PubSet = { id: string; kind: string; title: string; subject_id: string; unit_id: string | null; resource_id: string | null; exam_year: string; session: string; emd_number: string };
   const [sets, setSets] = useState<PubSet[]>([]);
-  useEffect(() => { void supabase.from("exam_sets").select("id,kind,title,subject_id,resource_id,exam_year,session,emd_number").eq("status", "published").order("exam_year", { ascending: false }).then(({ data }) => setSets((data ?? []) as PubSet[])); }, []);
+  useEffect(() => { void supabase.from("exam_sets").select("id,kind,title,subject_id,unit_id,resource_id,exam_year,session,emd_number").eq("status", "published").order("exam_year", { ascending: false }).then(({ data }) => setSets((data ?? []) as PubSet[])); }, []);
   const subjOf = (id: string) => (tree ?? []).find((t) => t.id === id)?.name;
-  const visibleSets = sets.filter((x) => subjOf(x.subject_id) && (!mod || subjOf(x.subject_id) === mod));
+  const moduleOf = (x: PubSet) => { const s = tree?.find((t) => t.id === x.subject_id); const u = s?.units.find((t) => t.id === x.unit_id); return u && u.name !== s?.name ? `${u.name} · ${s?.name}` : s?.name ?? ""; };
+  const visibleSets = sets.filter((x) => subjOf(x.subject_id) && (!mod || moduleOf(x) === mod || subjOf(x.subject_id) === mod));
   const openSet = async (x: PubSet) => {
     setBusy(x.id);
     const { data } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
@@ -154,12 +155,13 @@ function PastEmds({ onBack }: { onBack: () => void }) {
     const subject = subjOf(x.subject_id) ?? "";
     const qs: Question[] = (data ?? []).map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; return { id: `set-${r.id}`, subject, topic: subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0]!, why: r.explanation, distractors: [], slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
     if (!qs.length) { toast.error(translate("This exam has no questions yet.")); return; }
-    setRun({ title: `${subject} · ${x.title}`, qs });
+    setRun({ title: `${moduleOf(x)} · ${x.title}`, qs });
     log(`Past EMD opened · ${subject} ${x.title}`);
   };
   const mods = (tree ?? []).filter((s) => s.emds.length || sets.some((x) => x.subject_id === s.id));
   const files = (mods.find((m) => m.name === mod)?.emds ?? (mod ? [] : mods.flatMap((m) => m.emds))).map((f) => ({ ...f, year: emdYear(f.file_name, f.date) }));
-  const years = [...new Set(files.map((f) => f.year))].sort().reverse();
+  const years = [...new Set([...files.map((f) => f.year), ...visibleSets.map((x) => x.exam_year).filter(Boolean)])].sort().reverse();
+  const moduleNames = [...new Set([...mods.map((m) => m.name), ...sets.filter((x) => subjOf(x.subject_id)).map(moduleOf)])];
   const shown = files.filter((f) => year === "All" || f.year === year);
   const open = async (f: CurFile & { year: string }) => {
     const verified = sets.find((x) => x.resource_id === f.id);
@@ -183,18 +185,18 @@ function PastEmds({ onBack }: { onBack: () => void }) {
       <h2 className="emd-h2">{translate("Past EMDs")}</h2>
       <p className="emd-sub">{translate("Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.")}</p>
       <div className="emd-filters">
-        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); }}><option value="">{translate("All modules")}</option>{mods.map((m) => <option key={m.id}>{m.name}</option>)}</select>
+        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); }}><option value="">{translate("All modules")}</option>{moduleNames.map((name) => <option key={name}>{name}</option>)}</select>
         <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : translate(y)}</button>)}</div>
       </div>
       {[["past_emd", "Verified past EMDs"], ["ai_generated", "Verified Wisen AI exams"]].map(([k, label]) => {
         const group = visibleSets.filter((x) => x.kind === k && (year === "All" || x.exam_year === year || k === "ai_generated"));
         return group.length ? <div key={k}><h3 className="emd-sub"><strong>{translate(label!)}</strong></h3><div className="emd-file-grid">{group.map((x) => (
           <button key={x.id} type="button" className="emd-file" disabled={!!busy} onClick={() => void openSet(x)}>
-            <FileText /><span><strong>{subjOf(x.subject_id)}</strong><small>{[x.title, x.emd_number, x.exam_year, x.session === "rattrapage" ? translate("Rattrapage") : ""].filter(Boolean).join(" · ")}</small></span>
+            <FileText /><span><strong>{moduleOf(x)}</strong><small>{[x.title, x.emd_number, x.exam_year, x.session === "rattrapage" ? translate("Rattrapage") : ""].filter(Boolean).join(" · ")}</small></span>
             {busy === x.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}
           </button>))}</div></div> : null;
       })}
-      {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" />  {translate("Loading…")}</p> : !shown.length ? (
+      {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" />  {translate("Loading…")}</p> : !shown.length && !visibleSets.some((x) => year === "All" || x.exam_year === year || x.kind === "ai_generated") ? (
         <p className="emd-empty">{translate("No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.")}</p>
       ) : (
         <div className="emd-file-grid">{shown.map((f) => (

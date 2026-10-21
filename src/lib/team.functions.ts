@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { audit, loadTeam, newToken, requireTeam, safeEqual, sha256 } from "./team.server";
+import { validateExamScope } from "./exam-scope";
 
 const INVITE_DAYS = 7;
 const emailOf = (claims: { email?: unknown }) => String(claims.email ?? "").trim().toLowerCase();
@@ -306,6 +307,15 @@ export const saveResource = createServerFn({ method: "POST" })
     const { id, ...vals } = data;
     if (!vals.unit_id && vals.kind !== "past_emd") throw new Error("Course files need a unit.");
     if (!vals.unit_id) vals.lesson_id = null;
+    if (!id && vals.kind === "past_emd") {
+      const [{ data: subject, error: subjectError }, { data: unit, error: unitError }] = await Promise.all([
+        context.supabase.from("subjects").select("id,name,department,academic_year").eq("id", vals.subject_id).single(),
+        vals.unit_id ? context.supabase.from("units").select("id,name,subject_id").eq("id", vals.unit_id).single() : Promise.resolve({ data: null, error: null }),
+      ]);
+      if (subjectError || unitError) throw new Error("Choose a valid curriculum subject and module.");
+      validateExamScope(subject, unit, vals);
+      vals.lesson_id = null;
+    }
     if (id) {
       const { data: old } = await context.supabase.from("lesson_resources").select("storage_path").eq("id", id).single();
       const { error } = await context.supabase.from("lesson_resources").update({ file_name: vals.file_name, storage_path: vals.storage_path, mime_type: vals.mime_type, size_bytes: vals.size_bytes, uploaded_by: t.userId }).eq("id", id);
@@ -318,7 +328,12 @@ export const saveResource = createServerFn({ method: "POST" })
     if (error || !row) throw new Error(error?.message ?? "Save failed");
     await audit(context.supabase, t, "uploaded_file", "resource", row.id, vals.file_name);
     if (vals.kind === "past_emd") {
-      await context.supabase.from("exam_sets").insert({ kind: "past_emd", title: vals.file_name.replace(/\.[a-z0-9]{2,5}$/i, ""), subject_id: vals.subject_id, unit_id: vals.unit_id, resource_id: row.id, created_by: t.userId });
+      const { data: exam, error: examError } = await context.supabase.from("exam_sets").insert({ kind: "past_emd", title: vals.file_name.replace(/\.[a-z0-9]{2,5}$/i, ""), subject_id: vals.subject_id, unit_id: vals.unit_id, resource_id: row.id, created_by: t.userId }).select("id").single();
+      if (examError || !exam) {
+        await context.supabase.from("lesson_resources").delete().eq("id", row.id);
+        throw new Error("Could not create the past EMD. Please retry the upload.");
+      }
+      return { id: row.id, examId: exam.id };
     }
     return { id: row.id };
   });

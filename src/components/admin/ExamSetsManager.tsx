@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Sparkles, Trash2, Undo2, X } from "lucide-react";
+import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Sparkles, Trash2, Undo2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -7,7 +7,9 @@ import { area, inp, sel, useAction, useHierarchy, useServerFn } from "@/componen
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteExamSet, generateAiExam, saveExamQuestions, saveExamSet, setExamStatus } from "@/lib/exams.functions";
-import { aiParseQuestions, resourceDownloadUrl } from "@/lib/team.functions";
+import { aiParseQuestions, resourceDownloadUrl, resourceUploadUrl, saveResource } from "@/lib/team.functions";
+import { ExamScopePicker } from "./ExamScopePicker";
+import { examScopeName } from "@/lib/exam-scope";
 
 type Kind = "past_emd" | "ai_generated";
 type Q = { stem: string; options: string[]; answers: number[]; explanation: string; format: string; verified: boolean };
@@ -57,7 +59,7 @@ export function ExamSetsManager({ kind }: { kind: Kind }) {
             {rows.map((r) => (
               <tr key={r.id} className="cursor-pointer border-b border-border last:border-0 hover:bg-accent/50" onClick={() => setOpen(r.id)}>
                 <td className="p-3 font-medium">{r.title}{r.emd_number && <span className="ml-1 text-muted-foreground">· {r.emd_number}</span>}</td>
-                <td className="p-3 text-muted-foreground">{subjName(r.subject_id)}</td>
+                <td className="p-3 text-muted-foreground">{examScopeName(subjName(r.subject_id), h?.units.find((u) => u.id === r.unit_id)?.name)}</td>
                 {kind === "past_emd" && <><td className="p-3">{r.exam_year || "—"}</td><td className="p-3">{r.session === "rattrapage" ? "Rattrapage" : "Normal"}</td><td className="p-3">{r.has_corrige ? "Yes" : "No"}</td></>}
                 <td className="p-3">{(r.exam_set_questions as unknown as { count: number }[])[0]?.count ?? 0}</td>
                 <td className="p-3"><StatusBadge s={r.status} /></td>
@@ -88,6 +90,22 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
   const [busy, setBusy] = useState<string | null>(null);
   const save = useServerFn(saveExamSet), saveQs = useServerFn(saveExamQuestions), setSt = useServerFn(setExamStatus), del = useServerFn(deleteExamSet);
   const parse = useServerFn(aiParseQuestions), gen = useServerFn(generateAiExam), view = useServerFn(resourceDownloadUrl);
+  const uploadUrl = useServerFn(resourceUploadUrl), uploadResource = useServerFn(saveResource);
+
+  const uploadPaper = async (file: File) => {
+    if (!m.subject_id) { toast.error("Choose a subject first."); return; }
+    setBusy("upload");
+    try {
+      const up = await uploadUrl({ data: { fileName: file.name } });
+      const { error } = await supabase.storage.from("resources").uploadToSignedUrl(up.path, up.token, file, { contentType: file.type || "application/octet-stream" });
+      if (error) throw new Error("Upload failed");
+      const result = await uploadResource({ data: { subject_id: m.subject_id, unit_id: m.unit_id, lesson_id: null, file_name: file.name, storage_path: up.path, mime_type: file.type || "application/octet-stream", size_bytes: file.size, kind: "past_emd" } });
+      if (!("examId" in result) || !result.examId) throw new Error("Could not create the past EMD.");
+      await save({ data: { ...m, title: m.title.trim() || file.name.replace(/\.[^.]+$/, ""), kind, id: result.examId } });
+      await act(Promise.resolve(result), "Paper uploaded");
+      onCreated(result.examId);
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  };
 
   useEffect(() => {
     if (!set) return;
@@ -118,7 +136,7 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
         <Button variant="ghost" size="sm" onClick={onClose}><X /> Back to list</Button>
         {set && <StatusBadge s={set.status} />}
         <div className="ml-auto flex flex-wrap gap-2">
-          {set?.resource_id && <Button size="sm" variant="outline" onClick={async () => { const x = await act(view({ data: { id: set.resource_id! } })); if (x?.url) window.open(x.url, "_blank", "noopener"); }}><Eye /> View paper</Button>}
+          {set?.resource_id && <Button size="sm" variant="outline" onClick={async () => { if (!set.resource_id) return; const x = await act(view({ data: { id: set.resource_id } })); if (x?.url) window.open(x.url, "_blank", "noopener"); }}><Eye /> View paper</Button>}
           {set && set.status !== "published" && <Button size="sm" variant="outline" onClick={() => status("verified")}><CheckCircle2 /> Mark verified</Button>}
           {set && set.status !== "published" && <Button size="sm" onClick={() => status("published")}><Send /> Publish to students</Button>}
           {set?.status === "published" && <Button size="sm" variant="outline" onClick={() => status("in_review")}><Undo2 /> Unpublish</Button>}
@@ -128,15 +146,19 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
 
       <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
         <label className="text-xs text-muted-foreground sm:col-span-2">Title<input className={inp} value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} placeholder={kind === "past_emd" ? "EMD 1 Anatomie 2023" : "Wisen mock EMD — Cardiologie"} /></label>
-        <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
-        <label className="text-xs text-muted-foreground">Unit (optional)<select className={`${sel} w-full`} value={m.unit_id ?? ""} disabled={!m.subject_id} onChange={(e) => setM({ ...m, unit_id: e.target.value || null })}><option value="">Whole module</option>{units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
+        {kind === "past_emd" ? <div className="min-w-0 sm:col-span-2"><ExamScopePicker value={m} onChange={(scope) => setM({ ...m, ...scope })} /></div> : <>
+          <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
+          <label className="text-xs text-muted-foreground">Unit (optional)<select className={`${sel} w-full`} value={m.unit_id ?? ""} disabled={!m.subject_id} onChange={(e) => setM({ ...m, unit_id: e.target.value || null })}><option value="">Whole module</option>{units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
+        </>}
         {kind === "past_emd" && <>
           <label className="text-xs text-muted-foreground">Academic year<input className={inp} value={m.exam_year} onChange={(e) => setM({ ...m, exam_year: e.target.value })} placeholder="2023–2024" /></label>
           <label className="text-xs text-muted-foreground">Exam<input className={inp} value={m.emd_number} onChange={(e) => setM({ ...m, emd_number: e.target.value })} placeholder="EMD 1" /></label>
           <label className="text-xs text-muted-foreground">Session<select className={`${sel} w-full`} value={m.session} onChange={(e) => setM({ ...m, session: e.target.value as Meta["session"] })}><option value="normal">Normal</option><option value="rattrapage">Rattrapage</option></select></label>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={m.has_corrige} onChange={(e) => setM({ ...m, has_corrige: e.target.checked })} /> Answer key (Corrigé) available</label>
         </>}
-        <div className="sm:col-span-2"><Button size="sm" onClick={saveMeta}><Save /> {set ? "Save details" : "Create exam"}</Button></div>
+        <div className="flex flex-wrap items-center gap-2 sm:col-span-2"><Button size="sm" disabled={!!busy} onClick={saveMeta}><Save /> {set ? "Save details" : "Create exam"}</Button>
+          {kind === "past_emd" && !set && <><Button size="sm" variant="outline" disabled={!m.subject_id || !!busy} onClick={() => document.getElementById("past-emd-paper")?.click()}>{busy === "upload" ? <Loader2 className="animate-spin" /> : <Upload />} Upload exam paper</Button><input id="past-emd-paper" type="file" hidden onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void uploadPaper(file); }} /></>}
+        </div>
       </section>
 
       {set && <>
