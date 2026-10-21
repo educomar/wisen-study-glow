@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Logo } from "@/components/site/Logo";
+import { supabase } from "@/integrations/supabase/client";
 import { generateQuestions, transcribePastEmd } from "@/lib/ai/study.functions";
 import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
 import { useCurriculum, type CurFile } from "./Curriculum";
@@ -141,11 +142,28 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [run, setRun] = useState<{ title: string; qs: Question[] } | null>(null);
   const transcribe = useServerFn(transcribePastEmd);
-  const mods = (tree ?? []).filter((s) => s.emds.length);
+  type PubSet = { id: string; kind: string; title: string; subject_id: string; resource_id: string | null; exam_year: string; session: string; emd_number: string };
+  const [sets, setSets] = useState<PubSet[]>([]);
+  useEffect(() => { void supabase.from("exam_sets").select("id,kind,title,subject_id,resource_id,exam_year,session,emd_number").eq("status", "published").order("exam_year", { ascending: false }).then(({ data }) => setSets((data ?? []) as PubSet[])); }, []);
+  const subjOf = (id: string) => (tree ?? []).find((t) => t.id === id)?.name;
+  const visibleSets = sets.filter((x) => subjOf(x.subject_id) && (!mod || subjOf(x.subject_id) === mod));
+  const openSet = async (x: PubSet) => {
+    setBusy(x.id);
+    const { data } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
+    setBusy(null);
+    const subject = subjOf(x.subject_id) ?? "";
+    const qs: Question[] = (data ?? []).map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; return { id: `set-${r.id}`, subject, topic: subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0]!, why: r.explanation, distractors: [], slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
+    if (!qs.length) { toast.error(translate("This exam has no questions yet.")); return; }
+    setRun({ title: `${subject} · ${x.title}`, qs });
+    log(`Past EMD opened · ${subject} ${x.title}`);
+  };
+  const mods = (tree ?? []).filter((s) => s.emds.length || sets.some((x) => x.subject_id === s.id));
   const files = (mods.find((m) => m.name === mod)?.emds ?? (mod ? [] : mods.flatMap((m) => m.emds))).map((f) => ({ ...f, year: emdYear(f.file_name, f.date) }));
   const years = [...new Set(files.map((f) => f.year))].sort().reverse();
   const shown = files.filter((f) => year === "All" || f.year === year);
   const open = async (f: CurFile & { year: string }) => {
+    const verified = sets.find((x) => x.resource_id === f.id);
+    if (verified) { await openSet(verified); return; }
     const cached = ai.filter((q) => q.origin === "past" && q.source === f.file_name);
     if (cached.length) { setRun({ title: `${f.subject} · ${f.year}`, qs: cached }); return; }
     try {
@@ -168,6 +186,14 @@ function PastEmds({ onBack }: { onBack: () => void }) {
         <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); }}><option value="">{translate("All modules")}</option>{mods.map((m) => <option key={m.id}>{m.name}</option>)}</select>
         <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : translate(y)}</button>)}</div>
       </div>
+      {[["past_emd", "Verified past EMDs"], ["ai_generated", "Verified Wisen AI exams"]].map(([k, label]) => {
+        const group = visibleSets.filter((x) => x.kind === k && (year === "All" || x.exam_year === year || k === "ai_generated"));
+        return group.length ? <div key={k}><h3 className="emd-sub"><strong>{translate(label!)}</strong></h3><div className="emd-file-grid">{group.map((x) => (
+          <button key={x.id} type="button" className="emd-file" disabled={!!busy} onClick={() => void openSet(x)}>
+            <FileText /><span><strong>{subjOf(x.subject_id)}</strong><small>{[x.title, x.emd_number, x.exam_year, x.session === "rattrapage" ? translate("Rattrapage") : ""].filter(Boolean).join(" · ")}</small></span>
+            {busy === x.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}
+          </button>))}</div></div> : null;
+      })}
       {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" />  {translate("Loading…")}</p> : !shown.length ? (
         <p className="emd-empty">{translate("No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.")}</p>
       ) : (
