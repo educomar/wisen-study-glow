@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Sparkles, Trash2, Undo2, X } from "lucide-react";
+import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Sparkles, Trash2, Undo2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -7,7 +7,7 @@ import { area, inp, sel, useAction, useHierarchy, useServerFn } from "@/componen
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteExamSet, generateAiExam, saveExamQuestions, saveExamSet, setExamStatus } from "@/lib/exams.functions";
-import { aiParseQuestions, resourceDownloadUrl } from "@/lib/team.functions";
+import { aiParseQuestions, resourceDownloadUrl, resourceUploadUrl, saveResource } from "@/lib/team.functions";
 import { ExamScopePicker } from "./ExamScopePicker";
 import { examScopeName } from "@/lib/exam-scope";
 
@@ -90,6 +90,22 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
   const [busy, setBusy] = useState<string | null>(null);
   const save = useServerFn(saveExamSet), saveQs = useServerFn(saveExamQuestions), setSt = useServerFn(setExamStatus), del = useServerFn(deleteExamSet);
   const parse = useServerFn(aiParseQuestions), gen = useServerFn(generateAiExam), view = useServerFn(resourceDownloadUrl);
+  const uploadUrl = useServerFn(resourceUploadUrl), uploadResource = useServerFn(saveResource);
+
+  const uploadPaper = async (file: File) => {
+    if (!m.subject_id) { toast.error("Choose a subject first."); return; }
+    setBusy("upload");
+    try {
+      const up = await uploadUrl({ data: { fileName: file.name } });
+      const { error } = await supabase.storage.from("resources").uploadToSignedUrl(up.path, up.token, file, { contentType: file.type || "application/octet-stream" });
+      if (error) throw new Error("Upload failed");
+      const result = await uploadResource({ data: { subject_id: m.subject_id, unit_id: m.unit_id, lesson_id: null, file_name: file.name, storage_path: up.path, mime_type: file.type || "application/octet-stream", size_bytes: file.size, kind: "past_emd" } });
+      if (!("examId" in result) || !result.examId) throw new Error("Could not create the past EMD.");
+      await save({ data: { ...m, title: m.title.trim() || file.name.replace(/\.[^.]+$/, ""), kind, id: result.examId } });
+      await act(Promise.resolve(result), "Paper uploaded");
+      onCreated(result.examId);
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  };
 
   useEffect(() => {
     if (!set) return;
@@ -120,7 +136,7 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
         <Button variant="ghost" size="sm" onClick={onClose}><X /> Back to list</Button>
         {set && <StatusBadge s={set.status} />}
         <div className="ml-auto flex flex-wrap gap-2">
-          {set?.resource_id && <Button size="sm" variant="outline" onClick={async () => { const x = await act(view({ data: { id: set.resource_id! } })); if (x?.url) window.open(x.url, "_blank", "noopener"); }}><Eye /> View paper</Button>}
+          {set?.resource_id && <Button size="sm" variant="outline" onClick={async () => { if (!set.resource_id) return; const x = await act(view({ data: { id: set.resource_id } })); if (x?.url) window.open(x.url, "_blank", "noopener"); }}><Eye /> View paper</Button>}
           {set && set.status !== "published" && <Button size="sm" variant="outline" onClick={() => status("verified")}><CheckCircle2 /> Mark verified</Button>}
           {set && set.status !== "published" && <Button size="sm" onClick={() => status("published")}><Send /> Publish to students</Button>}
           {set?.status === "published" && <Button size="sm" variant="outline" onClick={() => status("in_review")}><Undo2 /> Unpublish</Button>}
@@ -140,7 +156,9 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
           <label className="text-xs text-muted-foreground">Session<select className={`${sel} w-full`} value={m.session} onChange={(e) => setM({ ...m, session: e.target.value as Meta["session"] })}><option value="normal">Normal</option><option value="rattrapage">Rattrapage</option></select></label>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={m.has_corrige} onChange={(e) => setM({ ...m, has_corrige: e.target.checked })} /> Answer key (Corrigé) available</label>
         </>}
-        <div className="sm:col-span-2"><Button size="sm" onClick={saveMeta}><Save /> {set ? "Save details" : "Create exam"}</Button></div>
+        <div className="flex flex-wrap items-center gap-2 sm:col-span-2"><Button size="sm" disabled={!!busy} onClick={saveMeta}><Save /> {set ? "Save details" : "Create exam"}</Button>
+          {kind === "past_emd" && !set && <><Button size="sm" variant="outline" disabled={!m.subject_id || !!busy} onClick={() => document.getElementById("past-emd-paper")?.click()}>{busy === "upload" ? <Loader2 className="animate-spin" /> : <Upload />} Upload exam paper</Button><input id="past-emd-paper" type="file" hidden onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void uploadPaper(file); }} /></>}
+        </div>
       </section>
 
       {set && <>
