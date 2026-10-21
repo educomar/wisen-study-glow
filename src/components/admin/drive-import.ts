@@ -12,10 +12,9 @@ export type ImportNode = {
 };
 
 export const FOLDER = "application/vnd.google-apps.folder";
-const EMD_RE = /(^|[^a-z])(emd\d*|qcm|qcu|rattrapage|sujets?|examens?|exam)([^a-z]|$)/i;
-
-export function detectKind(name: string, ancestors: string[] = []): "course" | "past_emd" {
-  return [name, ...ancestors].some((n) => EMD_RE.test(n)) ? "past_emd" : "course";
+/** Imports are always course files; Past EMDs are only tagged by an explicit admin choice. */
+export function detectKind(_name: string, _ancestors: string[] = []): "course" | "past_emd" {
+  return "course";
 }
 
 const SMALL = new Set(["a", "an", "and", "of", "the", "in", "on", "to", "for", "et", "de", "du", "des", "la", "le", "les", "with"]);

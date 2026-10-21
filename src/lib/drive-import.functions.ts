@@ -72,13 +72,12 @@ For each item return a clean, professional medical Title Case name:
 - Remove professor names (Dr/Pr/Prof X), dates, years, academic-year ranges, course codes, numbering prefixes, emojis, underscores and version/status tags (cours_, TD_, TP_, v2, final, copie, new).
 - Preserve the source language and official medical terminology exactly (do not translate; keep accents and acronyms like ECG, ADN, SNV).
 - Do not invent content. Keep it concise. Files: do NOT include the file extension.
-- For files, set "emd": true when it is a past exam (EMD, QCM, Rattrapage, Sujet, Examen), else false.
-Return JSON only: {"items":[{"k":"<same k>","name":"...","emd":false}]}`;
+Return JSON only: {"items":[{"k":"<same k>","name":"..."}]}`;
     const r = await wisenComplete([{ role: "system", content: system }, { role: "user", content: `${data.context ? `Context: ${data.context}\n` : ""}${JSON.stringify(data.items)}` }], { json: true });
     if (!r.ok) throw new Error(r.error === "credits" ? "Wisen AI is out of credits right now." : r.error === "busy" ? "Wisen AI is busy — try again in a minute." : "Wisen AI couldn't standardize these names.");
     const parsed = parseJson<{ items?: { k?: string; name?: string; emd?: boolean }[] }>(r.text);
     const ok = new Set(data.items.map((i) => i.k));
-    return (parsed?.items ?? []).filter((i) => i.k && ok.has(i.k) && i.name?.trim()).map((i) => ({ k: i.k!, name: i.name!.trim().slice(0, 200), emd: Boolean(i.emd) }));
+    return (parsed?.items ?? []).filter((i) => i.k && ok.has(i.k) && i.name?.trim()).map((i) => ({ k: i.k!, name: i.name!.trim().slice(0, 200), emd: false }));
   });
 
 const fileZ = z.object({ driveId: z.string().regex(/^[\w-]{10,}$/), name: z.string().trim().min(1).max(200), mimeType: z.string().max(120), size: z.number().int().nonnegative(), createdTime: z.string().max(40).nullable(), kind: z.enum(["course", "past_emd"]) });

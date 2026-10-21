@@ -99,7 +99,6 @@ function DriveImporter() {
         const n = byKey.get(x.k); if (!n) continue;
         const ext = n.type === "file" ? (n.raw.match(/\.[a-z0-9]{2,5}$/i)?.[0]?.toLowerCase() ?? "") : "";
         n.name = x.name.replace(/\.[a-z0-9]{2,5}$/i, "") + ext;
-        if (n.type === "file" && x.emd) n.kind = "past_emd";
       }
       setAiDone(Math.min(all.length, i + 120));
     }

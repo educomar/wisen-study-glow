@@ -296,7 +296,7 @@ export const resourceUploadUrl = createServerFn({ method: "POST" })
 export const saveResource = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    id: z.string().uuid().optional(), subject_id: z.string().uuid(), unit_id: z.string().uuid(), lesson_id: z.string().uuid().nullable(),
+    id: z.string().uuid().optional(), subject_id: z.string().uuid(), unit_id: z.string().uuid().nullable(), lesson_id: z.string().uuid().nullable(),
     file_name: z.string().max(200), storage_path: z.string().max(300), mime_type: z.string().max(120), size_bytes: z.number().int().nonnegative(),
     kind: z.enum(["course", "past_emd"]).default("course"),
   }).parse(d))
@@ -304,6 +304,8 @@ export const saveResource = createServerFn({ method: "POST" })
     const t = await requireTeam(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { id, ...vals } = data;
+    if (!vals.unit_id && vals.kind !== "past_emd") throw new Error("Course files need a unit.");
+    if (!vals.unit_id) vals.lesson_id = null;
     if (id) {
       const { data: old } = await context.supabase.from("lesson_resources").select("storage_path").eq("id", id).single();
       const { error } = await context.supabase.from("lesson_resources").update({ file_name: vals.file_name, storage_path: vals.storage_path, mime_type: vals.mime_type, size_bytes: vals.size_bytes, uploaded_by: t.userId }).eq("id", id);
@@ -315,6 +317,9 @@ export const saveResource = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase.from("lesson_resources").insert({ ...vals, uploaded_by: t.userId }).select("id").single();
     if (error || !row) throw new Error(error?.message ?? "Save failed");
     await audit(context.supabase, t, "uploaded_file", "resource", row.id, vals.file_name);
+    if (vals.kind === "past_emd") {
+      await context.supabase.from("exam_sets").insert({ kind: "past_emd", title: vals.file_name.replace(/\.[a-z0-9]{2,5}$/i, ""), subject_id: vals.subject_id, unit_id: vals.unit_id, resource_id: row.id, created_by: t.userId });
+    }
     return { id: row.id };
   });
 

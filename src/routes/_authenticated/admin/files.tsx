@@ -38,28 +38,29 @@ function Files() {
       const rows = (await q).data ?? [];
       const pos = new Map((h?.subjects ?? []).map((x, i) => [x.id, i]));
       const upos = new Map((h?.units ?? []).map((x, i) => [x.id, i]));
-      return rows.sort((a, b) => (pos.get(a.subject_id) ?? 0) - (pos.get(b.subject_id) ?? 0) || (upos.get(a.unit_id) ?? 0) - (upos.get(b.unit_id) ?? 0) || String(a.drive_created_at ?? a.created_at).localeCompare(String(b.drive_created_at ?? b.created_at)));
+      return rows.sort((a, b) => (pos.get(a.subject_id) ?? 0) - (pos.get(b.subject_id) ?? 0) || (upos.get(a.unit_id ?? "") ?? 0) - (upos.get(b.unit_id ?? "") ?? 0) || String(a.drive_created_at ?? a.created_at).localeCompare(String(b.drive_created_at ?? b.created_at)));
     },
   });
 
   const onFile = async (file: File) => {
     const existing = replaceId.current ? list.data?.find((r) => r.id === replaceId.current) : undefined;
-    const target = existing ? { s: existing.subject_id, u: existing.unit_id, l: existing.lesson_id ?? "" } : pick;
-    if (!target.u) { toast.error("Choose a subject and unit first."); return; }
+    const target = existing ? { s: existing.subject_id, u: existing.unit_id ?? "", l: existing.lesson_id ?? "" } : pick;
+    const k = existing ? (existing.kind as "course" | "past_emd") : kind;
+    if (!target.s || (!target.u && k !== "past_emd")) { toast.error(k === "past_emd" ? "Choose a subject first." : "Choose a subject and unit first."); return; }
     setBusy(true);
     try {
       const up = await getUrl({ data: { fileName: file.name } });
       const { error } = await supabase.storage.from("resources").uploadToSignedUrl(up.path, up.token, file, { contentType: file.type });
       if (error) throw new Error("Upload failed");
-      await act(save({ data: { id: replaceId.current, subject_id: target.s, unit_id: target.u, lesson_id: target.l || null, file_name: file.name, storage_path: up.path, mime_type: file.type, size_bytes: file.size, kind: existing ? (existing.kind as "course" | "past_emd") : kind } }), replaceId.current ? "File replaced" : "File uploaded");
+      await act(save({ data: { id: replaceId.current, subject_id: target.s, unit_id: target.u || null, lesson_id: target.l || null, file_name: file.name, storage_path: up.path, mime_type: file.type, size_bytes: file.size, kind: k } }), replaceId.current ? "File replaced" : "File uploaded");
     } catch (e) { toast.error((e as Error).message); }
     replaceId.current = undefined; setBusy(false);
   };
 
-  const where = (r: { unit_id: string; lesson_id: string | null }) => {
+  const where = (r: { subject_id: string; unit_id: string | null; lesson_id: string | null }) => {
     const u = h?.units.find((x) => x.id === r.unit_id); const l = h?.lessons.find((x) => x.id === r.lesson_id);
-    const s = h?.subjects.find((x) => x.id === u?.subject_id);
-    return [s?.name, u?.name, l?.name].filter(Boolean).join(" → ");
+    const s = h?.subjects.find((x) => x.id === r.subject_id);
+    return [s?.name, u?.name ?? "Whole module", l?.name].filter(Boolean).join(" → ");
   };
 
   return (
@@ -75,8 +76,8 @@ function Files() {
           {Array.from({ length: dept === "Dentistry" ? 6 : 7 }, (_, i) => i + 1).map((y) => <option key={y} value={y}>Year {y}</option>)}
         </select>
         <LessonPicker value={pick} onChange={setPick} allowUnitOnly department={dept || undefined} year={year || undefined} />
-        <select aria-label="File type" className={sel} value={kind} onChange={(e) => setKind(e.target.value as "course" | "past_emd")}><option value="course">Course file</option><option value="past_emd">Previous-year EMD</option></select>
-        <Button disabled={busy || !pick.u} onClick={() => { replaceId.current = undefined; input.current?.click(); }}><Upload /> {busy ? "Uploading…" : "Upload file"}</Button>
+        <select aria-label="File type" className={sel} value={kind} onChange={(e) => setKind(e.target.value as "course" | "past_emd")}><option value="course">Course file</option><option value="past_emd">Previous-year EMD (unit optional)</option></select>
+        <Button disabled={busy || !pick.s || (kind !== "past_emd" && !pick.u)} onClick={() => { replaceId.current = undefined; input.current?.click(); }}><Upload /> {busy ? "Uploading…" : "Upload file"}</Button>
         <input ref={input} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void onFile(f); }} />
       </div>
       <div className="mt-6 divide-y divide-border rounded-xl border border-border bg-card">
