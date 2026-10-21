@@ -43,6 +43,7 @@ export function useHierarchy() {
         supabase.from("units").select("id,subject_id,name").order("position").order("created_at"),
         supabase.from("lessons").select("id,unit_id,name").order("position").order("created_at"),
       ]);
+      if (s.error || u.error || l.error) throw new Error(s.error?.message ?? u.error?.message ?? l.error?.message ?? "Could not load curriculum.");
       return { subjects: (s.data ?? []) as Subject[], units: (u.data ?? []) as Unit[], lessons: (l.data ?? []) as Lesson[] };
     },
   });

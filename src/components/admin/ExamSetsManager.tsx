@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteExamSet, generateAiExam, saveExamQuestions, saveExamSet, setExamStatus } from "@/lib/exams.functions";
 import { aiParseQuestions, resourceDownloadUrl } from "@/lib/team.functions";
+import { ExamScopePicker } from "./ExamScopePicker";
+import { examScopeName } from "@/lib/exam-scope";
 
 type Kind = "past_emd" | "ai_generated";
 type Q = { stem: string; options: string[]; answers: number[]; explanation: string; format: string; verified: boolean };
@@ -57,7 +59,7 @@ export function ExamSetsManager({ kind }: { kind: Kind }) {
             {rows.map((r) => (
               <tr key={r.id} className="cursor-pointer border-b border-border last:border-0 hover:bg-accent/50" onClick={() => setOpen(r.id)}>
                 <td className="p-3 font-medium">{r.title}{r.emd_number && <span className="ml-1 text-muted-foreground">· {r.emd_number}</span>}</td>
-                <td className="p-3 text-muted-foreground">{subjName(r.subject_id)}</td>
+                <td className="p-3 text-muted-foreground">{examScopeName(subjName(r.subject_id), h?.units.find((u) => u.id === r.unit_id)?.name)}</td>
                 {kind === "past_emd" && <><td className="p-3">{r.exam_year || "—"}</td><td className="p-3">{r.session === "rattrapage" ? "Rattrapage" : "Normal"}</td><td className="p-3">{r.has_corrige ? "Yes" : "No"}</td></>}
                 <td className="p-3">{(r.exam_set_questions as unknown as { count: number }[])[0]?.count ?? 0}</td>
                 <td className="p-3"><StatusBadge s={r.status} /></td>
@@ -128,8 +130,10 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
 
       <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
         <label className="text-xs text-muted-foreground sm:col-span-2">Title<input className={inp} value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} placeholder={kind === "past_emd" ? "EMD 1 Anatomie 2023" : "Wisen mock EMD — Cardiologie"} /></label>
-        <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
-        <label className="text-xs text-muted-foreground">Unit (optional)<select className={`${sel} w-full`} value={m.unit_id ?? ""} disabled={!m.subject_id} onChange={(e) => setM({ ...m, unit_id: e.target.value || null })}><option value="">Whole module</option>{units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
+        {kind === "past_emd" ? <div className="min-w-0 sm:col-span-2"><ExamScopePicker value={m} onChange={(scope) => setM({ ...m, ...scope })} /></div> : <>
+          <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
+          <label className="text-xs text-muted-foreground">Unit (optional)<select className={`${sel} w-full`} value={m.unit_id ?? ""} disabled={!m.subject_id} onChange={(e) => setM({ ...m, unit_id: e.target.value || null })}><option value="">Whole module</option>{units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
+        </>}
         {kind === "past_emd" && <>
           <label className="text-xs text-muted-foreground">Academic year<input className={inp} value={m.exam_year} onChange={(e) => setM({ ...m, exam_year: e.target.value })} placeholder="2023–2024" /></label>
           <label className="text-xs text-muted-foreground">Exam<input className={inp} value={m.emd_number} onChange={(e) => setM({ ...m, emd_number: e.target.value })} placeholder="EMD 1" /></label>
