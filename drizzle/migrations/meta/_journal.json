@@ -78,6 +78,20 @@
       "when": 1791813648376,
       "tag": "0010_profile_language",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792542622072,
+      "tag": "0011_exam_sets",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792542648503,
+      "tag": "0012_reclassify_lecture_files",
+      "breakpoints": true
     }
   ]
 }

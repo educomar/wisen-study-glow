@@ -26,10 +26,12 @@ import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as TeamLoginRouteImport } from './routes/team/login'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminAiExamsRouteImport } from './routes/_authenticated/admin/ai-exams'
 import { Route as AuthenticatedAdminDriveImportRouteImport } from './routes/_authenticated/admin/drive-import'
 import { Route as AuthenticatedAdminFilesRouteImport } from './routes/_authenticated/admin/files'
 import { Route as AuthenticatedAdminFlashcardsRouteImport } from './routes/_authenticated/admin/flashcards'
 import { Route as AuthenticatedAdminKbRouteImport } from './routes/_authenticated/admin/kb'
+import { Route as AuthenticatedAdminPastEmdsRouteImport } from './routes/_authenticated/admin/past-emds'
 import { Route as AuthenticatedAdminQbankRouteImport } from './routes/_authenticated/admin/qbank'
 import { Route as AuthenticatedAdminStudentsRouteImport } from './routes/_authenticated/admin/students'
 import { Route as AuthenticatedAdminSubjectsRouteImport } from './routes/_authenticated/admin/subjects'
@@ -121,6 +123,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminAiExamsRoute =
+  AuthenticatedAdminAiExamsRouteImport.update({
+    id: '/ai-exams',
+    path: '/ai-exams',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminDriveImportRoute =
   AuthenticatedAdminDriveImportRouteImport.update({
     id: '/drive-import',
@@ -143,6 +151,12 @@ const AuthenticatedAdminKbRoute = AuthenticatedAdminKbRouteImport.update({
   path: '/kb',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminPastEmdsRoute =
+  AuthenticatedAdminPastEmdsRouteImport.update({
+    id: '/past-emds',
+    path: '/past-emds',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminQbankRoute = AuthenticatedAdminQbankRouteImport.update({
   id: '/qbank',
   path: '/qbank',
@@ -192,10 +206,12 @@ export interface FileRoutesByFullPath {
   '/workspace': typeof WorkspaceRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
+  '/admin/ai-exams': typeof AuthenticatedAdminAiExamsRoute
   '/admin/drive-import': typeof AuthenticatedAdminDriveImportRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
   '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
   '/admin/kb': typeof AuthenticatedAdminKbRoute
+  '/admin/past-emds': typeof AuthenticatedAdminPastEmdsRoute
   '/admin/qbank': typeof AuthenticatedAdminQbankRoute
   '/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
@@ -219,10 +235,12 @@ export interface FileRoutesByTo {
   '/sheets': typeof SheetsRoute
   '/workspace': typeof WorkspaceRoute
   '/team/login': typeof TeamLoginRoute
+  '/admin/ai-exams': typeof AuthenticatedAdminAiExamsRoute
   '/admin/drive-import': typeof AuthenticatedAdminDriveImportRoute
   '/admin/files': typeof AuthenticatedAdminFilesRoute
   '/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
   '/admin/kb': typeof AuthenticatedAdminKbRoute
+  '/admin/past-emds': typeof AuthenticatedAdminPastEmdsRoute
   '/admin/qbank': typeof AuthenticatedAdminQbankRoute
   '/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
@@ -249,10 +267,12 @@ export interface FileRoutesById {
   '/workspace': typeof WorkspaceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/team/login': typeof TeamLoginRoute
+  '/_authenticated/admin/ai-exams': typeof AuthenticatedAdminAiExamsRoute
   '/_authenticated/admin/drive-import': typeof AuthenticatedAdminDriveImportRoute
   '/_authenticated/admin/files': typeof AuthenticatedAdminFilesRoute
   '/_authenticated/admin/flashcards': typeof AuthenticatedAdminFlashcardsRoute
   '/_authenticated/admin/kb': typeof AuthenticatedAdminKbRoute
+  '/_authenticated/admin/past-emds': typeof AuthenticatedAdminPastEmdsRoute
   '/_authenticated/admin/qbank': typeof AuthenticatedAdminQbankRoute
   '/_authenticated/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/_authenticated/admin/subjects': typeof AuthenticatedAdminSubjectsRoute
@@ -279,10 +299,12 @@ export interface FileRouteTypes {
     | '/workspace'
     | '/admin'
     | '/team/login'
+    | '/admin/ai-exams'
     | '/admin/drive-import'
     | '/admin/files'
     | '/admin/flashcards'
     | '/admin/kb'
+    | '/admin/past-emds'
     | '/admin/qbank'
     | '/admin/students'
     | '/admin/subjects'
@@ -306,10 +328,12 @@ export interface FileRouteTypes {
     | '/sheets'
     | '/workspace'
     | '/team/login'
+    | '/admin/ai-exams'
     | '/admin/drive-import'
     | '/admin/files'
     | '/admin/flashcards'
     | '/admin/kb'
+    | '/admin/past-emds'
     | '/admin/qbank'
     | '/admin/students'
     | '/admin/subjects'
@@ -335,10 +359,12 @@ export interface FileRouteTypes {
     | '/workspace'
     | '/_authenticated/admin'
     | '/team/login'
+    | '/_authenticated/admin/ai-exams'
     | '/_authenticated/admin/drive-import'
     | '/_authenticated/admin/files'
     | '/_authenticated/admin/flashcards'
     | '/_authenticated/admin/kb'
+    | '/_authenticated/admin/past-emds'
     | '/_authenticated/admin/qbank'
     | '/_authenticated/admin/students'
     | '/_authenticated/admin/subjects'
@@ -489,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/ai-exams': {
+      id: '/_authenticated/admin/ai-exams'
+      path: '/ai-exams'
+      fullPath: '/admin/ai-exams'
+      preLoaderRoute: typeof AuthenticatedAdminAiExamsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/drive-import': {
       id: '/_authenticated/admin/drive-import'
       path: '/drive-import'
@@ -515,6 +548,13 @@ declare module '@tanstack/react-router' {
       path: '/kb'
       fullPath: '/admin/kb'
       preLoaderRoute: typeof AuthenticatedAdminKbRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/past-emds': {
+      id: '/_authenticated/admin/past-emds'
+      path: '/past-emds'
+      fullPath: '/admin/past-emds'
+      preLoaderRoute: typeof AuthenticatedAdminPastEmdsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/qbank': {
@@ -563,10 +603,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAiExamsRoute: typeof AuthenticatedAdminAiExamsRoute
   AuthenticatedAdminDriveImportRoute: typeof AuthenticatedAdminDriveImportRoute
   AuthenticatedAdminFilesRoute: typeof AuthenticatedAdminFilesRoute
   AuthenticatedAdminFlashcardsRoute: typeof AuthenticatedAdminFlashcardsRoute
   AuthenticatedAdminKbRoute: typeof AuthenticatedAdminKbRoute
+  AuthenticatedAdminPastEmdsRoute: typeof AuthenticatedAdminPastEmdsRoute
   AuthenticatedAdminQbankRoute: typeof AuthenticatedAdminQbankRoute
   AuthenticatedAdminStudentsRoute: typeof AuthenticatedAdminStudentsRoute
   AuthenticatedAdminSubjectsRoute: typeof AuthenticatedAdminSubjectsRoute
@@ -576,10 +618,12 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAiExamsRoute: AuthenticatedAdminAiExamsRoute,
     AuthenticatedAdminDriveImportRoute: AuthenticatedAdminDriveImportRoute,
     AuthenticatedAdminFilesRoute: AuthenticatedAdminFilesRoute,
     AuthenticatedAdminFlashcardsRoute: AuthenticatedAdminFlashcardsRoute,
     AuthenticatedAdminKbRoute: AuthenticatedAdminKbRoute,
+    AuthenticatedAdminPastEmdsRoute: AuthenticatedAdminPastEmdsRoute,
     AuthenticatedAdminQbankRoute: AuthenticatedAdminQbankRoute,
     AuthenticatedAdminStudentsRoute: AuthenticatedAdminStudentsRoute,
     AuthenticatedAdminSubjectsRoute: AuthenticatedAdminSubjectsRoute,

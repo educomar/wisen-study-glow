@@ -6,11 +6,10 @@ type T = { id: string; name: string; mimeType: string; size: number; createdTime
 const f = (id: string, name: string, children?: T[]): T => ({ id, name, mimeType: children ? FOLDER : "application/pdf", size: 1, createdTime: null, children });
 
 describe("drive importer", () => {
-  it("tags EMD, QCM, Rattrapage and Sujet files as past EMDs", () => {
-    assert.equal(detectKind("EMD1 2022.pdf"), "past_emd");
-    assert.equal(detectKind("Sujet Rattrapage.pdf"), "past_emd");
-    assert.equal(detectKind("serie.pdf", ["QCM Anatomie"]), "past_emd");
-    assert.equal(detectKind("Cours Femur.pdf"), "course");
+  it("never tags files as past EMDs from their names", () => {
+    assert.equal(detectKind("EMD1 2022.pdf"), "course");
+    assert.equal(detectKind("Examen Clinique.pdf"), "course");
+    assert.equal(detectKind("serie.pdf", ["QCM Anatomie"]), "course");
   });
   it("strips course prefixes, version tags, underscores and dates", () => {
     assert.equal(cleanName("cours_plexus_brachial_v2_final.pdf", true), "Plexus Brachial.pdf");

@@ -140,6 +140,126 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_set_questions: {
+        Row: {
+          answers: Json
+          created_at: string
+          explanation: string
+          format: string
+          id: string
+          options: Json
+          position: number
+          set_id: string
+          stem: string
+          verified: boolean
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          explanation?: string
+          format?: string
+          id?: string
+          options?: Json
+          position?: number
+          set_id: string
+          stem: string
+          verified?: boolean
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          explanation?: string
+          format?: string
+          id?: string
+          options?: Json
+          position?: number
+          set_id?: string
+          stem?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_set_questions_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_sets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          emd_number: string
+          exam_year: string
+          has_corrige: boolean
+          id: string
+          kind: string
+          resource_id: string | null
+          session: string
+          status: string
+          subject_id: string
+          title: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          emd_number?: string
+          exam_year?: string
+          has_corrige?: boolean
+          id?: string
+          kind: string
+          resource_id?: string | null
+          session?: string
+          status?: string
+          subject_id: string
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          emd_number?: string
+          exam_year?: string
+          has_corrige?: boolean
+          id?: string
+          kind?: string
+          resource_id?: string | null
+          session?: string
+          status?: string
+          subject_id?: string
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_sets_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_sets_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_sets_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kb_entries: {
         Row: {
           category: string
@@ -185,7 +305,7 @@ export type Database = {
           size_bytes: number
           storage_path: string
           subject_id: string
-          unit_id: string
+          unit_id: string | null
           updated_at: string
           uploaded_by: string | null
         }
@@ -200,7 +320,7 @@ export type Database = {
           size_bytes?: number
           storage_path: string
           subject_id: string
-          unit_id: string
+          unit_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
@@ -215,7 +335,7 @@ export type Database = {
           size_bytes?: number
           storage_path?: string
           subject_id?: string
-          unit_id?: string
+          unit_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
