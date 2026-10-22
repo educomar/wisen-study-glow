@@ -139,6 +139,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   const { qs: ai } = useAi();
   const [mod, setMod] = useState("");
   const [year, setYear] = useState("All");
+  const [lesson, setLesson] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [run, setRun] = useState<{ title: string; qs: Question[] } | null>(null);
   const transcribe = useServerFn(transcribePastEmd);
@@ -153,9 +154,11 @@ function PastEmds({ onBack }: { onBack: () => void }) {
     const { data } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
     setBusy(null);
     const subject = subjOf(x.subject_id) ?? "";
-    const qs: Question[] = (data ?? []).map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; return { id: `set-${r.id}`, subject, topic: subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0]!, why: r.explanation, distractors: [], slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
-    if (!qs.length) { toast.error(translate("This exam has no questions yet.")); return; }
-    setRun({ title: `${moduleOf(x)} · ${x.title}`, qs });
+    const lessonName = new Map((tree ?? []).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const))));
+    const rowsIn = (data ?? []).filter((r) => !lesson || (r.lesson_ids ?? []).includes(lesson));
+    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0]!, why: r.explanation, distractors: [], slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
+    if (!qs.length) { toast.error(translate(lesson ? "No questions in this exam are linked to the selected lesson." : "This exam has no questions yet.")); return; }
+    setRun({ title: `${moduleOf(x)} · ${x.title}${lesson ? ` · ${lessonName.get(lesson) ?? ""}` : ""}`, qs });
     log(`Past EMD opened · ${subject} ${x.title}`);
   };
   const mods = (tree ?? []).filter((s) => s.emds.length || sets.some((x) => x.subject_id === s.id));
@@ -163,6 +166,8 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   const years = [...new Set([...files.map((f) => f.year), ...visibleSets.map((x) => x.exam_year).filter(Boolean)])].sort().reverse();
   const moduleNames = [...new Set([...mods.map((m) => m.name), ...sets.filter((x) => subjOf(x.subject_id)).map(moduleOf)])];
   const shown = files.filter((f) => year === "All" || f.year === year);
+  const modSubjects = new Set(mod ? [...(tree ?? []).filter((t) => t.name === mod).map((t) => t.id), ...sets.filter((x) => moduleOf(x) === mod).map((x) => x.subject_id)] : []);
+  const lessonOptions = (tree ?? []).filter((t) => modSubjects.has(t.id)).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => ({ id: l.id, name: `${u.name} · ${l.name}` }))));
   const open = async (f: CurFile & { year: string }) => {
     const verified = sets.find((x) => x.resource_id === f.id);
     if (verified) { await openSet(verified); return; }
@@ -185,7 +190,8 @@ function PastEmds({ onBack }: { onBack: () => void }) {
       <h2 className="emd-h2">{translate("Past EMDs")}</h2>
       <p className="emd-sub">{translate("Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.")}</p>
       <div className="emd-filters">
-        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); }}><option value="">{translate("All modules")}</option>{moduleNames.map((name) => <option key={name}>{name}</option>)}</select>
+        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); setLesson(""); }}><option value="">{translate("All modules")}</option>{moduleNames.map((name) => <option key={name}>{name}</option>)}</select>
+        {lessonOptions.length > 0 && <select aria-label={translate("Lesson")} value={lesson} onChange={(e) => setLesson(e.target.value)}><option value="">{translate("Full exam")}</option>{lessonOptions.map((l) => <option key={l.id} value={l.id}>{translate("Practice by lesson")}: {l.name}</option>)}</select>}
         <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : translate(y)}</button>)}</div>
       </div>
       {[["past_emd", "Verified past EMDs"], ["ai_generated", "Verified Wisen AI exams"]].map(([k, label]) => {
