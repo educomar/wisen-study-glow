@@ -199,6 +199,18 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
               ))}
               {q.options.length < 5 && <Button size="sm" variant="ghost" onClick={() => patch(i, { options: [...q.options, ""] })}><Plus /> Option</Button>}
               <textarea className={area} rows={2} placeholder="Explanation" value={q.explanation} onChange={(e) => patch(i, { explanation: e.target.value })} />
+              <details className="rounded border border-border p-2 text-xs">
+                <summary className="cursor-pointer text-muted-foreground">Lessons ({q.lesson_ids.length ? q.lesson_ids.map((id) => h?.lessons.find((l) => l.id === id)?.name ?? "?").join(", ") : "none — whole module"})</summary>
+                <div className="mt-2 max-h-56 space-y-2 overflow-y-auto">
+                  {units.filter((u) => !m.unit_id || u.id === m.unit_id).map((u) => (
+                    <div key={u.id}><b className="text-foreground">{u.name}</b>
+                      {(h?.lessons ?? []).filter((l) => l.unit_id === u.id).map((l) => (
+                        <label key={l.id} className="flex items-center gap-2 py-0.5"><input type="checkbox" checked={q.lesson_ids.includes(l.id)} onChange={(e) => patch(i, { verified: q.verified, lesson_ids: e.target.checked ? [...q.lesson_ids, l.id] : q.lesson_ids.filter((x) => x !== l.id) })} />{l.name}</label>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </details>
             </div>
           ))}
         </section>
