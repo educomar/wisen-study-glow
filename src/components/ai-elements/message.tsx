@@ -329,8 +329,11 @@ export const MessageResponse = ({ children, className, isAnimating }: MessageRes
   if (!ready) return plain;
   return (
     <Suspense fallback={plain}>
-      <LazyMessageResponse className={className} isAnimating={isAnimating}>
-        {children}
+      <LazyMessageResponse
+        {...(className !== undefined && { className })}
+        {...(isAnimating !== undefined && { isAnimating })}
+      >
+        {children ?? ""}
       </LazyMessageResponse>
     </Suspense>
   );
