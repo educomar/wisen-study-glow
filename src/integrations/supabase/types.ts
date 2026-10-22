@@ -147,6 +147,7 @@ export type Database = {
           explanation: string
           format: string
           id: string
+          lesson_ids: string[]
           options: Json
           position: number
           set_id: string
@@ -159,6 +160,7 @@ export type Database = {
           explanation?: string
           format?: string
           id?: string
+          lesson_ids?: string[]
           options?: Json
           position?: number
           set_id: string
@@ -171,6 +173,7 @@ export type Database = {
           explanation?: string
           format?: string
           id?: string
+          lesson_ids?: string[]
           options?: Json
           position?: number
           set_id?: string
