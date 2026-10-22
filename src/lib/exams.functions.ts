@@ -13,6 +13,7 @@ const qZ = z.object({
   explanation: z.string().max(6000).default(""),
   format: z.string().max(20).default(""),
   verified: z.boolean().default(false),
+  lesson_ids: z.array(z.string().uuid()).max(20).default([]),
 });
 
 const metaZ = z.object({
@@ -57,12 +58,21 @@ export const saveExamQuestions = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const t = await requireTeam(context.supabase, context.userId);
     const sb = context.supabase;
-    const { data: set } = await sb.from("exam_sets").select("title,status").eq("id", data.setId).single();
+    const { data: set } = await sb.from("exam_sets").select("title,status,subject_id").eq("id", data.setId).single();
     if (!set) throw new Error("Exam not found");
+    // Lessons may only come from the exam's own subject (any of its modules).
+    const wanted = [...new Set(data.questions.flatMap((q) => q.lesson_ids))];
+    if (wanted.length) {
+      const { data: les, error } = await sb.from("lessons").select("id, units!inner(subject_id)").in("id", wanted);
+      if (error) throw new Error(error.message);
+      const ok = new Set((les ?? []).filter((l) => (l.units as unknown as { subject_id: string }).subject_id === set.subject_id).map((l) => l.id));
+      if (wanted.some((id) => !ok.has(id))) throw new Error("A linked lesson does not belong to this exam's subject.");
+    }
     const rows = data.questions.map((q, i) => ({
       set_id: data.setId, position: i, stem: q.stem, options: q.options,
       answers: [...new Set(q.answers.filter((a) => a < q.options.length))].sort(),
       explanation: q.explanation, format: q.format, verified: q.verified,
+      lesson_ids: [...new Set(q.lesson_ids)],
     }));
     await sb.from("exam_set_questions").delete().eq("set_id", data.setId);
     if (rows.length) { const { error } = await sb.from("exam_set_questions").insert(rows); if (error) throw new Error(error.message); }

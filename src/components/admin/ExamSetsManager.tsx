@@ -12,7 +12,7 @@ import { ExamScopePicker } from "./ExamScopePicker";
 import { examScopeName } from "@/lib/exam-scope";
 
 type Kind = "past_emd" | "ai_generated";
-type Q = { stem: string; options: string[]; answers: number[]; explanation: string; format: string; verified: boolean };
+type Q = { stem: string; options: string[]; answers: number[]; explanation: string; format: string; verified: boolean; lesson_ids: string[] };
 type Meta = { title: string; subject_id: string; unit_id: string | null; exam_year: string; session: "normal" | "rattrapage"; emd_number: string; has_corrige: boolean };
 const L = "ABCDE";
 const STATUS: Record<string, string> = { uploaded: "Uploaded", in_review: "In review", verified: "Verified", published: "Published" };
@@ -110,7 +110,7 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
   useEffect(() => {
     if (!set) return;
     void supabase.from("exam_set_questions").select("*").eq("set_id", set.id).order("position").then(({ data }) =>
-      setQs((data ?? []).map((q) => ({ stem: q.stem, options: q.options as string[], answers: q.answers as number[], explanation: q.explanation, format: q.format, verified: q.verified }))));
+      setQs((data ?? []).map((q) => ({ stem: q.stem, options: q.options as string[], answers: q.answers as number[], explanation: q.explanation, format: q.format, verified: q.verified, lesson_ids: (q.lesson_ids ?? []) as string[] }))));
   }, [set]);
 
   const patch = (i: number, p: Partial<Q>) => setQs((d) => d.map((q, j) => (j === i ? { ...q, ...p, verified: "verified" in p ? !!p.verified : false } : q)));
@@ -167,20 +167,20 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
             <strong className="text-sm">Transcribe the paper</strong>
             <p className="text-xs text-muted-foreground">Paste the exam text (and corrigé if available). Wisen AI structures it once; you verify every answer before publishing.</p>
             <textarea className={area} rows={6} value={raw} onChange={(e) => setRaw(e.target.value)} />
-            <Button size="sm" disabled={!!busy || raw.trim().length < 20} onClick={() => run("parse", async () => (await parse({ data: { text: raw, context: m.title } })).map((q) => ({ stem: q.stem, options: q.options, answers: q.answers, explanation: q.explanation, format: "", verified: false })))}>{busy === "parse" ? <Loader2 className="animate-spin" /> : <Sparkles />} Structure with Wisen AI</Button>
+            <Button size="sm" disabled={!!busy || raw.trim().length < 20} onClick={() => run("parse", async () => (await parse({ data: { text: raw, context: m.title } })).map((q) => ({ stem: q.stem, options: q.options, answers: q.answers, explanation: q.explanation, format: "", verified: false, lesson_ids: [] })))}>{busy === "parse" ? <Loader2 className="animate-spin" /> : <Sparkles />} Structure with Wisen AI</Button>
           </> : <>
             <strong className="text-sm">Generate with Wisen AI</strong>
             <p className="text-xs text-muted-foreground">Optional: paste course material to keep questions strictly on-source. Generated once and shared with all students after approval.</p>
             <textarea className={area} rows={5} value={raw} onChange={(e) => setRaw(e.target.value)} placeholder="Course material (optional)" />
             <div className="flex items-center gap-2"><input type="number" min={3} max={40} className={`${inp} w-24`} value={count} onChange={(e) => setCount(Number(e.target.value))} /><span className="text-xs text-muted-foreground">questions</span>
-              <Button size="sm" disabled={!!busy} onClick={() => run("gen", () => gen({ data: { setId: set.id, count, material: raw } }))}>{busy === "gen" ? <Loader2 className="animate-spin" /> : <Sparkles />} Generate draft</Button></div>
+              <Button size="sm" disabled={!!busy} onClick={() => run("gen", async () => (await gen({ data: { setId: set.id, count, material: raw } })).map((q) => ({ ...q, lesson_ids: [] })))}>{busy === "gen" ? <Loader2 className="animate-spin" /> : <Sparkles />} Generate draft</Button></div>
           </>}
         </section>
 
         <section className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <strong className="mr-auto text-sm">{qs.length} questions · {qs.filter((q) => q.verified).length} verified</strong>
-            <Button size="sm" variant="outline" onClick={() => setQs((d) => [...d, { stem: "", options: ["", ""], answers: [], explanation: "", format: "", verified: false }])}><Plus /> Add question</Button>
+            <Button size="sm" variant="outline" onClick={() => setQs((d) => [...d, { stem: "", options: ["", ""], answers: [], explanation: "", format: "", verified: false, lesson_ids: [] }])}><Plus /> Add question</Button>
             <Button size="sm" variant="outline" disabled={!qs.length} onClick={() => setQs((d) => d.map((q) => ({ ...q, verified: q.answers.length > 0 })))}><CheckCircle2 /> Verify all with a key</Button>
             <Button size="sm" onClick={saveAll}><Save /> Save questions</Button>
           </div>
@@ -199,6 +199,18 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
               ))}
               {q.options.length < 5 && <Button size="sm" variant="ghost" onClick={() => patch(i, { options: [...q.options, ""] })}><Plus /> Option</Button>}
               <textarea className={area} rows={2} placeholder="Explanation" value={q.explanation} onChange={(e) => patch(i, { explanation: e.target.value })} />
+              <details className="rounded border border-border p-2 text-xs">
+                <summary className="cursor-pointer text-muted-foreground">Lessons ({q.lesson_ids.length ? q.lesson_ids.map((id) => h?.lessons.find((l) => l.id === id)?.name ?? "?").join(", ") : "none — whole module"})</summary>
+                <div className="mt-2 max-h-56 space-y-2 overflow-y-auto">
+                  {units.filter((u) => !m.unit_id || u.id === m.unit_id).map((u) => (
+                    <div key={u.id}><b className="text-foreground">{u.name}</b>
+                      {(h?.lessons ?? []).filter((l) => l.unit_id === u.id).map((l) => (
+                        <label key={l.id} className="flex items-center gap-2 py-0.5"><input type="checkbox" checked={q.lesson_ids.includes(l.id)} onChange={(e) => patch(i, { verified: q.verified, lesson_ids: e.target.checked ? [...q.lesson_ids, l.id] : q.lesson_ids.filter((x) => x !== l.id) })} />{l.name}</label>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </details>
             </div>
           ))}
         </section>

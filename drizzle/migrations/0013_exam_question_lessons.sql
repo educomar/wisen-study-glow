@@ -1,0 +1,2 @@
+ALTER TABLE public.exam_set_questions ADD COLUMN IF NOT EXISTS lesson_ids uuid[] NOT NULL DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS exam_set_questions_lesson_ids_idx ON public.exam_set_questions USING gin (lesson_ids);

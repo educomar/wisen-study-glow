@@ -334,7 +334,7 @@
   "Save": "Enregistrer",
   "Subject": "Matière",
   "Unit": "Unité",
-  "Lesson": "Cours",
+  "Lesson": "Leçon",
   "Chapter / lesson": "Chapitre / cours",
   "File": "Fichier",
   "Choose subject…": "Choisir une matière…",
@@ -877,5 +877,8 @@
   "Scoring system": "Système de notation",
   "pts": "pts",
   "Practice summary": "Bilan de l’entraînement",
-  "Points earned:": "Points obtenus :"
+  "Points earned:": "Points obtenus :",
+  "Full exam": "Examen complet",
+  "Practice by lesson": "Entraînement par leçon",
+  "No questions in this exam are linked to the selected lesson.": "Aucune question de cet examen n'est liée à la leçon choisie."
 }
