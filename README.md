@@ -33,8 +33,6 @@ Footer:
 - Bottom bar:
   © 2026 Wisen. Built for medical students.
 
-قم بتقليد موقع studyybuddyai.com طبق الأصل في الخلفية والتصميم والأوضاع العادي والليلي.
-
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
