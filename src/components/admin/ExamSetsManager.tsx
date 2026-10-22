@@ -110,7 +110,7 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
   useEffect(() => {
     if (!set) return;
     void supabase.from("exam_set_questions").select("*").eq("set_id", set.id).order("position").then(({ data }) =>
-      setQs((data ?? []).map((q) => ({ stem: q.stem, options: q.options as string[], answers: q.answers as number[], explanation: q.explanation, format: q.format, verified: q.verified }))));
+      setQs((data ?? []).map((q) => ({ stem: q.stem, options: q.options as string[], answers: q.answers as number[], explanation: q.explanation, format: q.format, verified: q.verified, lesson_ids: (q.lesson_ids ?? []) as string[] }))));
   }, [set]);
 
   const patch = (i: number, p: Partial<Q>) => setQs((d) => d.map((q, j) => (j === i ? { ...q, ...p, verified: "verified" in p ? !!p.verified : false } : q)));
