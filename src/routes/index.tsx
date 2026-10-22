@@ -6,7 +6,7 @@ import {
   Quote,
 } from "lucide-react";
 
-import facultyPhoto from "@/assets/faculty-medicine-setif-1-4k.png.asset.json";
+const facultyPhoto = { url: "/images/faculty-medicine-setif-1-4k.png" };
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
 import { QuestionCard } from "@/components/site/QuestionCard";

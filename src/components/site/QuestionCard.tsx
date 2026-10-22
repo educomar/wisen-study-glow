@@ -2,7 +2,7 @@ import { translate, useLang } from '@/lib/i18n';
 import { ArrowUpRight, BookOpen, Check, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import facultyPhoto from "@/assets/faculty-medicine-setif-1-4k.png.asset.json";
+const facultyPhoto = { url: "/images/faculty-medicine-setif-1-4k.png" };
 
 const options = [
   "Forms the neural tube",
