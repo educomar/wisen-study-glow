@@ -12,23 +12,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import {
   createContext,
+  lazy,
   memo,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import { Streamdown } from "streamdown";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -319,27 +316,25 @@ export const MessageBranchPage = ({
   );
 };
 
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
+// The markdown renderer (with code, math and diagram support) is very large.
+// Load it only in the browser so the server stays small and starts fast.
+const LazyMessageResponse = lazy(() => import("./message-response"));
 
-const streamdownPlugins = { cjk, code, math, mermaid };
+export type MessageResponseProps = { children?: string; className?: string; isAnimating?: boolean };
 
-export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      plugins={streamdownPlugins}
-      {...props}
-    />
-  ),
-  (prevProps, nextProps) =>
-    prevProps.children === nextProps.children &&
-    nextProps.isAnimating === prevProps.isAnimating
-);
-
-MessageResponse.displayName = "MessageResponse";
+export const MessageResponse = ({ children, className, isAnimating }: MessageResponseProps) => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  const plain = <div className={cn("whitespace-pre-wrap", className)}>{children}</div>;
+  if (!ready) return plain;
+  return (
+    <Suspense fallback={plain}>
+      <LazyMessageResponse className={className} isAnimating={isAnimating}>
+        {children}
+      </LazyMessageResponse>
+    </Suspense>
+  );
+};
 
 export type MessageToolbarProps = ComponentProps<"div">;
 
