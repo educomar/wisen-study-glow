@@ -302,8 +302,8 @@ html { scroll-behavior: smooth; }
  --reference-nav-ink:oklch(0.17 0.009 245); --reference-gold:oklch(0.92 0.028 90);
  --reference-streak:oklch(0.62 0.14 65); --reference-streak-bg:oklch(0.96 0.03 90);
  --reference-mint:oklch(0.945 0.042 172); --reference-mint-border:oklch(0.79 0.065 177);
- --reference-paper-image:url('/__l5e/assets-v1/5be004d1-aab3-49a3-b1f6-27aa1ce6f9aa/study-paper-backdrop.png');
- --reference-grain-image:url('/__l5e/assets-v1/9286fb16-a8bd-424c-a188-00338081ed7c/study-paper-grain.png');
+ --reference-paper-image:url('/images/study-paper-backdrop.png');
+ --reference-grain-image:url('/images/study-paper-grain.png');
  font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.55;
 }
 .dark .reference-theme {

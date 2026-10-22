@@ -1,5 +1,5 @@
-import darkLogo from "@/assets/wisen-logo-dark.png.asset.json";
-import lightLogo from "@/assets/wisen-logo-light.png.asset.json";
+const darkLogo = { url: "/images/wisen-logo-dark.png" };
+const lightLogo = { url: "/images/wisen-logo-light.png" };
 
 export function Logo({ className = "h-10 w-auto sm:h-11" }: { className?: string }) {
   return (
