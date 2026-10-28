@@ -1,5 +1,12 @@
 # Roadmap
 
+## Central exam ingestion — October 28
+- [ ] Extract PDF, DOCX, PPTX/POTX, JSON and text uploads, with scanned PDF OCR and visible progress.
+- [ ] Separate mixed-subject/year archives into editable exam drafts; preserve official keys and link real lessons.
+- [ ] Use the selected admin text model for import enrichment and source-grounded MCQ/QCS generation.
+- [ ] Add collapsible review cards, per-option comments, exact trap warnings, semester metadata and safe central saves.
+- [ ] Verify rules, authenticated admin save/readback and student published-question display.
+
 ## Past EMD academic scope — October 21
 - [x] Share subject/module selection across Past EMDs and exam-file uploads, retaining existing hierarchy and IDs.
 - [x] Validate subject/unit ownership and show published module exams under the correct student scope.
