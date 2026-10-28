@@ -44,7 +44,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     if (result.json && kind === "past_emd") {
       const imported = parseExamJson(result.json).papers;
       setPapers(imported.map((p) => ({ ...blankPaper(p.title ?? file.name), ...p, questions: p.questions })));
-      if (imported.length === 1 && subjectId) {
+      if (setId && imported.length === 1 && subjectId) {
         const qs = await enrichAll(imported[0]?.questions ?? [], subjectId, unitId);
         onQuestions(qs); setPapers([]);
       }
@@ -83,7 +83,9 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
       check(); setProgress(`${t("Generating questions")} ${i + 1}/${count}`);
       const batch = await generate({ data: { subjectId, material, count: Math.min(8, count - i), format, language: lang, prompt, previousStems: qs.map((q) => q.stem) } }); check(); qs.push(...batch);
     }
-    onQuestions(await enrichAll(uniqueQuestions(qs), subjectId, unitId));
+    const ready = await enrichAll(uniqueQuestions(qs), subjectId, unitId);
+    if (setId) onQuestions(ready);
+    else setPapers([{ ...blankPaper("EMD Simulation"), end_page: Math.max(1, pages.length), questions: ready }]);
   });
   const current = papers[active];
   const patchPaper = (p: Partial<ReviewPaper>) => setPapers((ps) => ps.map((x, i) => i === active ? { ...x, ...p } : x));
@@ -107,7 +109,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
           for (let i = 0; i < papers.length; i++) {
             check(); const p = papers[i]; if (!p?.subject_id) throw new Error(t("Choose a subject first."));
             setProgress(`${t("Saving exam drafts")} ${i + 1}/${papers.length}`);
-            const saved = await save({ data: { id: p.savedId, kind, title: p.title, subject_id: p.subject_id, unit_id: p.unit_id, semester: p.semester, exam_year: p.exam_year, session: p.session, emd_number: p.emd_number, has_corrige: p.questions.every((q) => q.answer_source === "official" && q.answers.length > 0) } });
+            const saved = await save({ data: { id: p.savedId, kind, title: p.title, subject_id: p.subject_id, unit_id: p.unit_id, semester: p.semester, exam_year: p.exam_year, session: p.session, emd_number: p.emd_number, has_corrige: p.questions.every((q) => q.answers.length > 0) } });
             setPapers((ps) => ps.map((x, j) => i === j ? { ...x, savedId: saved.id } : x));
             await saveQs({ data: { setId: saved.id, questions: p.questions } });
           }

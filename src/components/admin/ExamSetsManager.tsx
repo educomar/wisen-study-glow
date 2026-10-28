@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Sparkles, Trash2, Undo2, Upload, X } from "lucide-react";
+import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Trash2, Undo2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { area, inp, sel, useAction, useHierarchy, useServerFn } from "@/components/admin/team-context";
+import { inp, sel, useAction, useHierarchy, useServerFn } from "@/components/admin/team-context";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteExamSet, saveExamQuestions, saveExamSet, setExamStatus } from "@/lib/exams.functions";
@@ -17,7 +17,6 @@ import { ExamIngestionPanel } from "./ExamIngestionPanel";
 import { ExamQuestionCards } from "./ExamQuestionCards";
 import { useLang } from "@/lib/i18n";
 type Meta = { title: string; subject_id: string; unit_id: string | null; exam_year: string; session: "normal" | "rattrapage"; emd_number: string; has_corrige: boolean; semester: "" | "S1" | "S2" };
-const L = "ABCDE";
 const STATUS: Record<string, string> = { uploaded: "Uploaded", in_review: "In review", verified: "Verified", published: "Published" };
 const blank: Meta = { title: "", subject_id: "", unit_id: null, exam_year: "", session: "normal", emd_number: "", has_corrige: false, semester: "" };
 
@@ -33,7 +32,6 @@ export function ExamSetsManager({ kind }: { kind: Kind }) {
       return data ?? [];
     },
   });
-  const { t } = useLang();
   const rows = (list.data ?? []).filter((r) => (!subj || r.subject_id === subj) && (!status || r.status === status));
   const subjName = (id: string) => { const s = h?.subjects.find((x) => x.id === id); return s ? `${s.name} · ${s.department} Y${s.academic_year}` : "—"; };
   const current = open && open !== "new" ? list.data?.find((r) => r.id === open) : undefined;
@@ -114,7 +112,7 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
   useEffect(() => {
     if (!set) return;
     void supabase.from("exam_set_questions").select("*").eq("set_id", set.id).order("position").then(({ data }) =>
-      setQs((data ?? []).map((q) => questionDraftSchema.parse({ ...q, format: ["QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].includes(q.format) ? q.format : "" }))));
+      setQs((data ?? []).map((q) => questionDraftSchema.parse({ ...q, verified: q.verified && q.answer_source !== "missing" && !q.review_note, format: ["QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].includes(q.format) ? q.format : "" }))));
   }, [set]);
 
   const subjects = h?.subjects ?? [];
@@ -144,8 +142,8 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
 
       <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
         <label className="text-xs text-muted-foreground sm:col-span-2">Title<input className={inp} value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} placeholder={kind === "past_emd" ? "EMD 1 Anatomie 2023" : "Wisen mock EMD — Cardiologie"} /></label>
-        {kind === "past_emd" ? <div className="min-w-0 sm:col-span-2"><ExamScopePicker value={m} onChange={(scope) => setM({ ...m, ...scope })} /></div> : <>
-          <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
+        {kind === "past_emd" ? <div className="min-w-0 sm:col-span-2"><ExamScopePicker value={m} onChange={(scope) => { setM({ ...m, ...scope, semester: "" }); setQs((qs) => qs.map((q) => ({ ...q, lesson_ids: [], verified: false }))); }} /></div> : <>
+          <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null, semester: "" })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
           <label className="text-xs text-muted-foreground">Unit (optional)<select className={`${sel} w-full`} value={m.unit_id ?? ""} disabled={!m.subject_id} onChange={(e) => setM({ ...m, unit_id: e.target.value || null })}><option value="">Whole module</option>{units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
         </>}
         {kind === "past_emd" && <>
