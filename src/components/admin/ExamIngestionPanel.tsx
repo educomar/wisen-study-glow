@@ -58,6 +58,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     const p = papers[index]; if (!p?.subject_id) throw new Error(t("Choose a subject first."));
     const subject = h?.subjects.find((s) => s.id === p.subject_id); if (!subject) throw new Error(t("Choose a subject first."));
     validateSemester(subject.academic_year, p.semester);
+    if (p.start_page < 1 || p.end_page < p.start_page || p.end_page > Math.max(1, pages.length)) throw new Error(t("Check the exam page range."));
     let qs = p.questions;
     if (!qs.length) {
       const text = pages.filter((page) => page.number >= p.start_page && page.number <= p.end_page).map((page) => `[Page ${page.number}]\n${page.text}`).join("\n");
@@ -68,9 +69,9 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
         const batch = await extract({ data: { text, offset, count: 8 } }); check();
         if (!batch.questions.length) throw new Error(t("No questions found."));
         qs.push(...batch.questions); offset += batch.questions.length; total = batch.total;
-        setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: uniqueQuestions(qs) } : x));
       }
     }
+    setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: uniqueQuestions(qs) } : x));
     const ready = await enrichAll(uniqueQuestions(qs), p.subject_id, p.unit_id);
     setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: ready } : x));
   };
