@@ -87,6 +87,8 @@ export type Question = {
   answer: number;
   why: string;
   distractors: string[];
+  trapPhrase?: string;
+  trapExplanation?: string;
   slide: number;
 };
 

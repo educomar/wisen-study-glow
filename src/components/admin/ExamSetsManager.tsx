@@ -1,22 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Sparkles, Trash2, Undo2, Upload, X } from "lucide-react";
+import { CheckCircle2, Eye, Loader2, Plus, Save, Send, Trash2, Undo2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { area, inp, sel, useAction, useHierarchy, useServerFn } from "@/components/admin/team-context";
+import { inp, sel, useAction, useHierarchy, useServerFn } from "@/components/admin/team-context";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteExamSet, generateAiExam, saveExamQuestions, saveExamSet, setExamStatus } from "@/lib/exams.functions";
-import { aiParseQuestions, resourceDownloadUrl, resourceUploadUrl, saveResource } from "@/lib/team.functions";
+import { deleteExamSet, saveExamQuestions, saveExamSet, setExamStatus } from "@/lib/exams.functions";
+import { resourceDownloadUrl, resourceUploadUrl, saveResource } from "@/lib/team.functions";
 import { ExamScopePicker } from "./ExamScopePicker";
 import { examScopeName } from "@/lib/exam-scope";
 
 type Kind = "past_emd" | "ai_generated";
-type Q = { stem: string; options: string[]; answers: number[]; explanation: string; format: string; verified: boolean; lesson_ids: string[] };
-type Meta = { title: string; subject_id: string; unit_id: string | null; exam_year: string; session: "normal" | "rattrapage"; emd_number: string; has_corrige: boolean };
-const L = "ABCDE";
+import { questionDraftSchema, type ExamDraftQuestion as Q } from "@/lib/exam-ingestion";
+import { ExamIngestionPanel } from "./ExamIngestionPanel";
+import { ExamQuestionCards } from "./ExamQuestionCards";
+import { useLang } from "@/lib/i18n";
+type Meta = { title: string; subject_id: string; unit_id: string | null; exam_year: string; session: "normal" | "rattrapage"; emd_number: string; has_corrige: boolean; semester: "" | "S1" | "S2" };
 const STATUS: Record<string, string> = { uploaded: "Uploaded", in_review: "In review", verified: "Verified", published: "Published" };
-const blank: Meta = { title: "", subject_id: "", unit_id: null, exam_year: "", session: "normal", emd_number: "", has_corrige: false };
+const blank: Meta = { title: "", subject_id: "", unit_id: null, exam_year: "", session: "normal", emd_number: "", has_corrige: false, semester: "" };
 
 export function ExamSetsManager({ kind }: { kind: Kind }) {
   const { data: h } = useHierarchy();
@@ -48,6 +50,7 @@ export function ExamSetsManager({ kind }: { kind: Kind }) {
         </select>
         <Button className="ml-auto" onClick={() => setOpen("new")}><Plus /> {kind === "past_emd" ? "New Past EMD" : "New AI exam"}</Button>
       </div>
+      <ExamIngestionPanel kind={kind} subjectId={subj} unitId={null} onQuestions={() => {}} onSaved={() => void list.refetch()} />
       <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase text-muted-foreground"><tr className="border-b border-border">
@@ -82,14 +85,13 @@ type SetRow = { id: string; status: string; resource_id: string | null } & Meta;
 
 function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | undefined; onClose: () => void; onCreated: (id: string) => void }) {
   const { data: h } = useHierarchy();
+  const { t } = useLang();
   const act = useAction();
-  const [m, setM] = useState<Meta>(set ? { title: set.title, subject_id: set.subject_id, unit_id: set.unit_id, exam_year: set.exam_year, session: set.session, emd_number: set.emd_number, has_corrige: set.has_corrige } : blank);
+  const [m, setM] = useState<Meta>(set ? { title: set.title, subject_id: set.subject_id, unit_id: set.unit_id, exam_year: set.exam_year, session: set.session, emd_number: set.emd_number, has_corrige: set.has_corrige, semester: set.semester ?? "" } : blank);
   const [qs, setQs] = useState<Q[]>([]);
-  const [raw, setRaw] = useState("");
-  const [count, setCount] = useState(20);
   const [busy, setBusy] = useState<string | null>(null);
   const save = useServerFn(saveExamSet), saveQs = useServerFn(saveExamQuestions), setSt = useServerFn(setExamStatus), del = useServerFn(deleteExamSet);
-  const parse = useServerFn(aiParseQuestions), gen = useServerFn(generateAiExam), view = useServerFn(resourceDownloadUrl);
+  const view = useServerFn(resourceDownloadUrl);
   const uploadUrl = useServerFn(resourceUploadUrl), uploadResource = useServerFn(saveResource);
 
   const uploadPaper = async (file: File) => {
@@ -109,11 +111,10 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
 
   useEffect(() => {
     if (!set) return;
-    void supabase.from("exam_set_questions").select("*").eq("set_id", set.id).order("position").then(({ data }) =>
-      setQs((data ?? []).map((q) => ({ stem: q.stem, options: q.options as string[], answers: q.answers as number[], explanation: q.explanation, format: q.format, verified: q.verified, lesson_ids: (q.lesson_ids ?? []) as string[] }))));
+    void Promise.resolve(supabase.from("exam_set_questions").select("*").eq("set_id", set.id).order("position")).then(({ data }) =>
+      setQs((data ?? []).map((q) => questionDraftSchema.parse({ ...q, verified: q.verified && q.answer_source !== "missing" && !q.review_note, format: ["QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].includes(q.format) ? q.format : "" })))).catch(() => toast.error("Could not load exam questions."));
   }, [set]);
 
-  const patch = (i: number, p: Partial<Q>) => setQs((d) => d.map((q, j) => (j === i ? { ...q, ...p, verified: "verified" in p ? !!p.verified : false } : q)));
   const subjects = h?.subjects ?? [];
   const units = (h?.units ?? []).filter((u) => u.subject_id === m.subject_id);
 
@@ -123,12 +124,14 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
     if (r && !set) onCreated(r.id);
   };
   const saveAll = async () => { if (!set) return; await act(saveQs({ data: { setId: set.id, questions: qs } }), `${qs.length} questions saved`); };
-  const run = async (label: string, fn: () => Promise<Q[]>) => {
-    setBusy(label);
-    try { const add = await fn(); setQs((d) => [...d, ...add]); toast.success(`${add.length} draft questions added — review, then save`); }
-    catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  const status = async (s: "uploaded" | "in_review" | "verified" | "published") => {
+    if (!set) return;
+    if (s === "verified" || s === "published") {
+      const saved = await act(saveQs({ data: { setId: set.id, questions: qs } }));
+      if (!saved) return;
+    }
+    await act(setSt({ data: { id: set.id, status: s } }), `Status: ${STATUS[s]}`);
   };
-  const status = async (s: "uploaded" | "in_review" | "verified" | "published") => { if (set) await act(setSt({ data: { id: set.id, status: s } }), `Status: ${STATUS[s]}`); };
 
   return (
     <div className="space-y-5">
@@ -146,8 +149,8 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
 
       <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
         <label className="text-xs text-muted-foreground sm:col-span-2">Title<input className={inp} value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} placeholder={kind === "past_emd" ? "EMD 1 Anatomie 2023" : "Wisen mock EMD — Cardiologie"} /></label>
-        {kind === "past_emd" ? <div className="min-w-0 sm:col-span-2"><ExamScopePicker value={m} onChange={(scope) => setM({ ...m, ...scope })} /></div> : <>
-          <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
+        {kind === "past_emd" ? <div className="min-w-0 sm:col-span-2"><ExamScopePicker value={m} onChange={(scope) => { setM({ ...m, ...scope, semester: "" }); setQs((qs) => qs.map((q) => ({ ...q, lesson_ids: [], verified: false }))); }} /></div> : <>
+          <label className="text-xs text-muted-foreground">Subject / Module<select className={`${sel} w-full`} value={m.subject_id} onChange={(e) => setM({ ...m, subject_id: e.target.value, unit_id: null, semester: "" })}><option value="">Choose…</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}</select></label>
           <label className="text-xs text-muted-foreground">Unit (optional)<select className={`${sel} w-full`} value={m.unit_id ?? ""} disabled={!m.subject_id} onChange={(e) => setM({ ...m, unit_id: e.target.value || null })}><option value="">Whole module</option>{units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
         </>}
         {kind === "past_emd" && <>
@@ -161,59 +164,14 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
         </div>
       </section>
 
+      {h?.subjects.find((s) => s.id === m.subject_id)?.academic_year === 1 && <label className="block text-xs text-muted-foreground">{t("Semester")}<select className={`${sel} ml-2`} value={m.semester} onChange={(e) => setM({ ...m, semester: e.target.value as Meta["semester"] })}><option value="">{t("Not specified")}</option><option>S1</option><option>S2</option></select></label>}
       {set && <>
-        <section className="space-y-2 rounded-xl border border-border bg-card p-4">
-          {kind === "past_emd" ? <>
-            <strong className="text-sm">Transcribe the paper</strong>
-            <p className="text-xs text-muted-foreground">Paste the exam text (and corrigé if available). Wisen AI structures it once; you verify every answer before publishing.</p>
-            <textarea className={area} rows={6} value={raw} onChange={(e) => setRaw(e.target.value)} />
-            <Button size="sm" disabled={!!busy || raw.trim().length < 20} onClick={() => run("parse", async () => (await parse({ data: { text: raw, context: m.title } })).map((q) => ({ stem: q.stem, options: q.options, answers: q.answers, explanation: q.explanation, format: "", verified: false, lesson_ids: [] })))}>{busy === "parse" ? <Loader2 className="animate-spin" /> : <Sparkles />} Structure with Wisen AI</Button>
-          </> : <>
-            <strong className="text-sm">Generate with Wisen AI</strong>
-            <p className="text-xs text-muted-foreground">Optional: paste course material to keep questions strictly on-source. Generated once and shared with all students after approval.</p>
-            <textarea className={area} rows={5} value={raw} onChange={(e) => setRaw(e.target.value)} placeholder="Course material (optional)" />
-            <div className="flex items-center gap-2"><input type="number" min={3} max={40} className={`${inp} w-24`} value={count} onChange={(e) => setCount(Number(e.target.value))} /><span className="text-xs text-muted-foreground">questions</span>
-              <Button size="sm" disabled={!!busy} onClick={() => run("gen", async () => (await gen({ data: { setId: set.id, count, material: raw } })).map((q) => ({ ...q, lesson_ids: [] })))}>{busy === "gen" ? <Loader2 className="animate-spin" /> : <Sparkles />} Generate draft</Button></div>
-          </>}
-        </section>
-
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <strong className="mr-auto text-sm">{qs.length} questions · {qs.filter((q) => q.verified).length} verified</strong>
-            <Button size="sm" variant="outline" onClick={() => setQs((d) => [...d, { stem: "", options: ["", ""], answers: [], explanation: "", format: "", verified: false, lesson_ids: [] }])}><Plus /> Add question</Button>
-            <Button size="sm" variant="outline" disabled={!qs.length} onClick={() => setQs((d) => d.map((q) => ({ ...q, verified: q.answers.length > 0 })))}><CheckCircle2 /> Verify all with a key</Button>
-            <Button size="sm" onClick={saveAll}><Save /> Save questions</Button>
-          </div>
-          {qs.map((q, i) => (
-            <div key={i} className={`space-y-2 rounded-xl border p-3 ${q.answers.length ? "border-border" : "border-destructive/50"} bg-card`}>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground"><b className="text-foreground">Q{i + 1}</b>{q.format && <span className="font-mono">{q.format}</span>}
-                <label className="ml-auto flex items-center gap-1"><input type="checkbox" checked={q.verified} onChange={(e) => patch(i, { verified: e.target.checked })} /> Verified</label>
-                <button type="button" aria-label="Remove question" onClick={() => setQs((d) => d.filter((_, j) => j !== i))}><Trash2 className="size-4" /></button></div>
-              <textarea className={area} rows={2} value={q.stem} onChange={(e) => patch(i, { stem: e.target.value })} />
-              {q.options.map((o, k) => (
-                <div key={k} className="flex items-center gap-2">
-                  <button type="button" className={`size-7 shrink-0 rounded border text-xs font-semibold ${q.answers.includes(k) ? "border-primary bg-primary text-primary-foreground" : "border-border"}`} onClick={() => patch(i, { answers: q.answers.includes(k) ? q.answers.filter((a) => a !== k) : [...q.answers, k].sort() })}>{L[k]}</button>
-                  <input className={inp} value={o} onChange={(e) => patch(i, { options: q.options.map((x, j) => (j === k ? e.target.value : x)) })} />
-                  {q.options.length > 2 && <button type="button" aria-label="Remove option" onClick={() => patch(i, { options: q.options.filter((_, j) => j !== k), answers: q.answers.filter((a) => a !== k).map((a) => (a > k ? a - 1 : a)) })}><X className="size-4" /></button>}
-                </div>
-              ))}
-              {q.options.length < 5 && <Button size="sm" variant="ghost" onClick={() => patch(i, { options: [...q.options, ""] })}><Plus /> Option</Button>}
-              <textarea className={area} rows={2} placeholder="Explanation" value={q.explanation} onChange={(e) => patch(i, { explanation: e.target.value })} />
-              <details className="rounded border border-border p-2 text-xs">
-                <summary className="cursor-pointer text-muted-foreground">Lessons ({q.lesson_ids.length ? q.lesson_ids.map((id) => h?.lessons.find((l) => l.id === id)?.name ?? "?").join(", ") : "none — whole module"})</summary>
-                <div className="mt-2 max-h-56 space-y-2 overflow-y-auto">
-                  {units.filter((u) => !m.unit_id || u.id === m.unit_id).map((u) => (
-                    <div key={u.id}><b className="text-foreground">{u.name}</b>
-                      {(h?.lessons ?? []).filter((l) => l.unit_id === u.id).map((l) => (
-                        <label key={l.id} className="flex items-center gap-2 py-0.5"><input type="checkbox" checked={q.lesson_ids.includes(l.id)} onChange={(e) => patch(i, { verified: q.verified, lesson_ids: e.target.checked ? [...q.lesson_ids, l.id] : q.lesson_ids.filter((x) => x !== l.id) })} />{l.name}</label>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </details>
-            </div>
-          ))}
-        </section>
+        <ExamIngestionPanel kind={kind} subjectId={m.subject_id} unitId={m.unit_id} setId={set.id} onQuestions={(add) => setQs((q) => [...q, ...add])} onSaved={onClose} />
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setQs((d) => [...d, { stem: "", options: ["", ""], answers: [], explanation: "", format: "", verified: false, lesson_ids: [], option_comments: [], trap_phrase: "", trap_explanation: "", answer_source: "missing", review_note: "", source_pages: [] }])}><Plus /> {t("Add question")}</Button>
+          <Button size="sm" disabled={!!busy} onClick={saveAll}><Save />{t("Save questions")}</Button>
+        </div>
+        <ExamQuestionCards questions={qs} subjectId={m.subject_id} unitId={m.unit_id} onChange={setQs} />
       </>}
     </div>
   );

@@ -142,42 +142,60 @@ export type Database = {
       }
       exam_set_questions: {
         Row: {
+          answer_source: string
           answers: Json
           created_at: string
           explanation: string
           format: string
           id: string
           lesson_ids: string[]
+          option_comments: Json
           options: Json
           position: number
+          review_note: string
           set_id: string
+          source_pages: number[]
           stem: string
+          trap_explanation: string
+          trap_phrase: string
           verified: boolean
         }
         Insert: {
+          answer_source?: string
           answers?: Json
           created_at?: string
           explanation?: string
           format?: string
           id?: string
           lesson_ids?: string[]
+          option_comments?: Json
           options?: Json
           position?: number
+          review_note?: string
           set_id: string
+          source_pages?: number[]
           stem: string
+          trap_explanation?: string
+          trap_phrase?: string
           verified?: boolean
         }
         Update: {
+          answer_source?: string
           answers?: Json
           created_at?: string
           explanation?: string
           format?: string
           id?: string
           lesson_ids?: string[]
+          option_comments?: Json
           options?: Json
           position?: number
+          review_note?: string
           set_id?: string
+          source_pages?: number[]
           stem?: string
+          trap_explanation?: string
+          trap_phrase?: string
           verified?: boolean
         }
         Relationships: [
@@ -200,6 +218,7 @@ export type Database = {
           id: string
           kind: string
           resource_id: string | null
+          semester: string
           session: string
           status: string
           subject_id: string
@@ -216,6 +235,7 @@ export type Database = {
           id?: string
           kind: string
           resource_id?: string | null
+          semester?: string
           session?: string
           status?: string
           subject_id: string
@@ -232,6 +252,7 @@ export type Database = {
           id?: string
           kind?: string
           resource_id?: string | null
+          semester?: string
           session?: string
           status?: string
           subject_id?: string
@@ -845,6 +866,10 @@ export type Database = {
       }
       is_active_admin: { Args: { _user_id: string }; Returns: boolean }
       is_active_team: { Args: { _user_id: string }; Returns: boolean }
+      replace_exam_questions: {
+        Args: { p_questions: Json; p_set_id: string }
+        Returns: undefined
+      }
       student_can_see_subject: {
         Args: { _subject_id: string }
         Returns: boolean

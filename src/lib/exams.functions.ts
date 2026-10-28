@@ -5,16 +5,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { EXAM_SPEC } from "./ai/exam-spec";
 import { audit, requireTeam } from "./team.server";
 import { validateExamScope } from "./exam-scope";
+import { questionDraftSchema, uniqueQuestions, validateSemester } from "./exam-ingestion";
 
-const qZ = z.object({
-  stem: z.string().trim().min(1).max(4000),
-  options: z.array(z.string().trim().min(1).max(1000)).min(2).max(5),
-  answers: z.array(z.number().int().min(0).max(4)).max(5),
-  explanation: z.string().max(6000).default(""),
-  format: z.string().max(20).default(""),
-  verified: z.boolean().default(false),
-  lesson_ids: z.array(z.string().uuid()).max(20).default([]),
-});
+const qZ = questionDraftSchema;
 
 const metaZ = z.object({
   title: z.string().trim().min(1).max(200),
@@ -24,6 +17,7 @@ const metaZ = z.object({
   session: z.enum(["normal", "rattrapage"]).default("normal"),
   emd_number: z.string().max(20).default(""),
   has_corrige: z.boolean().default(false),
+  semester: z.enum(["", "S1", "S2"]).default(""),
 });
 
 /** Create or update an exam set's metadata (Past EMD or AI-generated). */
@@ -39,6 +33,7 @@ export const saveExamSet = createServerFn({ method: "POST" })
     ]);
     if (subjectError || unitError) throw new Error("Choose a valid curriculum subject and module.");
     validateExamScope(subject, unit, vals);
+    if (subject) validateSemester(subject.academic_year, vals.semester);
     if (id) {
       const { error } = await context.supabase.from("exam_sets").update(vals).eq("id", id);
       if (error) throw new Error(error.message);
@@ -58,7 +53,7 @@ export const saveExamQuestions = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const t = await requireTeam(context.supabase, context.userId);
     const sb = context.supabase;
-    const { data: set } = await sb.from("exam_sets").select("title,status,subject_id").eq("id", data.setId).single();
+    const { data: set } = await sb.from("exam_sets").select("title,status,subject_id,unit_id,kind").eq("id", data.setId).single();
     if (!set) throw new Error("Exam not found");
     // Lessons may only come from the exam's own subject (any of its modules).
     const wanted = [...new Set(data.questions.flatMap((q) => q.lesson_ids))];
@@ -68,17 +63,19 @@ export const saveExamQuestions = createServerFn({ method: "POST" })
       const ok = new Set((les ?? []).filter((l) => (l.units as unknown as { subject_id: string }).subject_id === set.subject_id).map((l) => l.id));
       if (wanted.some((id) => !ok.has(id))) throw new Error("A linked lesson does not belong to this exam's subject.");
     }
-    const rows = data.questions.map((q, i) => ({
+    if (set.kind === "past_emd" && data.questions.some((q) => q.answer_source === "generated")) throw new Error("Past EMDs require an official correction, not an AI-generated key.");
+    const rows = uniqueQuestions(data.questions).map((q, i) => ({
       set_id: data.setId, position: i, stem: q.stem, options: q.options,
       answers: [...new Set(q.answers.filter((a) => a < q.options.length))].sort(),
       explanation: q.explanation, format: q.format, verified: q.verified,
       lesson_ids: [...new Set(q.lesson_ids)],
+      option_comments: q.option_comments, trap_phrase: q.trap_phrase, trap_explanation: q.trap_explanation,
+      answer_source: q.answer_source, review_note: q.review_note, source_pages: q.source_pages,
     }));
-    await sb.from("exam_set_questions").delete().eq("set_id", data.setId);
-    if (rows.length) { const { error } = await sb.from("exam_set_questions").insert(rows); if (error) throw new Error(error.message); }
+    const { error: replaceError } = await sb.rpc("replace_exam_questions", { p_set_id: data.setId, p_questions: rows });
+    if (replaceError) throw new Error(replaceError.message);
     // Any edit sends a published exam back to review until re-approved.
-    const status = rows.length ? (set.status === "uploaded" || set.status === "published" ? "in_review" : set.status) : "uploaded";
-    await sb.from("exam_sets").update({ status }).eq("id", data.setId);
+    const status = rows.length ? "in_review" : "uploaded";
     await audit(sb, t, "saved_exam_questions", "exam_set", data.setId, set.title, { count: rows.length });
     return { count: rows.length, status };
   });
@@ -91,9 +88,9 @@ export const setExamStatus = createServerFn({ method: "POST" })
     const t = await requireTeam(context.supabase, context.userId);
     const sb = context.supabase;
     if (data.status === "verified" || data.status === "published") {
-      const { data: qs } = await sb.from("exam_set_questions").select("verified,answers").eq("set_id", data.id);
+      const { data: qs } = await sb.from("exam_set_questions").select("verified,answers,answer_source,review_note").eq("set_id", data.id);
       if (!qs?.length) throw new Error("Add questions before approving this exam.");
-      if (qs.some((q) => !q.verified || !(q.answers as number[]).length)) throw new Error("Every question must be verified and have a correct answer.");
+      if (qs.some((q) => !q.verified || !(q.answers as number[]).length || q.answer_source === "missing" || q.review_note)) throw new Error("Every question must be verified with a correction and no unresolved review warning.");
     }
     const { data: row, error } = await sb.from("exam_sets").update({ status: data.status }).eq("id", data.id).select("title").single();
     if (error || !row) throw new Error(error?.message ?? "Update failed");

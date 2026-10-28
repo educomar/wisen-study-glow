@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
+- Admin central exam ingestion uses browser PDF/Office parsing and local OCR, then dedicated authenticated text-model functions; model suggestions never overwrite official keys, and atomic question replacement keeps each exam unified under existing scope/RLS.
+- Central exam questions carry option comments, multiple lesson IDs and review warnings; publishing requires resolved corrections and explicit human verification, so mixed archive processing never publishes automatically.
 - Past EMD subject/module choices share `exam-scope` across exam creation and uploads; existing subject_id/unit_id relationships remain authoritative and server-validated, so nested modules are selectable without duplicate subjects or curriculum reparenting.
 - Platform UI translations use the shared reactive language store and French catalog; localize display text and dates only, preserving form values, academic IDs and source/student content so language switching never changes study data.
 - Team roles live in `user_roles` + `team_members`; every Team server fn in `src/lib/team.functions.ts` re-checks role/status via `requireTeam` — frontend role state is never trusted.
@@ -32,6 +34,6 @@
 - Study Sheets uses sequential existing Wisen server-function calls per section for truthful completion progress; structured sheets stay in student notes and exact embedded cards save to the own-row AI card table, avoiding regenerated card answers.
 - Study Sheets passes an explicit output-language override through the validated AI request into the system prompt and formats curriculum labels only for display; this avoids auto-detected source languages and leaves other study tools and canonical curriculum metadata unchanged.
 - Kapsules routes reuse Flashcards as one active hub; scheduling is isolated in kapsule-review and curriculum generation passes a validated English override, preserving authorized storage and consistent review behavior across entry points.
-- /qbank is EmdQBank: Past EMDs are transcribed once per student from authorized past_emd files into ai_questions (origin 'past', unit = academic year) and cached; the EMD Simulator reuses generateQuestions and the persisted exam session, with /20 scoring in emd-exam.ts so results stay consistent across entry points.
+- /qbank is EmdQBank: Past EMDs read published central exam sets, never re-transcribe per student; shared AI exams belong in Simulator and restore via scoped authorized reads, with /20 scoring in emd-exam.ts.
 - /library is a read-only index over the existing own-row student notes and Kapsules stores; actions deep-link into Sheets, Kapsules and QBank so saved content is never duplicated into a parallel persistence model.
 - Workspace studio styles and palette are scoped to workspace and its portals; its copilot composes AI Elements over the existing chat transport, preserving conversation persistence and authorized study actions.

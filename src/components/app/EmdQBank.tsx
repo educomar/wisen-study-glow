@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Logo } from "@/components/site/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { generateQuestions, transcribePastEmd } from "@/lib/ai/study.functions";
+import { generateQuestions } from "@/lib/ai/study.functions";
 import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
 import { useCurriculum, type CurFile } from "./Curriculum";
 import type { Question } from "./data";
@@ -87,6 +87,8 @@ function Explanation({ q, picked }: { q: Question; picked: number | null }) {
     <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
       <p className="font-semibold">{ok ? translate("Correct") : picked === null ? translate("Not answered") : translate("Incorrect")}  {translate("— answer:")} {correctText(q)}</p>
       <div className="mt-2 text-sm"><RichText text={q.why || translate("No explanation available.")} /></div>
+      {q.distractors.some(Boolean) && <ul className="mt-3 space-y-2 text-sm">{q.distractors.map((comment, i) => comment ? <li key={i}><strong>{L[i]}.</strong> <Inline text={comment} /></li> : null)}</ul>}
+      {q.trapPhrase && <div className="mt-3 border-l-2 border-destructive pl-3 text-sm"><p className="flex items-center gap-2 font-semibold"><TriangleAlert className="size-4 text-destructive" /><span dir="rtl">{q.trapPhrase}</span></p>{q.trapExplanation && <RichText text={q.trapExplanation} />}</div>}
       {q.source && <p className="mt-2 text-xs text-muted-foreground">{translate("Source:")} {q.source}</p>}
       <Button size="sm" variant="outline" className="mt-3" onClick={() => { saveKapsule(q); toast.success(translate("Saved as Kapsule")); }}><Layers />  {translate("Save as Kapsule")}</Button>
     </div>
@@ -136,19 +138,17 @@ function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { 
 function PastEmds({ onBack }: { onBack: () => void }) {
   const { t: translate } = useLang();
   const { tree } = useCurriculum();
-  const { qs: ai } = useAi();
   const [mod, setMod] = useState("");
   const [year, setYear] = useState("All");
   const [lesson, setLesson] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [run, setRun] = useState<{ title: string; qs: Question[] } | null>(null);
-  const transcribe = useServerFn(transcribePastEmd);
-  type PubSet = { id: string; kind: string; title: string; subject_id: string; unit_id: string | null; resource_id: string | null; exam_year: string; session: string; emd_number: string };
+  type PubSet = { id: string; kind: string; title: string; subject_id: string; unit_id: string | null; resource_id: string | null; exam_year: string; session: string; emd_number: string; semester: string };
   const [sets, setSets] = useState<PubSet[]>([]);
-  useEffect(() => { void supabase.from("exam_sets").select("id,kind,title,subject_id,unit_id,resource_id,exam_year,session,emd_number").eq("status", "published").order("exam_year", { ascending: false }).then(({ data }) => setSets((data ?? []) as PubSet[])); }, []);
+  useEffect(() => { void supabase.from("exam_sets").select("id,kind,title,subject_id,unit_id,resource_id,exam_year,session,emd_number,semester").eq("status", "published").order("exam_year", { ascending: false }).then(({ data }) => setSets((data ?? []) as PubSet[])); }, []);
   const subjOf = (id: string) => (tree ?? []).find((t) => t.id === id)?.name;
   const moduleOf = (x: PubSet) => { const s = tree?.find((t) => t.id === x.subject_id); const u = s?.units.find((t) => t.id === x.unit_id); return u && u.name !== s?.name ? `${u.name} · ${s?.name}` : s?.name ?? ""; };
-  const visibleSets = sets.filter((x) => subjOf(x.subject_id) && (!mod || moduleOf(x) === mod || subjOf(x.subject_id) === mod));
+  const visibleSets = sets.filter((x) => x.kind === "past_emd" && subjOf(x.subject_id) && (!mod || moduleOf(x) === mod || subjOf(x.subject_id) === mod));
   const openSet = async (x: PubSet) => {
     setBusy(x.id);
     const { data } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
@@ -156,7 +156,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
     const subject = subjOf(x.subject_id) ?? "";
     const lessonName = new Map((tree ?? []).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const))));
     const rowsIn = (data ?? []).filter((r) => !lesson || (r.lesson_ids ?? []).includes(lesson));
-    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0]!, why: r.explanation, distractors: [], slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
+    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0, why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation, slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
     if (!qs.length) { toast.error(translate(lesson ? "No questions in this exam are linked to the selected lesson." : "This exam has no questions yet.")); return; }
     setRun({ title: `${moduleOf(x)} · ${x.title}${lesson ? ` · ${lessonName.get(lesson) ?? ""}` : ""}`, qs });
     log(`Past EMD opened · ${subject} ${x.title}`);
@@ -165,24 +165,9 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   const files = (mods.find((m) => m.name === mod)?.emds ?? (mod ? [] : mods.flatMap((m) => m.emds))).map((f) => ({ ...f, year: emdYear(f.file_name, f.date) }));
   const years = [...new Set([...files.map((f) => f.year), ...visibleSets.map((x) => x.exam_year).filter(Boolean)])].sort().reverse();
   const moduleNames = [...new Set([...mods.map((m) => m.name), ...sets.filter((x) => subjOf(x.subject_id)).map(moduleOf)])];
-  const shown = files.filter((f) => year === "All" || f.year === year);
+  const shown: (CurFile & { year: string })[] = [];
   const modSubjects = new Set(mod ? [...(tree ?? []).filter((t) => t.name === mod).map((t) => t.id), ...sets.filter((x) => moduleOf(x) === mod).map((x) => x.subject_id)] : []);
   const lessonOptions = (tree ?? []).filter((t) => modSubjects.has(t.id)).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => ({ id: l.id, name: `${u.name} · ${l.name}` }))));
-  const open = async (f: CurFile & { year: string }) => {
-    const verified = sets.find((x) => x.resource_id === f.id);
-    if (verified) { await openSet(verified); return; }
-    const cached = ai.filter((q) => q.origin === "past" && q.source === f.file_name);
-    if (cached.length) { setRun({ title: `${f.subject} · ${f.year}`, qs: cached }); return; }
-    try {
-      setBusy(f.id);
-      const [m] = await extractMaterial([f], 1);
-      if (!m) throw new Error("This EMD has no readable text (it may be scanned).");
-      const rows = await transcribe({ data: { subject: f.subject, year: f.year, file: m } });
-      await reloadAi();
-      setRun({ title: `${f.subject} · ${f.year}`, qs: rows.map((r) => ({ id: `ai-${r.id}`, subject: r.subject, topic: r.subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: r.qtype === "MCQ" ? (r.answers as number[]).reduce((a, b) => a | (1 << b), 0) : (r.answers as number[])[0]!, why: r.explanation, distractors: [], slide: 0, source: r.source, multi: r.qtype === "MCQ", origin: "past", unit: r.unit })) });
-      log(`Past EMD opened · ${f.subject} ${f.year}`);
-    } catch (e) { toast.error((e as Error).message || "Couldn't open this EMD."); } finally { setBusy(null); }
-  };
   if (run) return <PracticeRunner qs={run.qs} title={translate(run.title)} onExit={() => setRun(null)} />;
   return (
     <section className="emd-section">
@@ -198,7 +183,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
         const group = visibleSets.filter((x) => x.kind === k && (year === "All" || x.exam_year === year || k === "ai_generated"));
         return group.length ? <div key={k}><h3 className="emd-sub"><strong>{translate(label!)}</strong></h3><div className="emd-file-grid">{group.map((x) => (
           <button key={x.id} type="button" className="emd-file" disabled={!!busy} onClick={() => void openSet(x)}>
-            <FileText /><span><strong>{moduleOf(x)}</strong><small>{[x.title, x.emd_number, x.exam_year, x.session === "rattrapage" ? translate("Rattrapage") : ""].filter(Boolean).join(" · ")}</small></span>
+            <FileText /><span><strong>{moduleOf(x)}</strong><small>{[x.title, x.emd_number, x.exam_year, x.semester, x.session === "rattrapage" ? translate("Rattrapage") : ""].filter(Boolean).join(" · ")}</small></span>
             {busy === x.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}
           </button>))}</div></div> : null;
       })}
@@ -206,7 +191,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
         <p className="emd-empty">{translate("No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.")}</p>
       ) : (
         <div className="emd-file-grid">{shown.map((f) => (
-          <button key={f.id} type="button" className="emd-file" disabled={!!busy} onClick={() => void open(f)}>
+          <button key={f.id} type="button" className="emd-file" disabled={!!busy} onClick={() => toast.info(translate("This paper is awaiting faculty review."))}>
             <FileText /><span><strong>{f.subject}</strong><small>{f.year} · {f.file_name}</small></span>
             {busy === f.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}
           </button>
@@ -233,7 +218,7 @@ function submitExam() {
 let poolRef: Question[] = [];
 const getPool = () => poolRef;
 
-function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | null }) {
+function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; initial?: Scope | null; setApprovedPool: (qs: Question[]) => void }) {
   const { t: translate } = useLang();
   const { tree } = useCurriculum();
   const [sc, setSc] = useState<Scope>(initial ?? emptyScope);
@@ -244,6 +229,31 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
   const [busy, setBusy] = useState<string | null>(null);
   const [practiceQs, setPracticeQs] = useState<{ title: string; qs: Question[] } | null>(null);
   const gen = useServerFn(generateQuestions);
+  const [approved, setApproved] = useState<{ id: string; title: string; subject_id: string; unit_id: string | null; semester: string }[]>([]);
+  useEffect(() => { void supabase.from("exam_sets").select("id,title,subject_id,unit_id,semester").eq("kind", "ai_generated").eq("status", "published").then(({ data }) => setApproved(data ?? [])); }, []);
+  const openApproved = async (x: (typeof approved)[number]) => {
+    const subject = tree?.find((s) => s.id === x.subject_id); if (!subject) return;
+    setBusy(translate("Loading…"));
+    try {
+      const { data, error } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
+      if (error) throw new Error(error.message);
+      const lessons = new Map(subject.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const)));
+      const qs: Question[] = (data ?? []).filter((r) => !sc.l || r.lesson_ids.includes(sc.l)).map((r) => {
+        const a = r.answers as number[], multi = a.length > 1 || r.format === "QCM_MULTI";
+        return { id: `set-${r.id}`, subject: subject.name, topic: r.lesson_ids.map((id) => lessons.get(id)).filter(Boolean).join(" + ") || subject.name,
+          difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0,
+          why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
+          slide: 0, source: x.title, multi };
+      });
+      if (!qs.length) throw new Error(translate("No questions in this exam are linked to the selected lesson."));
+      if (mode === "practice") setPracticeQs({ title: x.title, qs });
+      else {
+        setApprovedPool(qs);
+        const ids = qs.map((q) => q.id);
+        setE({ subject: subject.name, phase: "run", qids: ids, answers: ids.map(() => null), flags: ids.map(() => false), i: 0, minutes, count: qs.length, endsAt: Date.now() + minutes * 60e3, usedSec: 0, scoring });
+      }
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  };
   const go = async () => {
     const r = resolveScope(tree, sc);
     if (!r.files.length) { toast.error(translate("No course files in this selection yet.")); return; }
@@ -276,6 +286,7 @@ function Simulator({ onBack, initial }: { onBack: () => void; initial?: Scope | 
           <button key={k} type="button" className={`emd-mode ${mode === k ? "is-on" : ""}`} onClick={() => setMode(k)}><Icon /><strong>{translate(t)}</strong><span>{translate(d)}</span></button>
         ))}
       </div>
+      {approved.filter((x) => tree?.some((s) => s.id === x.subject_id) && (!sc.s || x.subject_id === sc.s) && (!sc.u || !x.unit_id || x.unit_id === sc.u)).length > 0 && <section className="my-4"><h3 className="mb-2 font-semibold">{translate("Verified Wisen AI exams")}</h3><div className="emd-file-grid">{approved.filter((x) => tree?.some((s) => s.id === x.subject_id) && (!sc.s || x.subject_id === sc.s) && (!sc.u || !x.unit_id || x.unit_id === sc.u)).map((x) => <Button key={x.id} variant="outline" disabled={!!busy} className="h-auto justify-start whitespace-normal py-3" onClick={() => void openApproved(x)}><FileText />{x.title} {x.semester}<ArrowRight /></Button>)}</div></section>}
       <div className="emd-setup">
         <ScopePicker tree={tree} value={sc} onChange={setSc} />
         <div className="emd-setup-row">
@@ -392,16 +403,39 @@ export function EmdQBank() {
   const { t: translate } = useLang();
   const { user } = useSession();
   const { qs: ai } = useAi();
-  poolRef = ai;
+  const [approvedPool, setApprovedPool] = useState<Question[]>([]);
+  poolRef = [...ai, ...approvedPool];
   const app = useAppState();
   const e = app.exam;
+  const { tree } = useCurriculum();
+  useEffect(() => {
+    const ids = e.qids.filter((id) => id.startsWith("set-")).map((id) => id.slice(4));
+    if (!ids.length || !tree) return;
+    let cancelled = false;
+    void supabase.from("exam_set_questions").select("*, exam_sets!inner(subject_id,title,kind,status)").in("id", ids).then(({ data }) => {
+      if (cancelled) return;
+      const restored: Question[] = (data ?? []).flatMap((r) => {
+        const exam = r.exam_sets;
+        const subject = tree.find((s) => s.id === exam.subject_id);
+        if (!subject || exam.status !== "published" || exam.kind !== "ai_generated") return [];
+        const a = r.answers as number[], multi = a.length > 1 || r.format === "QCM_MULTI";
+        const lessons = new Map(subject.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const)));
+        return [{ id: `set-${r.id}`, subject: subject.name, topic: r.lesson_ids.map((id) => lessons.get(id)).filter(Boolean).join(" + ") || subject.name,
+          difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0,
+          why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
+          slide: 0, source: exam.title, multi }];
+      });
+      setApprovedPool(restored);
+    });
+    return () => { cancelled = true; };
+  }, [e.qids, tree]);
   const search = useSearch({ strict: false }) as { s?: string; u?: string; l?: string; view?: "mistakes" | "history" };
   const initialScope: Scope | null = search.s ? { ...emptyScope, s: search.s, u: search.u ?? "", l: search.l ?? "" } : null;
   const [view, setView] = useState<"hub" | "past" | "sim" | "mistakes" | "history">(search.view ?? (initialScope ? "sim" : "hub"));
   // A finished exam stays in the persisted state; only show the debrief when the exam was actually run during this visit, so /qbank always opens on the hub. An in-progress exam still resumes.
   const [sawRun, setSawRun] = useState(false);
   useEffect(() => { if (e.phase === "run") setSawRun(true); }, [e.phase]);
-  const examQs = useMemo(() => e.qids.map((id) => ai.find((q) => q.id === id)).filter((q): q is AiQuestion => !!q), [e.qids, ai]);
+  const examQs = useMemo(() => e.qids.map((id) => [...ai, ...approvedPool].find((q) => q.id === id)).filter((q): q is Question => !!q), [e.qids, ai, approvedPool]);
   const realActive = (e.phase === "run" || e.phase === "done") && examQs.length > 0;
   if (!user) return <main className="reference-page emd-page"><div className="tool-signin"><span className="reference-tool-icon"><LogIn /></span><strong>{translate("Sign in to practise EMDs")}</strong><p>{translate("Your exams and results are saved to your account.")}</p><Button asChild><Link to="/login"><LogIn />{translate("Sign in")}</Link></Button></div></main>;
   if (realActive && e.phase === "run") return <RealExam qs={examQs} />;
@@ -409,7 +443,7 @@ export function EmdQBank() {
   const back = <Button variant="ghost" onClick={() => setView("hub")}><ArrowLeft />{translate("Back to QBank")}</Button>;
   return (
     <main className="reference-page emd-page">
-      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} initial={initialScope} /> : view === "mistakes" ? (
+      {realActive && e.phase === "done" && sawRun ? <Debrief qs={examQs} /> : view === "past" ? <PastEmds onBack={() => setView("hub")} /> : view === "sim" ? <Simulator onBack={() => setView("hub")} initial={initialScope} setApprovedPool={setApprovedPool} /> : view === "mistakes" ? (
         <>{back}<header className="tool-page-heading"><span className="tool-kicker">{translate("QBANK · REVIEW")}</span><h1>{translate("My Mistakes")}</h1><p>{translate("Retry the questions you missed and turn them into Kapsules.")}</p></header><Mistakes /></>
       ) : view === "history" ? (
         <>{back}<header className="tool-page-heading"><span className="tool-kicker">{translate("QBANK · ARCHIVE")}</span><h1>{translate("Exam History")}</h1><p>{translate("Every EMD simulation you completed, newest first.")}</p></header>
