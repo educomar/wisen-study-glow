@@ -112,7 +112,7 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
   useEffect(() => {
     if (!set) return;
     void supabase.from("exam_set_questions").select("*").eq("set_id", set.id).order("position").then(({ data }) =>
-      setQs((data ?? []).map((q) => questionDraftSchema.parse({ ...q, verified: q.verified && q.answer_source !== "missing" && !q.review_note, format: ["QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].includes(q.format) ? q.format : "" }))));
+      setQs((data ?? []).map((q) => questionDraftSchema.parse({ ...q, verified: q.verified && q.answer_source !== "missing" && !q.review_note, format: ["QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].includes(q.format) ? q.format : "" })))).catch(() => toast.error("Could not load exam questions."));
   }, [set]);
 
   const subjects = h?.subjects ?? [];
@@ -124,7 +124,14 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
     if (r && !set) onCreated(r.id);
   };
   const saveAll = async () => { if (!set) return; await act(saveQs({ data: { setId: set.id, questions: qs } }), `${qs.length} questions saved`); };
-  const status = async (s: "uploaded" | "in_review" | "verified" | "published") => { if (set) await act(setSt({ data: { id: set.id, status: s } }), `Status: ${STATUS[s]}`); };
+  const status = async (s: "uploaded" | "in_review" | "verified" | "published") => {
+    if (!set) return;
+    if (s === "verified" || s === "published") {
+      const saved = await act(saveQs({ data: { setId: set.id, questions: qs } }));
+      if (!saved) return;
+    }
+    await act(setSt({ data: { id: set.id, status: s } }), `Status: ${STATUS[s]}`);
+  };
 
   return (
     <div className="space-y-5">

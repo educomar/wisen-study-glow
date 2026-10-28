@@ -165,7 +165,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   const files = (mods.find((m) => m.name === mod)?.emds ?? (mod ? [] : mods.flatMap((m) => m.emds))).map((f) => ({ ...f, year: emdYear(f.file_name, f.date) }));
   const years = [...new Set([...files.map((f) => f.year), ...visibleSets.map((x) => x.exam_year).filter(Boolean)])].sort().reverse();
   const moduleNames = [...new Set([...mods.map((m) => m.name), ...sets.filter((x) => subjOf(x.subject_id)).map(moduleOf)])];
-  const shown: CurFile[] = [];
+  const shown: (CurFile & { year: string })[] = [];
   const modSubjects = new Set(mod ? [...(tree ?? []).filter((t) => t.name === mod).map((t) => t.id), ...sets.filter((x) => moduleOf(x) === mod).map((x) => x.subject_id)] : []);
   const lessonOptions = (tree ?? []).filter((t) => modSubjects.has(t.id)).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => ({ id: l.id, name: `${u.name} · ${l.name}` }))));
   if (run) return <PracticeRunner qs={run.qs} title={translate(run.title)} onExit={() => setRun(null)} />;
@@ -407,6 +407,28 @@ export function EmdQBank() {
   poolRef = [...ai, ...approvedPool];
   const app = useAppState();
   const e = app.exam;
+  const { tree } = useCurriculum();
+  useEffect(() => {
+    const ids = e.qids.filter((id) => id.startsWith("set-")).map((id) => id.slice(4));
+    if (!ids.length || !tree) return;
+    let cancelled = false;
+    void supabase.from("exam_set_questions").select("*, exam_sets!inner(subject_id,title,kind,status)").in("id", ids).then(({ data }) => {
+      if (cancelled) return;
+      const restored: Question[] = (data ?? []).flatMap((r) => {
+        const exam = r.exam_sets;
+        const subject = tree.find((s) => s.id === exam.subject_id);
+        if (!subject || exam.status !== "published" || exam.kind !== "ai_generated") return [];
+        const a = r.answers as number[], multi = a.length > 1 || r.format === "QCM_MULTI";
+        const lessons = new Map(subject.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const)));
+        return [{ id: `set-${r.id}`, subject: subject.name, topic: r.lesson_ids.map((id) => lessons.get(id)).filter(Boolean).join(" + ") || subject.name,
+          difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0,
+          why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
+          slide: 0, source: exam.title, multi }];
+      });
+      setApprovedPool(restored);
+    });
+    return () => { cancelled = true; };
+  }, [e.qids, tree]);
   const search = useSearch({ strict: false }) as { s?: string; u?: string; l?: string; view?: "mistakes" | "history" };
   const initialScope: Scope | null = search.s ? { ...emptyScope, s: search.s, u: search.u ?? "", l: search.l ?? "" } : null;
   const [view, setView] = useState<"hub" | "past" | "sim" | "mistakes" | "history">(search.view ?? (initialScope ? "sim" : "hub"));
