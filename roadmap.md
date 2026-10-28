@@ -1,11 +1,12 @@
 # Roadmap
 
 ## Central exam ingestion — October 28
-- [ ] Extract PDF, DOCX, PPTX/POTX, JSON and text uploads, with scanned PDF OCR and visible progress.
-- [ ] Separate mixed-subject/year archives into editable exam drafts; preserve official keys and link real lessons.
-- [ ] Use the selected admin text model for import enrichment and source-grounded MCQ/QCS generation.
-- [ ] Add collapsible review cards, per-option comments, exact trap warnings, semester metadata and safe central saves.
-- [ ] Verify rules, authenticated admin save/readback and student published-question display.
+- [x] Extract PDF, DOCX, PPTX/POTX, JSON and text uploads, with scanned PDF OCR and visible progress; browser checks passed for digital PDF, scanned PDF, DOCX, POTX and JSON.
+- [x] Separate mixed-subject/year archives into editable exam drafts; preserve official keys and link real lessons.
+- [x] Use the selected admin text model for import enrichment and source-grounded MCQ/QCS generation; exact-model live request returned 200 with content.
+- [x] Add collapsible review cards, per-option comments, exact trap warnings, semester metadata and atomic central saves; student Past EMDs reads published central exams only, and approved AI exams appear in Simulator.
+- [x] Verify 31 scope/import/scoring/reader tests, signed-in QBank with no runtime errors and preview build OK.
+- [ ] Verify authenticated admin full archive processing, save/readback and published-question practice — blocked because the available preview account has no Team access; no permissions changed for testing.
 
 ## Past EMD academic scope — October 21
 - [x] Share subject/module selection across Past EMDs and exam-file uploads, retaining existing hierarchy and IDs.
