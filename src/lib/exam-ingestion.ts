@@ -56,9 +56,9 @@ export function parseExamJson(text: string): { papers: (Partial<PaperDraft> & { 
   const papers = Array.isArray(d) ? [{ questions: d }] : Array.isArray(d.papers) ? d.papers : [d];
   if (!papers.length || papers.length > 100) throw new Error("Invalid JSON exam archive");
   return { papers: papers.map((p: Record<string, unknown>) => {
-    if (!Array.isArray(p.questions)) throw new Error("JSON must contain a questions array (or papers with questions arrays).");
-    const questions = p.questions.map((q: Record<string, unknown>) => questionDraftSchema.parse({ ...q, verified: false,
-      answer_source: Array.isArray(q.answers) && q.answers.length ? "official" : "missing" }));
+    if (!Array.isArray(p["questions"])) throw new Error("JSON must contain a questions array (or papers with questions arrays).");
+    const questions = p["questions"].map((q: Record<string, unknown>) => questionDraftSchema.parse({ ...q, verified: false,
+      answer_source: Array.isArray(q["answers"]) && q["answers"].length ? "official" : "missing" }));
     return { ...p, questions };
   }) };
 }

@@ -12,7 +12,7 @@ import { area, inp, sel, useHierarchy } from "./team-context";
 import { ExamScopePicker } from "./ExamScopePicker";
 import { ExamQuestionCards } from "./ExamQuestionCards";
 
-type ReviewPaper = PaperDraft & { questions: ExamDraftQuestion[]; savedId?: string };
+type ReviewPaper = PaperDraft & { questions: ExamDraftQuestion[]; savedId?: string | undefined };
 export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions, onSaved }: { kind: "past_emd" | "ai_generated"; subjectId: string; unitId: string | null; setId?: string; onQuestions: (qs: ExamDraftQuestion[]) => void; onSaved: () => void }) {
   const { t, lang } = useLang();
   const { data: h } = useHierarchy();
@@ -86,7 +86,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     onQuestions(await enrichAll(uniqueQuestions(qs), subjectId, unitId));
   });
   const current = papers[active];
-  const patchPaper = (p: Partial<ReviewPaper>) => setPapers((ps) => ps.map((x, i) => i === active ? { ...x, ...p, savedId: undefined } : x));
+  const patchPaper = (p: Partial<ReviewPaper>) => setPapers((ps) => ps.map((x, i) => i === active ? { ...x, ...p } : x));
   return <section className="space-y-4 border-y border-border py-5">
     <div className="flex flex-wrap items-center gap-2"><FileText className="size-5 text-primary" /><h3 className="mr-auto font-semibold">{t(kind === "past_emd" ? "Upload & extract exam archive" : "Upload lessons & generate exam")}</h3>
       <Button size="sm" variant="outline" disabled={busy} onClick={() => input.current?.click()}><Upload />{t(kind === "past_emd" ? "Upload exam files" : "Upload course files")}</Button>

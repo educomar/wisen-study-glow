@@ -87,6 +87,8 @@ function Explanation({ q, picked }: { q: Question; picked: number | null }) {
     <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
       <p className="font-semibold">{ok ? translate("Correct") : picked === null ? translate("Not answered") : translate("Incorrect")}  {translate("— answer:")} {correctText(q)}</p>
       <div className="mt-2 text-sm"><RichText text={q.why || translate("No explanation available.")} /></div>
+      {q.distractors.some(Boolean) && <ul className="mt-3 space-y-2 text-sm">{q.distractors.map((comment, i) => comment ? <li key={i}><strong>{L[i]}.</strong> <Inline text={comment} /></li> : null)}</ul>}
+      {q.trapPhrase && <div className="mt-3 border-l-2 border-destructive pl-3 text-sm"><p className="flex items-center gap-2 font-semibold"><TriangleAlert className="size-4 text-destructive" /><span dir="rtl">{q.trapPhrase}</span></p>{q.trapExplanation && <RichText text={q.trapExplanation} />}</div>}
       {q.source && <p className="mt-2 text-xs text-muted-foreground">{translate("Source:")} {q.source}</p>}
       <Button size="sm" variant="outline" className="mt-3" onClick={() => { saveKapsule(q); toast.success(translate("Saved as Kapsule")); }}><Layers />  {translate("Save as Kapsule")}</Button>
     </div>
@@ -156,7 +158,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
     const subject = subjOf(x.subject_id) ?? "";
     const lessonName = new Map((tree ?? []).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const))));
     const rowsIn = (data ?? []).filter((r) => !lesson || (r.lesson_ids ?? []).includes(lesson));
-    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0]!, why: r.explanation, distractors: [], slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
+    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0, why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation, slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
     if (!qs.length) { toast.error(translate(lesson ? "No questions in this exam are linked to the selected lesson." : "This exam has no questions yet.")); return; }
     setRun({ title: `${moduleOf(x)} · ${x.title}${lesson ? ` · ${lessonName.get(lesson) ?? ""}` : ""}`, qs });
     log(`Past EMD opened · ${subject} ${x.title}`);
