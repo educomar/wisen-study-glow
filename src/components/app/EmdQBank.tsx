@@ -1,7 +1,6 @@
 import { translate, useLang, getLocale } from '@/lib/i18n';
 import { Link, useSearch } from "@tanstack/react-router";
 import { Mistakes } from "./Mistakes";
-import { useServerFn } from "@tanstack/react-start";
 import { Archive, ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ClipboardList, FileText, GraduationCap, Layers, Loader2, LogIn, Timer, TriangleAlert, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -11,13 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Logo } from "@/components/site/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { generateQuestions } from "@/lib/ai/study.functions";
-import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
+import { isCorrectOption, useAi, type AiQuestion } from "./ai-store";
 import { useCurriculum, type CurFile } from "./Curriculum";
 import type { Question } from "./data";
 import { emdYear, isAcceptedAnswer, isPicked, questionCredit, scoreOn20, scoreWith, SCORING, toggleOption, type Scoring } from "./emd-exam";
 import { Inline, RichText } from "./RichText";
-import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
+import { emptyScope, type Scope } from "./ScopePicker";
 import { addCard, getState, log, recordQuestion, update, useAppState, type ExamSession } from "./store";
 import { useSession } from "@/lib/profile";
 
@@ -366,13 +364,11 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
       setRows((data ?? []).map((r) => ({ ...r, semester: semOf.get(r.set_id) ?? "" })));
     })();
   }, []);
-  const setSubjectOf = useMemo(() => new Map<string, string>(), []);
   const lessonInfo = useMemo(() => {
     const m = new Map<string, { subject: string; subjectName: string; unit: string; name: string }>();
     tree?.forEach((s) => s.units.forEach((u) => u.lessons.forEach((l) => m.set(l.id, { subject: s.id, subjectName: s.name, unit: u.name, name: l.name }))));
     return m;
   }, [tree]);
-  void setSubjectOf;
   const all = rows ?? [];
   const subjects = useMemo(() => (tree ?? []).filter((s) => all.some((r) => r.lesson_ids.some((id) => lessonInfo.get(id)?.subject === s.id))), [tree, all, lessonInfo]);
   useEffect(() => { if (!subj && subjects[0]) setSubj(subjects[0].id); }, [subjects, subj]);
@@ -413,7 +409,7 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
   const scoreCard = (o: (typeof SCORING)[number]) => (
     <label key={o.key} className={`sim-opt ${scoring === o.key ? "is-on" : ""}`}>
       <input type="radio" name="sim-scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} />
-      <span><strong>{translate(o.label)}{o.key === "degressive" && <em className="sim-tag">{translate("Standard EMD")}</em>}</strong><small>{translate(o.hint)}</small>
+      <span><strong>{translate(o.label)}</strong><small>{translate(o.hint)}</small>
         {o.key === "degressive" && <span className="sim-rules">{["0 errors = 1", "1 error = 0.5", "2 errors = 0.2", "3+ errors = 0"].map((x) => <i key={x}>{translate(x)}</i>)}</span>}</span>
     </label>
   );
