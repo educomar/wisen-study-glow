@@ -5,12 +5,13 @@ export type ExamScopeOption = ExamScope & { value: string; name: string; departm
 
 export const examScopeValue = (scope: ExamScope) => scope.unit_id ? `${scope.subject_id}:${scope.unit_id}` : scope.subject_id;
 
-/** A module remains linked to its existing parent subject; no synthetic subjects. */
-export function examScopeOptions(subjects: ExamSubject[], units: ExamUnit[]): ExamScopeOption[] {
+/** EMDs are per official subject; Drive folder units (Lectures, TD, Semester…) are never exam scopes.
+ *  Only container subjects (e.g. Y3 "Les Modules") expose their real modules. */
+export function examScopeOptions(subjects: ExamSubject[], units: ExamUnit[] = []): ExamScopeOption[] {
   return subjects.filter((s) => !/deprecated/i.test(s.name)).flatMap((s) => {
-    const children = units.filter((u) => u.subject_id === s.id);
     const parent = { subject_id: s.id, unit_id: null, value: s.id, name: s.name, department: s.department, academic_year: s.academic_year };
-    const modules = children.filter((u) => u.name.trim().toLocaleLowerCase() !== s.name.trim().toLocaleLowerCase() && !/^(semester|semestre|s)\s*[12]$/i.test(u.name.trim())).map((u) => ({ ...parent, unit_id: u.id, value: `${s.id}:${u.id}`, name: `${u.name} · ${s.name}` }));
+    if (!/\bmodules?\b/i.test(s.name)) return [parent];
+    const modules = units.filter((u) => u.subject_id === s.id).map((u) => ({ ...parent, unit_id: u.id, value: `${s.id}:${u.id}`, name: `${u.name} · ${s.name}` }));
     return [parent, ...modules];
   });
 }
