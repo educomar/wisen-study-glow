@@ -342,89 +342,143 @@ function submitExam() {
 let poolRef: Question[] = [];
 const getPool = () => poolRef;
 
+type SimRow = Tables<"exam_set_questions"> & { semester: string };
 function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; initial?: Scope | null; setApprovedPool: (qs: Question[]) => void }) {
   const { t: translate } = useLang();
   const { tree } = useCurriculum();
-  const [sc, setSc] = useState<Scope>(initial ?? emptyScope);
   const [mode, setMode] = useState<"practice" | "real">("practice");
+  const [subj, setSubj] = useState<string>(initial?.s ?? "");
+  const [sem, setSem] = useState<"" | "S1" | "S2">("");
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(initial?.l ? [initial.l] : []));
+  const [q, setQ] = useState("");
   const [count, setCount] = useState(20);
   const [minutes, setMinutes] = useState(60);
   const [scoring, setScoring] = useState<Scoring>("degressive");
-  const [busy, setBusy] = useState<string | null>(null);
+  const [moreScoring, setMoreScoring] = useState(false);
+  const [rows, setRows] = useState<SimRow[] | null>(null);
   const [practiceQs, setPracticeQs] = useState<{ title: string; qs: Question[] } | null>(null);
-  const gen = useServerFn(generateQuestions);
-  const [approved, setApproved] = useState<{ id: string; title: string; subject_id: string; unit_id: string | null; semester: string }[]>([]);
-  useEffect(() => { void supabase.from("exam_sets").select("id,title,subject_id,unit_id,semester").eq("kind", "ai_generated").eq("status", "published").then(({ data }) => setApproved(data ?? [])); }, []);
-  const openApproved = async (x: (typeof approved)[number]) => {
-    const subject = tree?.find((s) => s.id === x.subject_id); if (!subject) return;
-    setBusy(translate("Loading…"));
-    try {
-      const { data, error } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
-      if (error) throw new Error(error.message);
-      const lessons = new Map(subject.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const)));
-      const qs: Question[] = (data ?? []).filter((r) => !sc.l || r.lesson_ids.includes(sc.l)).map((r) => {
-        const a = r.answers as number[], multi = a.length > 1 || r.format === "QCM_MULTI";
-        return { id: `set-${r.id}`, subject: subject.name, topic: r.lesson_ids.map((id) => lessons.get(id)).filter(Boolean).join(" + ") || subject.name,
-          difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0,
-          ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
-          slide: 0, source: x.title, multi };
-      });
-      if (!qs.length) throw new Error(translate("No questions in this exam are linked to the selected lesson."));
-      if (mode === "practice") setPracticeQs({ title: x.title, qs });
-      else {
-        setApprovedPool(qs);
-        const ids = qs.map((q) => q.id);
-        setE({ subject: subject.name, phase: "run", qids: ids, answers: ids.map(() => null), flags: ids.map(() => false), i: 0, minutes, count: qs.length, endsAt: Date.now() + minutes * 60e3, usedSec: 0, scoring });
-      }
-    } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  useEffect(() => {
+    void (async () => {
+      const { data: sets } = await supabase.from("exam_sets").select("id,subject_id,semester").eq("kind", "ai_generated").eq("status", "published");
+      const semOf = new Map((sets ?? []).map((x) => [x.id, x.semester ?? ""]));
+      if (!semOf.size) { setRows([]); return; }
+      const { data } = await supabase.from("exam_set_questions").select("*").in("set_id", [...semOf.keys()]).order("position");
+      setRows((data ?? []).map((r) => ({ ...r, semester: semOf.get(r.set_id) ?? "" })));
+    })();
+  }, []);
+  const setSubjectOf = useMemo(() => new Map<string, string>(), []);
+  const lessonInfo = useMemo(() => {
+    const m = new Map<string, { subject: string; subjectName: string; unit: string; name: string }>();
+    tree?.forEach((s) => s.units.forEach((u) => u.lessons.forEach((l) => m.set(l.id, { subject: s.id, subjectName: s.name, unit: u.name, name: l.name }))));
+    return m;
+  }, [tree]);
+  void setSubjectOf;
+  const all = rows ?? [];
+  const subjects = useMemo(() => (tree ?? []).filter((s) => all.some((r) => r.lesson_ids.some((id) => lessonInfo.get(id)?.subject === s.id))), [tree, all, lessonInfo]);
+  useEffect(() => { if (!subj && subjects[0]) setSubj(subjects[0].id); }, [subjects, subj]);
+  const scoped = all.filter((r) => (!sem || r.semester === sem) && r.lesson_ids.some((id) => lessonInfo.get(id)?.subject === subj));
+  const hasSem = all.some((r) => r.semester === "S1" || r.semester === "S2");
+  const counts = new Map<string, number>();
+  scoped.forEach((r) => r.lesson_ids.forEach((id) => { if (lessonInfo.get(id)?.subject === subj) counts.set(id, (counts.get(id) ?? 0) + 1); }));
+  const subject = tree?.find((s) => s.id === subj);
+  const needle = q.trim().toLowerCase();
+  const groups = (subject?.units ?? []).map((u) => ({ name: u.name, lessons: u.lessons.filter((l) => counts.has(l.id) && (!needle || l.name.toLowerCase().includes(needle))) })).filter((g) => g.lessons.length);
+  const visibleIds = groups.flatMap((g) => g.lessons.map((l) => l.id));
+  const pool = scoped.filter((r) => r.lesson_ids.some((id) => picked.has(id)));
+  const max = Math.min(120, pool.length);
+  const n = Math.max(1, Math.min(count, max || 1));
+  const toggleIds = (ids: string[]) => setPicked((p) => { const nx = new Set(p); const on = ids.every((id) => nx.has(id)); ids.forEach((id) => on ? nx.delete(id) : nx.add(id)); return nx; });
+  const changeSubject = (id: string) => { setSubj(id); setPicked(new Set()); setQ(""); };
+  const changeSem = (v: "" | "S1" | "S2") => { setSem(v); setPicked(new Set()); };
+  const start = () => {
+    if (!subject || !pool.length) return;
+    const lessons = new Map(subject.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const)));
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, n);
+    const qs: Question[] = shuffled.map((r) => {
+      const a = r.answers as number[], multi = a.length > 1 || r.format === "QCM_MULTI";
+      return { id: `set-${r.id}`, subject: subject.name, topic: r.lesson_ids.map((id) => lessons.get(id)).filter(Boolean).join(" + ") || subject.name,
+        difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0,
+        ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
+        slide: 0, source: subject.name, multi } as Question;
+    });
+    const title = `${subject.name}${sem ? ` · ${semLabelOf(sem, translate)}` : ""}`;
+    if (mode === "practice") { setPracticeQs({ title, qs }); return; }
+    setApprovedPool(qs);
+    const ids = qs.map((x) => x.id);
+    setE({ subject: subject.name, phase: "run", qids: ids, answers: ids.map(() => null), flags: ids.map(() => false), i: 0, minutes, count: qs.length, endsAt: Date.now() + minutes * 60e3, usedSec: 0, scoring });
   };
-  const go = async () => {
-    const r = resolveScope(tree, sc);
-    if (!r.files.length) { toast.error(translate("No course files in this selection yet.")); return; }
-    try {
-      setBusy("Reading your course files…");
-      const material = await extractMaterial(r.files, sc.f ? 1 : 6, (d, n) => setBusy(`Reading course files ${d}/${n}…`));
-      if (!material.length) throw new Error("These files have no readable text (they may be scanned).");
-      setBusy("Studying previous-year EMDs for style…");
-      const pastEmds = (await extractMaterial(r.emds, 3)).map((p) => ({ name: p.name, text: p.text.slice(0, 30000) }));
-      setBusy("Wisen AI is building your EMD…");
-      const rows = await gen({ data: { mode: "exam", qtype: "MCQ", difficulty: "Medium", count, subject: r.subject, unit: r.unit, lesson: r.lesson, material, pastEmds } });
-      await reloadAi();
-      const ids = rows.map((x) => `ai-${x.id}`);
-      if (mode === "real") {
-        setE({ subject: r.subject, phase: "run", qids: ids, answers: ids.map(() => null), flags: ids.map(() => false), i: 0, minutes, count, endsAt: Date.now() + minutes * 60e3, usedSec: 0, scoring });
-      } else {
-        const set = new Set(ids);
-        setPracticeQs({ title: `Practice · ${r.label}`, qs: poolRef.filter((q) => set.has(q.id)) });
-      }
-    } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setBusy(null); }
-  };
-  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={translate(practiceQs.title)} initialScoring={scoring} kind="ai_generated" onExit={() => setPracticeQs(null)} />;
+  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={practiceQs.title} initialScoring={scoring} kind="ai_generated" onExit={() => setPracticeQs(null)} />;
+  const scoringOpt = SCORING.find((o) => o.key === scoring);
+  const main = SCORING.filter((o) => o.key === "degressive"), others = SCORING.filter((o) => o.key !== "degressive");
+  const scoreCard = (o: (typeof SCORING)[number]) => (
+    <label key={o.key} className={`sim-opt ${scoring === o.key ? "is-on" : ""}`}>
+      <input type="radio" name="sim-scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} />
+      <span><strong>{translate(o.label)}{o.key === "degressive" && <em className="sim-tag">{translate("Standard EMD")}</em>}</strong><small>{translate(o.hint)}</small>
+        {o.key === "degressive" && <span className="sim-rules">{["0 errors = 1", "1 error = 0.5", "2 errors = 0.2", "3+ errors = 0"].map((x) => <i key={x}>{translate(x)}</i>)}</span>}</span>
+    </label>
+  );
   return (
-    <section className="emd-section">
+    <section className="emd-section sim">
       <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />  {translate("QBank")}</Button>
       <h2 className="emd-h2">{translate("EMD Simulator")} <small>{translate("UFAS1 Simulation")}</small></h2>
-      <p className="emd-sub">{translate("Original QCM questions from your selected course files, modelled on previous-year EMD style — never copied from them.")}</p>
-      <div className="emd-modes">
-        {([["practice", GraduationCap, "Practice Mode", "Untimed. Answer one by one; the correct answer and Wisen AI explanation appear after each submission."], ["real", Timer, "Real Exam", "Strict timed simulation with the QCM grille. No answers or hints until you submit."]] as const).map(([k, Icon, t, d]) => (
-          <button key={k} type="button" className={`emd-mode ${mode === k ? "is-on" : ""}`} onClick={() => setMode(k)}><Icon /><strong>{translate(t)}</strong><span>{translate(d)}</span></button>
-        ))}
-      </div>
-      {approved.filter((x) => tree?.some((s) => s.id === x.subject_id) && (!sc.s || x.subject_id === sc.s) && (!sc.u || !x.unit_id || x.unit_id === sc.u)).length > 0 && <section className="my-4"><h3 className="mb-2 font-semibold">{translate("Verified Wisen AI exams")}</h3><div className="emd-file-grid">{approved.filter((x) => tree?.some((s) => s.id === x.subject_id) && (!sc.s || x.subject_id === sc.s) && (!sc.u || !x.unit_id || x.unit_id === sc.u)).map((x) => <Button key={x.id} variant="outline" disabled={!!busy} className="h-auto justify-start whitespace-normal py-3" onClick={() => void openApproved(x)}><FileText />{x.title} {x.semester}<ArrowRight /></Button>)}</div></section>}
-      <div className="emd-setup">
-        <ScopePicker tree={tree} value={sc} onChange={setSc} />
-        <div className="emd-setup-row">
-          <span>{translate("Questions")}</span><div className="emd-pills">{[10, 20, 30].map((n) => <button key={n} type="button" className={n === count ? "is-on" : ""} onClick={() => { setCount(n); setMinutes(n * 3); }}>{n}</button>)}</div>
-          {mode === "real" && <><span>{translate("Duration")}</span><select aria-label={translate("Duration")} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>{[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m}  {translate("min")}</option>)}</select></>}
+      <p className="emd-sub">{translate("Verified Wisen AI questions built from your lessons, in previous-year EMD style.")}</p>
+      <div className="sim-layout">
+        <div className="sim-steps">
+          <section className="sim-step"><h3><b>1</b>{translate("Choose a mode")}</h3>
+            <div className="sim-modes">
+              {([["practice", GraduationCap, "Practice Mode", "Untimed. Answer one by one; the correct answer and Wisen AI explanation appear after each submission."], ["real", Timer, "Real Exam", "Strict timed simulation with the QCM grille. No answers or hints until you submit."]] as const).map(([k, Icon, t, d]) => (
+                <button key={k} type="button" className={`sim-mode ${mode === k ? "is-on" : ""}`} onClick={() => setMode(k)} aria-pressed={mode === k}><Icon /><strong>{translate(t)}</strong><span>{translate(d)}</span>{mode === k && <Check className="sim-mode-check" />}</button>
+              ))}
+            </div>
+          </section>
+          <section className="sim-step"><h3><b>2</b>{translate("Pick your lessons")}<small>{translate("Select one or several lessons")}</small></h3>
+            {rows === null ? <p className="emd-sub"><Loader2 className="inline size-4 animate-spin" /> {translate("Loading…")}</p> : !subjects.length ? <p className="emd-sub">{translate("No verified AI questions are published for your level yet.")}</p> : <>
+              <div className="pe-chips">{subjects.map((s) => <button key={s.id} type="button" className={s.id === subj ? "is-on" : ""} onClick={() => changeSubject(s.id)}><span className="pe-dot" style={{ background: peColor(s.name) }} />{s.name}</button>)}</div>
+              <div className="sim-tools">
+                {hasSem && <div className="pe-seg pe-seg-sm">{([["", "All semesters"], ["S1", "Semester 1"], ["S2", "Semester 2"]] as const).map(([v, l]) => <button key={v} type="button" className={sem === v ? "is-on" : ""} onClick={() => changeSem(v)}>{translate(l)}</button>)}</div>}
+                <input className="sim-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={translate("Search a lesson…")} aria-label={translate("Search a lesson…")} />
+                <Button variant="outline" size="sm" disabled={!visibleIds.length} onClick={() => toggleIds(visibleIds)}>{visibleIds.length && visibleIds.every((id) => picked.has(id)) ? translate("Deselect all") : translate("Whole subject")}</Button>
+              </div>
+              {!groups.length ? <p className="emd-sub">{translate("No lessons match.")}</p> : groups.map((g) => {
+                const ids = g.lessons.map((l) => l.id), on = ids.every((id) => picked.has(id));
+                return <div key={g.name} className="sim-group"><div className="sim-group-h"><span>{g.name}</span><button type="button" onClick={() => toggleIds(ids)}>{translate(on ? "Deselect all" : "Select all")}</button></div>
+                  <div className="sim-lessons">{g.lessons.map((l) => <button key={l.id} type="button" className={`sim-lesson ${picked.has(l.id) ? "is-on" : ""}`} aria-pressed={picked.has(l.id)} onClick={() => toggleIds([l.id])}><span className="sim-box">{picked.has(l.id) && <Check />}</span>{l.name}<small>{counts.get(l.id)}</small></button>)}</div></div>;
+              })}
+            </>}
+          </section>
+          <section className="sim-step"><h3><b>3</b>{translate("Set up the session")}</h3>
+            <div className="sim-range"><label htmlFor="sim-count">{translate("Number of questions")}</label>
+              <div><input id="sim-count" type="range" min={1} max={Math.max(1, max)} value={n} disabled={!max} onChange={(e) => setCount(Number(e.target.value))} />
+                <input type="number" min={1} max={Math.max(1, max)} value={n} disabled={!max} aria-label={translate("Number of questions")} onChange={(e) => setCount(Math.max(1, Math.min(max || 1, Number(e.target.value) || 1)))} /></div>
+              <small>{max ? `${translate("Available")}: ${pool.length}${pool.length > 120 ? ` (${translate("max")} 120)` : ""}` : translate("Select lessons to see available questions.")}</small></div>
+            {mode === "real" && <div className="sim-range"><label htmlFor="sim-min">{translate("Duration")}</label>
+              <div><input id="sim-min" type="range" min={1} max={120} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} />
+                <input type="number" min={1} max={120} value={minutes} aria-label={translate("Duration")} onChange={(e) => setMinutes(Math.max(1, Math.min(120, Number(e.target.value) || 1)))} /><em>{translate("min")}</em></div>
+              <small>{translate("From 1 to 120 minutes.")}</small></div>}
+          </section>
+          <section className="sim-step"><h3><b>4</b>{translate("Scoring system")}</h3>
+            {main.map(scoreCard)}
+            <button type="button" className="sim-more" onClick={() => setMoreScoring((v) => !v)}>{translate(moreScoring ? "Hide other scoring systems" : "Show other scoring systems")}</button>
+            {(moreScoring || scoring !== "degressive") && others.map(scoreCard)}
+          </section>
         </div>
-        <fieldset className="emd-card"><legend className="font-semibold">{translate("Choose your scoring system")}</legend>
-          {SCORING.map((o) => <label key={o.key} className="flex items-start gap-2 py-1 cursor-pointer"><input type="radio" name="scoring" checked={scoring === o.key} onChange={() => setScoring(o.key)} className="mt-1" /><span><strong>{translate(o.label)}</strong><br /><small className="text-muted-foreground">{translate(o.hint)}</small></span></label>)}
-        </fieldset>
-        <Button size="lg" className="w-full" disabled={!sc.s || !!busy} onClick={() => void go()}>{busy ? <><Loader2 className="animate-spin" /> {translate(busy)}</> : mode === "real" ? translate("Generate & start Real Exam") : translate("Generate & start practice")}</Button>
+        <aside className="sim-summary"><h3>{translate("Your session")}</h3>
+          <dl>
+            <div><dt>{translate("Mode")}</dt><dd>{translate(mode === "real" ? "Real Exam" : "Practice Mode")}</dd></div>
+            <div><dt>{translate("Subject")}</dt><dd>{subject?.name ?? "—"}</dd></div>
+            <div><dt>{translate("Lessons")}</dt><dd>{picked.size ? picked.size : translate("None selected")}</dd></div>
+            <div><dt>{translate("Questions")}</dt><dd>{max ? n : "—"}</dd></div>
+            {mode === "real" && <div><dt>{translate("Duration")}</dt><dd>{minutes} {translate("min")}</dd></div>}
+            <div><dt>{translate("Scoring")}</dt><dd>{scoringOpt ? translate(scoringOpt.label) : ""}</dd></div>
+          </dl>
+          <Button size="lg" className="w-full" disabled={!pool.length} onClick={start}>{translate(mode === "real" ? "Start Real Exam" : "Start practice")} <ArrowRight /></Button>
+          {!pool.length && <p>{translate("Select at least one lesson to start.")}</p>}
+        </aside>
       </div>
     </section>
   );
 }
+const semLabelOf = (s: string, t: (x: string) => string) => s === "S1" ? t("Semester 1") : s === "S2" ? t("Semester 2") : s;
 
 function RealExam({ qs }: { qs: Question[] }) {
   const { t: translate } = useLang();
