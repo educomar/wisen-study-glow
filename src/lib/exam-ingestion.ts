@@ -37,9 +37,12 @@ export const questionDraftSchema = z.object({
   if (q.answers.some((a) => a >= q.options.length)) ctx.addIssue({ code: "custom", message: "Answer outside options" });
   if (q.answer_variants?.some((v) => v.some((a) => a >= q.options.length))) ctx.addIssue({ code: "custom", message: "Alternative answer outside options" });
   if (q.format === "QCS" && q.answers.length > 1) ctx.addIssue({ code: "custom", message: "QCS requires one answer" });
-  if (q.verified && (!q.answers.length || q.answer_source === "missing" || q.review_note)) ctx.addIssue({ code: "custom", message: "Resolve the answer key and review warning before verification" });
 });
 export type ExamDraftQuestion = z.infer<typeof questionDraftSchema>;
+/** Bulk acknowledgement changes only verification, never source content or warnings. */
+export function markAllQuestionsVerified(questions: ExamDraftQuestion[]): ExamDraftQuestion[] {
+  return questions.map((q) => ({ ...q, verified: true }));
+}
 export type ExtractedPage = { number: number; text: string; ocr?: boolean; confidence?: number };
 export const paperSchema = z.object({
   title: z.string().max(200), subject_id: z.string().uuid().nullable(), unit_id: z.string().uuid().nullable().default(null),

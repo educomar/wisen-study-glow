@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, Plus, TriangleAlert, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/lib/i18n";
-import { TRAP_PHRASES, type ExamDraftQuestion } from "@/lib/exam-ingestion";
+import { markAllQuestionsVerified, TRAP_PHRASES, type ExamDraftQuestion } from "@/lib/exam-ingestion";
 import { area, inp, sel, useHierarchy } from "./team-context";
 
 export function ExamQuestionCards({ questions, onChange, subjectId, unitId }: { questions: ExamDraftQuestion[]; onChange: (q: ExamDraftQuestion[]) => void; subjectId: string; unitId: string | null }) {
@@ -15,14 +15,14 @@ export function ExamQuestionCards({ questions, onChange, subjectId, unitId }: { 
     <div className="flex flex-wrap items-center gap-2 text-sm"><strong className="mr-auto">{questions.length} {t("questions")} · {questions.filter((q) => q.verified).length} {t("Verified")}</strong>
       <Button size="sm" variant="outline" onClick={() => setExpanded(new Set(questions.map((_, i) => i)))}>{t("Expand all")}</Button>
       <Button size="sm" variant="outline" onClick={() => setExpanded(new Set())}>{t("Collapse all")}</Button>
-      <Button size="sm" variant="outline" onClick={() => onChange(questions.map((q) => !q.answers.length || q.answer_source === "missing" || q.review_note ? q : { ...q, verified: true }))}>{t("Mark all as verified")}</Button>
+      <Button size="sm" variant="outline" onClick={() => onChange(markAllQuestionsVerified(questions))}>{t("Mark all as verified")}</Button>
     </div>
     {questions.map((q, i) => <article key={i} className={`min-w-0 rounded-lg border bg-card ${q.review_note || !q.answers.length ? "border-destructive/50" : "border-border"}`}>
       <div className="flex items-start gap-2 p-3">
         <Button variant="ghost" size="sm" className="h-auto min-w-0 flex-1 justify-start whitespace-normal text-left" aria-expanded={expanded.has(i)} onClick={() => setExpanded((s) => { const next = new Set(s); if (next.has(i)) next.delete(i); else next.add(i); return next; })}>
           {expanded.has(i) ? <ChevronDown className="shrink-0" /> : <ChevronRight className="shrink-0" />}<span className="min-w-0"><b>Q{String(q.source_data?.["QuestionNumber"] ?? i + 1)}</b> · {q.format || "QCM"}<span className="ml-2 text-primary">{String(q.source_data?.[q.answer_source === "official" ? "OfficialAnswer" : "AIAnswer"] ?? q.answers.map((a) => "ABCDE"[a]).join(", ")) || t("Missing correction")}</span><span className="mt-1 block line-clamp-2 font-normal">{q.stem || t("New question")}</span></span>
         </Button>
-        <label className="flex shrink-0 items-center gap-1 pt-2 text-xs"><input type="checkbox" checked={q.verified} disabled={!q.answers.length || q.answer_source === "missing" || !!q.review_note} onChange={(e) => patch(i, { verified: e.target.checked })} />{t("Verified")}</label>
+        <label className="flex shrink-0 items-center gap-1 pt-2 text-xs"><input type="checkbox" checked={q.verified} onChange={(e) => patch(i, { verified: e.target.checked })} />{t("Verified")}</label>
         <Button size="icon" variant="ghost" aria-label={t("Remove question")} onClick={() => { onChange(questions.filter((_, k) => i !== k)); setExpanded(new Set()); }}><Trash2 /></Button>
       </div>
       {q.review_note && <p className="flex gap-2 border-t border-border px-4 py-2 text-xs text-destructive"><TriangleAlert className="size-4 shrink-0" />{q.review_note}</p>}

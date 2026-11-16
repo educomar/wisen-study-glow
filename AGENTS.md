@@ -12,6 +12,7 @@
 ## Architecture rules
 - Admin central exam ingestion uses browser PDF/Office parsing and local OCR, then dedicated authenticated text-model functions; model suggestions never overwrite official keys, and atomic question replacement keeps each exam unified under existing scope/RLS.
 - Central exam questions carry option comments, multiple lesson IDs and review warnings; publishing requires resolved corrections and explicit human verification, so mixed archive processing never publishes automatically.
+- Bulk exam verification acknowledges every draft in one action without changing corrections or warnings; publication validation remains separate so acknowledgement never invents missing keys.
 - Structured exam JSON retains raw archive/question metadata and separate accepted correction variants; deterministic scoped lesson matching precedes optional lesson-only AI enrichment, so source prose and professor alternatives are never rewritten or merged.
 - Past EMD subject/module choices share `exam-scope` across exam creation and uploads; existing subject_id/unit_id relationships remain authoritative and server-validated, so nested modules are selectable without duplicate subjects or curriculum reparenting.
 - Platform UI translations use the shared reactive language store and French catalog; localize display text and dates only, preserving form values, academic IDs and source/student content so language switching never changes study data.

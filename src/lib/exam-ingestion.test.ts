@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyEnrichment, parseExamJson, questionDraftSchema, TRAP_PHRASES, uniqueQuestions, validateSemester } from "./exam-ingestion";
+import { applyEnrichment, markAllQuestionsVerified, parseExamJson, questionDraftSchema, TRAP_PHRASES, uniqueQuestions, validateSemester } from "./exam-ingestion";
 import { validateExamFile } from "./exam-files";
 import { linkJsonLessons, scopeJsonPapers } from "./exam-json-scope";
 
@@ -23,9 +23,13 @@ describe("central exam ingestion", () => {
     const parsed = parseExamJson(JSON.stringify({ papers: [{ title: "Anatomy 2015", exam_year: "2015", questions: [make()] }, { title: "Biophysics 2020", exam_year: "2020", questions: [make()] }] }));
     assert.deepEqual(parsed.papers.map((p) => [p.title, p.exam_year]), [["Anatomy 2015", "2015"], ["Biophysics 2020", "2020"]]);
   });
-  it("blocks verification with a missing official key or image warning", () => {
-    assert.equal(questionDraftSchema.safeParse({ ...make(), verified: true, answers: [], answer_source: "missing" }).success, false);
-    assert.equal(questionDraftSchema.safeParse({ ...make(), verified: true, review_note: "Requires diagram" }).success, false);
+  it("marks every question verified in one action, including missing keys and warnings", () => {
+    const questions = [make(), questionDraftSchema.parse({ ...make(), answers: [], answer_source: "missing" }), questionDraftSchema.parse({ ...make(), review_note: "Requires diagram" })];
+    const result = markAllQuestionsVerified(questions);
+    assert.deepEqual(result.map((q) => q.verified), [true, true, true]);
+    result.forEach((q) => assert.equal(questionDraftSchema.safeParse(q).success, true));
+    assert.deepEqual(result.map((q) => ({ ...q, verified: false })), questions);
+    assert.equal(questions.every((q) => !q.verified), true);
   });
   it("keeps exact Darija trap phrases and rejects rewritten warnings", () => {
     assert.deepEqual(TRAP_PHRASES, ["رد بالك تتخدع", "رد بالك تطيح في الفخ", "هنا وين يغلطو الطلبة", "غلطة تافهة بزاااف حذاري", "ركز مليح متتخدعش"]);
