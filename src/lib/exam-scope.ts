@@ -10,7 +10,7 @@ export function examScopeOptions(subjects: ExamSubject[], units: ExamUnit[]): Ex
   return subjects.filter((s) => !/deprecated/i.test(s.name)).flatMap((s) => {
     const children = units.filter((u) => u.subject_id === s.id);
     const parent = { subject_id: s.id, unit_id: null, value: s.id, name: s.name, department: s.department, academic_year: s.academic_year };
-    const modules = children.filter((u) => u.name.trim().toLocaleLowerCase() !== s.name.trim().toLocaleLowerCase()).map((u) => ({ ...parent, unit_id: u.id, value: `${s.id}:${u.id}`, name: `${u.name} · ${s.name}` }));
+    const modules = children.filter((u) => u.name.trim().toLocaleLowerCase() !== s.name.trim().toLocaleLowerCase() && !/^(semester|semestre|s)\s*[12]$/i.test(u.name.trim())).map((u) => ({ ...parent, unit_id: u.id, value: `${s.id}:${u.id}`, name: `${u.name} · ${s.name}` }));
     return [parent, ...modules];
   });
 }

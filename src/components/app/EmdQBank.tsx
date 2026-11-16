@@ -158,8 +158,10 @@ function PastEmds({ onBack }: { onBack: () => void }) {
   const [sets, setSets] = useState<PubSet[]>([]);
   useEffect(() => { void supabase.from("exam_sets").select("id,kind,title,subject_id,unit_id,resource_id,exam_year,session,emd_number,semester").eq("status", "published").order("exam_year", { ascending: false }).then(({ data }) => setSets((data ?? []) as PubSet[])); }, []);
   const subjOf = (id: string) => (tree ?? []).find((t) => t.id === id)?.name;
-  const moduleOf = (x: PubSet) => { const s = tree?.find((t) => t.id === x.subject_id); const u = s?.units.find((t) => t.id === x.unit_id); return u && u.name !== s?.name ? `${u.name} · ${s?.name}` : s?.name ?? ""; };
-  const visibleSets = sets.filter((x) => x.kind === "past_emd" && subjOf(x.subject_id) && (!mod || moduleOf(x) === mod || subjOf(x.subject_id) === mod));
+  const moduleOf = (x: PubSet) => subjOf(x.subject_id) ?? "";
+  const [sem, setSem] = useState("");
+  const semesters = [...new Set(sets.filter((x) => x.kind === "past_emd" && (!mod || moduleOf(x) === mod)).map((x) => x.semester).filter(Boolean))].sort();
+  const visibleSets = sets.filter((x) => x.kind === "past_emd" && subjOf(x.subject_id) && (!mod || moduleOf(x) === mod) && (!sem || x.semester === sem));
   const openSet = async (x: PubSet) => {
     setBusy(x.id);
     const { data } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
@@ -186,7 +188,8 @@ function PastEmds({ onBack }: { onBack: () => void }) {
       <h2 className="emd-h2">{translate("Past EMDs")}</h2>
       <p className="emd-sub">{translate("Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.")}</p>
       <div className="emd-filters">
-        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); setLesson(""); }}><option value="">{translate("All modules")}</option>{moduleNames.map((name) => <option key={name}>{name}</option>)}</select>
+        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); setLesson(""); setSem(""); }}><option value="">{translate("All modules")}</option>{moduleNames.map((name) => <option key={name}>{name}</option>)}</select>
+        {semesters.length > 0 && <select aria-label={translate("Semester")} value={sem} onChange={(e) => setSem(e.target.value)}><option value="">{translate("All semesters")}</option>{semesters.map((v) => <option key={v} value={v}>{translate(v === "S1" ? "Semester 1" : v === "S2" ? "Semester 2" : v)}</option>)}</select>}
         {lessonOptions.length > 0 && <select aria-label={translate("Lesson")} value={lesson} onChange={(e) => setLesson(e.target.value)}><option value="">{translate("Full exam")}</option>{lessonOptions.map((l) => <option key={l.id} value={l.id}>{translate("Practice by lesson")}: {l.name}</option>)}</select>}
         <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : translate(y)}</button>)}</div>
       </div>
