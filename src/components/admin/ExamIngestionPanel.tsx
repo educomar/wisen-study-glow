@@ -47,7 +47,8 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     const result = await extractExamFile(file, setProgress, stop.current?.signal); check();
     setPages(result.pages); setRaw(""); setActive(0);
     if (result.pages.some((p) => p.ocr)) toast.warning(t("OCR was used. Review wording and corrections carefully."));
-    if (result.json && kind === "past_emd") {
+    if (result.json) {
+      if (kind !== "past_emd" && !scopeReady) throw new Error(t("Choose study year, semester and subject before uploading."));
       if (!selectedSubject) throw new Error(t("Choose a subject first."));
       const imported = scopeJsonPapers(parseExamJson(result.json).papers, selectedSubject, semester, uploadScope.unit_id);
       const allowedUnits = new Set((h?.units ?? []).filter((u) => u.subject_id === selectedSubject.id && (!uploadScope.unit_id || u.id === uploadScope.unit_id)).map((u) => u.id));
@@ -97,7 +98,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
   const current = papers[active];
   const patchPaper = (p: Partial<ReviewPaper>) => setPapers((ps) => ps.map((x, i) => i === active ? { ...x, ...p } : x));
   return <section className="space-y-4 border-y border-border py-5">
-    {kind === "past_emd" && <div className="space-y-3"><ExamScopePicker value={uploadScope} onChange={(scope) => { setUploadScope(scope); setSemester(""); }} />{selectedSubject?.academic_year === 1 && <label className="block text-xs text-muted-foreground">{t("Semester")}<select aria-label={t("Upload semester")} className={`${sel} ml-2`} disabled={busy} value={semester} onChange={(e) => setSemester(e.target.value as typeof semester)}><option value="">{t("Choose…")}</option><option>S1</option><option>S2</option></select></label>}</div>}
+    <div className="space-y-3"><ExamScopePicker value={uploadScope} onChange={(scope) => { setUploadScope(scope); setSemester(""); }} />{selectedSubject?.academic_year === 1 && <label className="block text-xs text-muted-foreground">{t("Semester")}<select aria-label={t("Upload semester")} className={`${sel} ml-2`} disabled={busy} value={semester} onChange={(e) => setSemester(e.target.value as typeof semester)}><option value="">{t("Choose…")}</option><option>S1</option><option>S2</option></select></label>}</div>
     <div className="flex flex-wrap items-center gap-2"><FileText className="size-5 text-primary" /><h3 className="mr-auto font-semibold">{t(kind === "past_emd" ? "Upload & extract exam archive" : "Upload lessons & generate exam")}</h3>
       <Button size="sm" variant="outline" disabled={busy || (kind === "past_emd" && !scopeReady)} onClick={() => input.current?.click()}><Upload />{t(kind === "past_emd" ? "Upload exam files" : "Upload course files")}</Button>
       <input ref={input} type="file" accept={EXAM_FILE_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void loadFile(f); }} />
