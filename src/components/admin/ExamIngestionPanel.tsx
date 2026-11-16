@@ -125,7 +125,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
           }
           toast.success(t("Exam drafts saved. Verify each exam before publishing.")); onSaved();
         })}><Save />{t("Save all as review drafts")}</Button></div>
-        <ExamQuestionCards questions={current.questions} subjectId={current.subject_id ?? ""} unitId={current.unit_id} onChange={(questions) => patchPaper({ questions })} />
+        <ExamQuestionCards questions={current.questions} subjectId={current.subject_id ?? ""} unitId={current.unit_id} kind={kind} onChange={(questions) => patchPaper({ questions })} />
       </div>}
     </>}
   </section>;

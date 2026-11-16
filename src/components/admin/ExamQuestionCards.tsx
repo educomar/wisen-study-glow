@@ -5,7 +5,7 @@ import { useLang } from "@/lib/i18n";
 import { markAllQuestionsVerified, TRAP_PHRASES, type ExamDraftQuestion } from "@/lib/exam-ingestion";
 import { area, inp, sel, useHierarchy } from "./team-context";
 
-export function ExamQuestionCards({ questions, onChange, subjectId, unitId }: { questions: ExamDraftQuestion[]; onChange: (q: ExamDraftQuestion[]) => void; subjectId: string; unitId: string | null }) {
+export function ExamQuestionCards({ questions, onChange, subjectId, unitId, kind = "past_emd" }: { questions: ExamDraftQuestion[]; onChange: (q: ExamDraftQuestion[]) => void; subjectId: string; unitId: string | null; kind?: "past_emd" | "ai_generated" }) {
   const { t } = useLang();
   const { data: h } = useHierarchy();
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -27,7 +27,9 @@ export function ExamQuestionCards({ questions, onChange, subjectId, unitId }: { 
       </div>
       {q.review_note && <p className="flex gap-2 border-t border-border px-4 py-2 text-xs text-destructive"><TriangleAlert className="size-4 shrink-0" />{q.review_note}</p>}
       {expanded.has(i) && <div className="space-y-3 border-t border-border p-4">
-        {q.source_data && <div className="space-y-1 text-sm"><p><strong>{t("Official answer")}:</strong> {String(q.source_data["OfficialAnswer"] ?? "")}</p><p><strong>{t("AI answer")}:</strong> {String(q.source_data["AIAnswer"] ?? "")}</p><p><strong>{t("Source lesson")}:</strong> {String(q.source_data["Lesson"] ?? "")}</p></div>}
+        {q.source_data && <div className="space-y-1 text-sm">{kind === "ai_generated"
+          ? <p><strong>{t("AI answer")}:</strong> {String(q.source_data["AIAnswer"] ?? q.source_data["OfficialAnswer"] ?? "")}</p>
+          : <><p><strong>{t("Official answer")}:</strong> {String(q.source_data["OfficialAnswer"] ?? "")}</p><p><strong>{t("AI answer")}:</strong> {String(q.source_data["AIAnswer"] ?? "")}</p></>}<p><strong>{t("Source lesson")}:</strong> {String(q.source_data["Lesson"] ?? "")}</p></div>}
         <label className="block text-xs text-muted-foreground">{t("Question")}<textarea readOnly={!!q.source_data} className={area} rows={3} value={q.stem} onChange={(e) => patch(i, { stem: e.target.value })} /></label>
         <div className="flex flex-wrap gap-3">
           <label className="text-xs text-muted-foreground">{t("Question format")}<select className={`${sel} ml-2`} value={q.format} onChange={(e) => patch(i, { format: e.target.value as ExamDraftQuestion["format"] })}>{["", "QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].map((f) => <option key={f} value={f}>{f || "QCM"}</option>)}</select></label>

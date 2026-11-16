@@ -97,7 +97,7 @@ function Explanation({ q, picked }: { q: Question; picked: number | null }) {
   return (
     <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
       <p className="font-semibold">{ok ? translate("Correct") : picked === null ? translate("Not answered") : translate("Incorrect")}  {translate("— answer:")} {correctText(q)}</p>
-      <>{q.officialAnswer && <p className="mt-2 text-sm"><strong>{translate("Official answer")}:</strong> {q.officialAnswer}</p>}{q.aiAnswer && <p className="text-sm"><strong>{translate("AI answer")}:</strong> {q.aiAnswer}</p>}</>
+      <>{(q.aiAnswer || q.officialAnswer) && <p className="mt-2 text-sm"><strong>{translate("AI answer")}:</strong> {q.aiAnswer || q.officialAnswer}</p>}</>
       <div className="mt-2 text-sm"><RichText text={q.why || translate("No explanation available.")} /></div>
       {q.distractors.some(Boolean) && <ul className="mt-3 space-y-2 text-sm">{q.distractors.map((comment, i) => comment ? <li key={i}><strong>{L[i]}.</strong> <Inline text={comment} /></li> : null)}</ul>}
       {q.trapPhrase && <div className="mt-3 border-l-2 border-destructive pl-3 text-sm"><p className="flex items-center gap-2 font-semibold"><TriangleAlert className="size-4 text-destructive" /><span dir="rtl">{q.trapPhrase}</span></p>{q.trapExplanation && <RichText text={q.trapExplanation} />}</div>}
@@ -108,7 +108,7 @@ function Explanation({ q, picked }: { q: Question; picked: number | null }) {
 }
 
 /* ---------- instant-feedback practice (Past EMDs + Practice Mode) ---------- */
-function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { qs: Question[]; title: string; onExit: () => void; initialScoring?: Scoring }) {
+function PracticeRunner({ qs, title, onExit, initialScoring = "degressive", kind = "past_emd" }: { qs: Question[]; title: string; onExit: () => void; initialScoring?: Scoring; kind?: "past_emd" | "ai_generated" }) {
   const { t: translate } = useLang();
   const [scoring, setScoring] = useState<Scoring>(initialScoring);
   const [i, setI] = useState(0);
@@ -182,7 +182,9 @@ function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { 
           {shown && <div className={`pr-result ${ok ? "is-right" : "is-wrong"}`}>
             <p className="pr-result-msg">{ok ? translate("Correct, well done") : picked === null ? translate("Not answered") : `${translate("Incorrect,")} ${toReview} ${translate("propositions to review")}`}</p>
             <p className="pr-result-pts">{translate("Points earned:")} <b>{fmtPts(credit(i))}</b> · {scoringLabel}</p>
-            <div className="pr-keys"><span>{translate("Official answer")}: <b>{q.officialAnswer || correctText(q)}</b></span>{q.aiAnswer && <span>{translate("AI answer")}: <b>{q.aiAnswer}</b></span>}</div>
+            <div className="pr-keys">{kind === "ai_generated"
+              ? <span>{translate("AI answer")}: <b>{q.aiAnswer || q.officialAnswer || correctText(q)}</b></span>
+              : <><span>{translate("Official answer")}: <b>{q.officialAnswer || correctText(q)}</b></span>{q.aiAnswer && <span>{translate("AI answer")}: <b>{q.aiAnswer}</b></span>}</>}</div>
             {q.why && <div className="pr-why-all"><RichText text={q.why} /></div>}
           </div>}
           {shown && q.trapPhrase && <div className="pr-trap"><p><TriangleAlert className="size-4" /><span dir="rtl">{q.trapPhrase}</span></p>{q.trapExplanation && <RichText text={q.trapExplanation} />}</div>}
@@ -397,7 +399,7 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
       }
     } catch (e) { toast.error((e as Error).message || "Generation failed"); } finally { setBusy(null); }
   };
-  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={translate(practiceQs.title)} initialScoring={scoring} onExit={() => setPracticeQs(null)} />;
+  if (practiceQs) return <PracticeRunner qs={practiceQs.qs} title={translate(practiceQs.title)} initialScoring={scoring} kind="ai_generated" onExit={() => setPracticeQs(null)} />;
   return (
     <section className="emd-section">
       <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />  {translate("QBank")}</Button>
