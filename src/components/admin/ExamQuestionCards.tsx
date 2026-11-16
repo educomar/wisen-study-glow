@@ -15,6 +15,7 @@ export function ExamQuestionCards({ questions, onChange, subjectId, unitId }: { 
     <div className="flex flex-wrap items-center gap-2 text-sm"><strong className="mr-auto">{questions.length} {t("questions")} · {questions.filter((q) => q.verified).length} {t("Verified")}</strong>
       <Button size="sm" variant="outline" onClick={() => setExpanded(new Set(questions.map((_, i) => i)))}>{t("Expand all")}</Button>
       <Button size="sm" variant="outline" onClick={() => setExpanded(new Set())}>{t("Collapse all")}</Button>
+      <Button size="sm" variant="outline" onClick={() => onChange(questions.map((q) => !q.answers.length || q.answer_source === "missing" || q.review_note ? q : { ...q, verified: true }))}>{t("Mark all as verified")}</Button>
     </div>
     {questions.map((q, i) => <article key={i} className={`min-w-0 rounded-lg border bg-card ${q.review_note || !q.answers.length ? "border-destructive/50" : "border-border"}`}>
       <div className="flex items-start gap-2 p-3">
