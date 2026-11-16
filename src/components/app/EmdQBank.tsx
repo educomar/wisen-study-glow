@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Logo } from "@/components/site/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { generateQuestions } from "@/lib/ai/study.functions";
 import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
 import { useCurriculum, type CurFile } from "./Curriculum";
@@ -146,70 +147,125 @@ function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { 
 }
 
 /* ---------- Past EMDs ---------- */
+const PE_COLORS: Record<string, string> = { anatomy: "#F2917B", biochemistry: "#E8C468", biophysics: "#7FB2F0", embryology: "#C79BEF", cytology: "#8FD6A0", ssh: "#F0A3C4" };
+const PE_FALLBACK = ["#6FD3C1", "#F5B971", "#9DB4FF", "#E79AD8", "#B6D77A"];
+const peColor = (name: string) => PE_COLORS[name.toLowerCase()] ?? PE_FALLBACK[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % PE_FALLBACK.length];
+
 function PastEmds({ onBack }: { onBack: () => void }) {
   const { t: translate } = useLang();
   const { tree } = useCurriculum();
+  const history = useAppState().questionResults as Record<string, unknown> | undefined;
+  const [mode, setMode] = useState<"full" | "lesson">("full");
   const [mod, setMod] = useState("");
+  const [sem, setSem] = useState("");
   const [year, setYear] = useState("All");
-  const [lesson, setLesson] = useState("");
+  const [q, setQ] = useState("");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [run, setRun] = useState<{ title: string; qs: Question[] } | null>(null);
   type PubSet = { id: string; kind: string; title: string; subject_id: string; unit_id: string | null; resource_id: string | null; exam_year: string; session: string; emd_number: string; semester: string };
   const [sets, setSets] = useState<PubSet[]>([]);
-  useEffect(() => { void supabase.from("exam_sets").select("id,kind,title,subject_id,unit_id,resource_id,exam_year,session,emd_number,semester").eq("status", "published").order("exam_year", { ascending: false }).then(({ data }) => setSets((data ?? []) as PubSet[])); }, []);
+  const [links, setLinks] = useState<{ id: string; set_id: string; lesson_ids: string[] | null }[]>([]);
+  useEffect(() => {
+    void supabase.from("exam_sets").select("id,kind,title,subject_id,unit_id,resource_id,exam_year,session,emd_number,semester").eq("status", "published").eq("kind", "past_emd").order("exam_year", { ascending: false }).then(({ data }) => {
+      const s = (data ?? []) as PubSet[]; setSets(s);
+      if (s.length) void supabase.from("exam_set_questions").select("id,set_id,lesson_ids").in("set_id", s.map((x) => x.id)).then(({ data: d }) => setLinks((d ?? []) as typeof links));
+    });
+  }, []);
   const subjOf = (id: string) => (tree ?? []).find((t) => t.id === id)?.name;
   const moduleOf = (x: PubSet) => subjOf(x.subject_id) ?? "";
-  const [sem, setSem] = useState("");
-  const semesters = [...new Set(sets.filter((x) => x.kind === "past_emd" && (!mod || moduleOf(x) === mod)).map((x) => x.semester).filter(Boolean))].sort();
-  const visibleSets = sets.filter((x) => x.kind === "past_emd" && subjOf(x.subject_id) && (!mod || moduleOf(x) === mod) && (!sem || x.semester === sem));
+  const lessonInfo = useMemo(() => new Map((tree ?? []).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => [l.id, { name: l.name, subject: t.name, subjectId: t.id }] as const)))), [tree]);
+  const valid = sets.filter((x) => subjOf(x.subject_id));
+  const moduleNames = [...new Set(valid.map(moduleOf))].sort();
+  const countBySet = new Map<string, number>(); links.forEach((r) => countBySet.set(r.set_id, (countBySet.get(r.set_id) ?? 0) + 1));
+  const semOfSet = new Map(valid.map((x) => [x.id, x.semester]));
+  const needle = q.trim().toLowerCase();
+  const filtered = valid.filter((x) => (!mod || moduleOf(x) === mod) && (!sem || x.semester === sem));
+  const years = [...new Set(filtered.map((x) => x.exam_year).filter(Boolean))].sort().reverse();
+  const exams = filtered.filter((x) => (year === "All" || x.exam_year === year) && (!needle || [moduleOf(x), x.title, x.exam_year, x.session, x.emd_number].join(" ").toLowerCase().includes(needle)));
+  // Lessons: built from published questions' lesson_ids, grouped by semester of their exam.
+  const lessonRows = useMemo(() => {
+    const m = new Map<string, { id: string; name: string; subject: string; sem: string; count: number }>();
+    links.forEach((r) => { const s = semOfSet.get(r.set_id); if (s === undefined) return; (r.lesson_ids ?? []).forEach((id) => { const info = lessonInfo.get(id); if (!info) return; const key = id; const cur = m.get(key) ?? { id, name: info.name, subject: info.subject, sem: s || "", count: 0 }; cur.count++; m.set(key, cur); }); });
+    return [...m.values()];
+  }, [links, lessonInfo, sets]); // eslint-disable-line react-hooks/exhaustive-deps
+  const lessons = lessonRows.filter((l) => (!mod || l.subject === mod) && (!sem || l.sem === sem) && (!needle || `${l.name} ${l.subject}`.toLowerCase().includes(needle)));
+  const lessonSems = [...new Set(lessons.map((l) => l.sem))].sort();
+  const pickedCount = lessonRows.filter((l) => picked.has(l.id)).reduce((a, l) => a + l.count, 0);
+  const toQuestion = (r: Tables<"exam_set_questions">, x: PubSet | undefined): Question => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const subject = x ? moduleOf(x) : ""; const topics = (r.lesson_ids ?? []).map((id: string) => lessonInfo.get(id)?.name).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0, ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation, slide: 0, source: x?.title ?? "", multi, origin: "past", unit: x?.exam_year ?? "" } as Question; };
   const openSet = async (x: PubSet) => {
     setBusy(x.id);
     const { data } = await supabase.from("exam_set_questions").select("*").eq("set_id", x.id).order("position");
     setBusy(null);
-    const subject = subjOf(x.subject_id) ?? "";
-    const lessonName = new Map((tree ?? []).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const))));
-    const rowsIn = (data ?? []).filter((r) => !lesson || (r.lesson_ids ?? []).includes(lesson));
-    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0, ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation, slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
-    if (!qs.length) { toast.error(translate(lesson ? "No questions in this exam are linked to the selected lesson." : "This exam has no questions yet.")); return; }
-    setRun({ title: `${moduleOf(x)} · ${x.title}${lesson ? ` · ${lessonName.get(lesson) ?? ""}` : ""}`, qs });
-    log(`Past EMD opened · ${subject} ${x.title}`);
+    const qs = (data ?? []).map((r) => toQuestion(r, x));
+    if (!qs.length) { toast.error(translate("This exam has no questions yet.")); return; }
+    setRun({ title: `${moduleOf(x)} · ${x.title}`, qs });
+    log(`Past EMD opened · ${moduleOf(x)} ${x.title}`);
   };
-  const mods = (tree ?? []).filter((s) => s.emds.length || sets.some((x) => x.subject_id === s.id));
-  const files = (mods.find((m) => m.name === mod)?.emds ?? (mod ? [] : mods.flatMap((m) => m.emds))).map((f) => ({ ...f, year: emdYear(f.file_name, f.date) }));
-  const years = [...new Set([...files.map((f) => f.year), ...visibleSets.map((x) => x.exam_year).filter(Boolean)])].sort().reverse();
-  const moduleNames = [...new Set([...mods.map((m) => m.name), ...sets.filter((x) => subjOf(x.subject_id)).map(moduleOf)])];
-  const shown: (CurFile & { year: string })[] = [];
-  const modSubjects = new Set(mod ? [...(tree ?? []).filter((t) => t.name === mod).map((t) => t.id), ...sets.filter((x) => moduleOf(x) === mod).map((x) => x.subject_id)] : []);
-  const lessonOptions = (tree ?? []).filter((t) => modSubjects.has(t.id)).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => ({ id: l.id, name: `${u.name} · ${l.name}` }))));
+  const startLessons = async () => {
+    const ids = [...picked]; if (!ids.length) return;
+    setBusy("lessons");
+    const { data } = await supabase.from("exam_set_questions").select("*").in("set_id", valid.map((x) => x.id)).overlaps("lesson_ids", ids).order("position");
+    setBusy(null);
+    const byId = new Map(valid.map((x) => [x.id, x]));
+    const qs = (data ?? []).map((r) => toQuestion(r, byId.get(r.set_id)));
+    if (!qs.length) { toast.error(translate("No questions in this exam are linked to the selected lesson.")); return; }
+    setRun({ title: `${translate("Practice by lesson")} · ${ids.length}`, qs });
+    log(`Past EMD lesson practice · ${ids.length} lessons`);
+  };
+  const reset = () => { setMod(""); setSem(""); setYear("All"); setQ(""); };
+  const toggle = (id: string) => setPicked((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const semLabel = (v: string) => translate(v === "S1" ? "Semester 1" : v === "S2" ? "Semester 2" : v || "Other");
+  const done = (x: PubSet) => { const h = history ?? {}; let n = 0; links.forEach((r) => { if (r.set_id === x.id && h[`set-${r.id}`]) n++; }); return n; };
   if (run) return <PracticeRunner qs={run.qs} title={translate(run.title)} onExit={() => setRun(null)} />;
   return (
-    <section className="emd-section">
+    <section className="emd-section pe">
       <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />  {translate("QBank")}</Button>
-      <h2 className="emd-h2">{translate("Past EMDs")}</h2>
-      <p className="emd-sub">{translate("Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.")}</p>
-      <div className="emd-filters">
-        <select aria-label={translate("Module")} value={mod} onChange={(e) => { setMod(e.target.value); setYear("All"); setLesson(""); setSem(""); }}><option value="">{translate("All modules")}</option>{moduleNames.map((name) => <option key={name}>{name}</option>)}</select>
-        {semesters.length > 0 && <select aria-label={translate("Semester")} value={sem} onChange={(e) => setSem(e.target.value)}><option value="">{translate("All semesters")}</option>{semesters.map((v) => <option key={v} value={v}>{translate(v === "S1" ? "Semester 1" : v === "S2" ? "Semester 2" : v)}</option>)}</select>}
-        {lessonOptions.length > 0 && <select aria-label={translate("Lesson")} value={lesson} onChange={(e) => setLesson(e.target.value)}><option value="">{translate("Full exam")}</option>{lessonOptions.map((l) => <option key={l.id} value={l.id}>{translate("Practice by lesson")}: {l.name}</option>)}</select>}
-        <div className="emd-pills">{["All", ...years].map((y) => <button key={y} type="button" className={y === year ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : translate(y)}</button>)}</div>
+      <div className="pe-head">
+        <div><h2 className="emd-h2">{translate("Past EMDs")}</h2><p className="emd-sub">{translate("Official previous-year faculty exams. Instant feedback, explanations for every option, and Save as Kapsule.")}</p></div>
+        <div className="pe-seg" role="tablist">{(["full", "lesson"] as const).map((m) => <button key={m} type="button" role="tab" aria-selected={mode === m} className={mode === m ? "is-on" : ""} onClick={() => setMode(m)}>{translate(m === "full" ? "Full exams" : "Practice by lesson")}</button>)}</div>
       </div>
-      {[["past_emd", "Verified past EMDs"], ["ai_generated", "Verified Wisen AI exams"]].map(([k, label]) => {
-        const group = visibleSets.filter((x) => x.kind === k && (year === "All" || x.exam_year === year || k === "ai_generated"));
-        return group.length ? <div key={k}><h3 className="emd-sub"><strong>{translate(label!)}</strong></h3><div className="emd-file-grid">{group.map((x) => (
-          <button key={x.id} type="button" className="emd-file" disabled={!!busy} onClick={() => void openSet(x)}>
-            <FileText /><span><strong>{moduleOf(x)}</strong><small>{[x.title, x.emd_number, x.exam_year, x.semester, x.session === "rattrapage" ? translate("Rattrapage") : ""].filter(Boolean).join(" · ")}</small></span>
-            {busy === x.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}
-          </button>))}</div></div> : null;
-      })}
-      {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" />  {translate("Loading…")}</p> : !shown.length && !visibleSets.some((x) => year === "All" || x.exam_year === year || x.kind === "ai_generated") ? (
-        <p className="emd-empty">{translate("No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.")}</p>
+      <div className="pe-panel">
+        <input className="pe-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={translate("Search exams or lessons")} aria-label={translate("Search exams or lessons")} />
+        <div className="pe-row"><span className="pe-label">{translate("Module")}</span><div className="pe-chips">
+          <button type="button" className={!mod ? "is-on" : ""} onClick={() => setMod("")}>{translate("All modules")}</button>
+          {moduleNames.map((n) => <button key={n} type="button" className={mod === n ? "is-on" : ""} onClick={() => { setMod(n); setYear("All"); }}><i style={{ background: peColor(n) }} />{n}</button>)}
+        </div></div>
+        <div className="pe-row"><span className="pe-label">{translate("Semester")}</span><div className="pe-seg pe-seg-sm">{["", "S1", "S2"].map((v) => <button key={v} type="button" className={sem === v ? "is-on" : ""} onClick={() => setSem(v)}>{v ? semLabel(v) : translate("All")}</button>)}</div></div>
+        {mode === "full" && years.length > 0 && <div className="pe-row"><span className="pe-label">{translate("Year")}</span><div className="pe-chips pe-scroll">{["All", ...years].map((y) => <button key={y} type="button" className={year === y ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : y}</button>)}</div></div>}
+        <div className="pe-results"><span>{mode === "full" ? `${exams.length} ${translate("exams")}` : `${lessons.length} ${translate("lessons")}`}</span><button type="button" onClick={reset}>{translate("Reset filters")}</button></div>
+      </div>
+      {tree === null ? <p className="emd-empty"><Loader2 className="animate-spin" />  {translate("Loading…")}</p> : mode === "full" ? (
+        !exams.length ? <p className="emd-empty">{translate(valid.length ? "No exams match these filters." : "No past EMDs have been added for your modules yet. Your faculty team adds them from the Team dashboard.")}</p> :
+        [...new Set(exams.map(moduleOf))].map((m) => { const group = exams.filter((x) => moduleOf(x) === m); return (
+          <div key={m} className="pe-group">
+            <h3 className="pe-gh"><i style={{ background: peColor(m) }} />{m}<small>{group.length} {translate("exams")}</small><span /></h3>
+            <div className="pe-grid">{group.map((x) => { const total = countBySet.get(x.id) ?? 0; const d = done(x); return (
+              <button key={x.id} type="button" className="pe-card" disabled={!!busy} onClick={() => void openSet(x)}>
+                <span className="pe-tag"><i style={{ background: peColor(m) }} />{m}<em className="pe-go">{busy === x.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}</em></span>
+                <strong className="pe-year">{x.exam_year || x.title}</strong>
+                <small>{[x.semester && semLabel(x.semester), translate(x.session === "rattrapage" ? "Rattrapage" : "Normale"), x.emd_number].filter(Boolean).join(" · ")}</small>
+                <span className="pe-track"><span style={{ width: `${total ? Math.round((d / total) * 100) : 0}%` }} /></span>
+                <span className="pe-foot"><span>{d ? `${d}/${total} ${translate("done")}` : translate("Not started")}</span><b>{total} {translate("questions")}</b></span>
+              </button>); })}</div>
+          </div>); })
       ) : (
-        <div className="emd-file-grid">{shown.map((f) => (
-          <button key={f.id} type="button" className="emd-file" disabled={!!busy} onClick={() => toast.info(translate("This paper is awaiting faculty review."))}>
-            <FileText /><span><strong>{f.subject}</strong><small>{f.year} · {f.file_name}</small></span>
-            {busy === f.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}
-          </button>
-        ))}</div>
+        !lessons.length ? <p className="emd-empty">{translate("No lessons match these filters.")}</p> :
+        lessonSems.map((s) => { const group = lessons.filter((l) => l.sem === s); const all = group.every((l) => picked.has(l.id)); return (
+          <div key={s} className="pe-group">
+            <h3 className="pe-gh">{semLabel(s)}<small>{group.length} {translate("lessons")}</small><span /><button type="button" className="pe-link" onClick={() => setPicked((p) => { const n = new Set(p); group.forEach((l) => all ? n.delete(l.id) : n.add(l.id)); return n; })}>{translate(all ? "Deselect all" : "Select all")}</button></h3>
+            <div className="pe-grid pe-lgrid">{group.map((l) => (
+              <button key={l.id} type="button" className={`pe-lcard${picked.has(l.id) ? " is-on" : ""}`} aria-pressed={picked.has(l.id)} onClick={() => toggle(l.id)}>
+                <span className="pe-box">{picked.has(l.id) && <Check />}</span>
+                <span><strong>{l.name}</strong><small><i style={{ background: peColor(l.subject) }} />{l.subject} · {l.count} {translate("questions")}</small></span>
+              </button>))}</div>
+          </div>); })
+      )}
+      {mode === "lesson" && picked.size > 0 && (
+        <div className="pe-bar"><span><b>{picked.size}</b> {translate("lessons selected")} · <b>{pickedCount}</b> {translate("questions")}</span>
+          <Button variant="ghost" size="sm" onClick={() => setPicked(new Set())}>{translate("Clear")}</Button>
+          <Button size="sm" disabled={busy === "lessons"} onClick={() => void startLessons()}>{busy === "lessons" ? <Loader2 className="animate-spin" /> : null}{translate("Start practice")} <ArrowRight /></Button>
+        </div>
       )}
     </section>
   );

@@ -935,5 +935,21 @@
   "OCR was used. Review wording and corrections carefully.": "OCR utilisé. Vérifiez attentivement le texte et les corrections.",
   "Processing stopped": "Traitement arrêté",
   "Choose a subject first.": "Choisissez d’abord une matière.",
-  "Generate draft": "Générer un brouillon"
+  "Generate draft": "Générer un brouillon",
+  "Full exams": "Examens complets",
+  "Search exams or lessons": "Rechercher examens ou leçons",
+  "Reset filters": "Réinitialiser",
+  "exams": "examens",
+  "questions": "questions",
+  "Year": "Année",
+  "Normale": "Normale",
+  "done": "faites",
+  "Not started": "Non commencé",
+  "Select all": "Tout sélectionner",
+  "Deselect all": "Tout désélectionner",
+  "lessons selected": "leçons sélectionnées",
+  "Clear": "Effacer",
+  "No exams match these filters.": "Aucun examen ne correspond à ces filtres.",
+  "No lessons match these filters.": "Aucune leçon ne correspond à ces filtres.",
+  "Other": "Autre"
 }

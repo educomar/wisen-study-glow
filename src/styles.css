@@ -962,3 +962,49 @@ button.emd-cell:not(:disabled):hover{transform:scale(1.15);border-color:var(--pr
 .office-page table { width: 100%; border-collapse: collapse; margin: 0.8em 0; font-size: 0.92em; }
 .office-page td, .office-page th { border: 1px solid var(--border); padding: 0.35em 0.5em; vertical-align: top; }
 .office-page img { max-width: 100%; height: auto; margin: 0.8em auto; border-radius: 0.5rem; display: block; }
+
+/* Past EMDs redesign */
+.pe { padding-bottom: 6rem; }
+.pe-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.pe-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--muted); border: 1px solid var(--border); }
+.pe-seg button { padding: .45rem 1rem; border-radius: 999px; font-size: .85rem; font-weight: 600; color: var(--muted-foreground); }
+.pe-seg button.is-on { background: var(--card); color: var(--foreground); box-shadow: 0 1px 3px color-mix(in oklab, var(--foreground) 15%, transparent); }
+.pe-seg-sm button { padding: .3rem .8rem; font-size: .8rem; }
+.pe-panel { margin: 1.25rem 0 1.5rem; padding: 1rem 1.1rem; border-radius: 1rem; border: 1px solid var(--border); background: color-mix(in oklab, var(--card) 85%, transparent); backdrop-filter: blur(10px); display: grid; gap: .8rem; }
+.pe-search { width: 100%; padding: .6rem .9rem; border-radius: .7rem; border: 1px solid var(--border); background: var(--background); font-size: .9rem; }
+.pe-row { display: flex; gap: .8rem; align-items: center; min-width: 0; }
+.pe-label { width: 5.5rem; flex: none; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted-foreground); }
+.pe-chips { display: flex; flex-wrap: wrap; gap: .4rem; min-width: 0; }
+.pe-scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.pe-chips button { display: inline-flex; align-items: center; gap: .4rem; flex: none; padding: .3rem .75rem; border-radius: 999px; border: 1px solid var(--border); font-size: .8rem; font-weight: 600; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.pe-chips button.is-on { border-color: var(--primary); color: var(--foreground); background: color-mix(in oklab, var(--primary) 14%, transparent); }
+.pe i { display: inline-block; width: .5rem; height: .5rem; border-radius: 999px; flex: none; }
+.pe-results { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted-foreground); border-top: 1px solid var(--border); padding-top: .7rem; }
+.pe-results button, .pe-link { color: var(--primary); font-weight: 600; font-size: .8rem; }
+.pe-group { margin-bottom: 1.6rem; }
+.pe-gh { display: flex; align-items: center; gap: .55rem; font-size: 1rem; font-weight: 700; margin-bottom: .75rem; }
+.pe-gh small { font-weight: 500; color: var(--muted-foreground); font-size: .78rem; }
+.pe-gh > span { flex: 1; height: 1px; background: var(--border); }
+.pe-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.pe-card { text-align: left; display: grid; gap: .35rem; padding: 1rem; border-radius: .9rem; border: 1px solid var(--border); background: var(--card); transition: border-color .15s, transform .15s; }
+.pe-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+.pe-tag { display: flex; align-items: center; gap: .4rem; font-size: .75rem; font-weight: 600; color: var(--muted-foreground); }
+.pe-go { margin-left: auto; display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 999px; border: 1px solid var(--border); }
+.pe-go svg { width: .9rem; height: .9rem; }
+.pe-card:hover .pe-go { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.pe-year { font-size: 1.7rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.pe-card small { color: var(--muted-foreground); font-size: .8rem; }
+.pe-track { height: 4px; border-radius: 999px; background: var(--muted); overflow: hidden; margin-top: .3rem; }
+.pe-track span { display: block; height: 100%; background: var(--primary); }
+.pe-foot { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted-foreground); }
+.pe-foot b { color: var(--foreground); font-weight: 600; }
+.pe-lgrid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.pe-lcard { display: flex; gap: .7rem; text-align: left; align-items: flex-start; padding: .8rem .9rem; border-radius: .8rem; border: 1px solid var(--border); background: var(--card); }
+.pe-lcard.is-on { border-color: var(--primary); background: color-mix(in oklab, var(--primary) 10%, var(--card)); }
+.pe-lcard strong { display: block; font-size: .88rem; font-weight: 600; }
+.pe-lcard small { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; color: var(--muted-foreground); }
+.pe-box { flex: none; width: 1.15rem; height: 1.15rem; margin-top: .1rem; border-radius: .3rem; border: 1.5px solid var(--border); display: grid; place-items: center; }
+.pe-lcard.is-on .pe-box { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+.pe-box svg { width: .8rem; height: .8rem; }
+.pe-bar { position: fixed; z-index: 40; left: 50%; bottom: 1.25rem; transform: translateX(-50%); display: flex; align-items: center; gap: .6rem; padding: .55rem .6rem .55rem 1.1rem; border-radius: 999px; border: 1px solid var(--border); background: color-mix(in oklab, var(--card) 92%, transparent); backdrop-filter: blur(12px); box-shadow: 0 10px 30px color-mix(in oklab, var(--foreground) 18%, transparent); font-size: .85rem; white-space: nowrap; }
+@media (max-width: 700px) { .pe-row { flex-direction: column; align-items: flex-start; gap: .4rem; } .pe-label { width: auto; } .pe-row > * { max-width: 100%; } .pe-grid { grid-template-columns: 1fr; } .pe-bar { left: .75rem; right: .75rem; transform: none; white-space: normal; } }
