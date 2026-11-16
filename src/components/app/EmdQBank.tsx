@@ -114,6 +114,7 @@ function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { 
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => qs.map(() => null));
   const [checked, setChecked] = useState<boolean[]>(() => qs.map(() => false));
+  const [flags, setFlags] = useState<boolean[]>(() => qs.map(() => false));
   const q = qs[i];
   if (!q) return null;
   const toggle = (qi: number, k: number) => !checked[qi] && setAnswers((a) => a.map((x, j) => (j === qi ? toggleOption(x, k, multiOf(qs[qi]!)) : x)));
@@ -123,25 +124,76 @@ function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { 
   const pts = qs.reduce((a, _, k) => a + (checked[k] ? credit(k) : 0), 0);
   const on20 = done ? Math.round((pts / done) * 2000) / 100 : 0;
   const correct = qs.filter((x, k) => checked[k] && isAcceptedAnswer(x, answers[k] ?? null)).length;
-  const fmt = (n: number) => (n > 0 ? `+${n.toFixed(2).replace(/0$/, "")}` : "0");
+  const fmtPts = (n: number) => (n > 0 ? `+${n.toFixed(2).replace(/0$/, "")}` : "0");
+  const scoringLabel = translate(SCORING.find((o) => o.key === scoring)!.label);
+  const state = (qi: number, k: number) => {
+    const qq = qs[qi]!; const on = isPicked(answers[qi] ?? null, k, multiOf(qq));
+    if (!checked[qi]) return on ? "on" : "";
+    const right = isCorrectOption(qq, k);
+    return right ? (on ? "right" : "missed") : on ? "wrong" : "omit";
+  };
+  const multi = multiOf(q); const shown = !!checked[i]; const picked = answers[i] ?? null;
+  const ok = shown && isAcceptedAnswer(q, picked);
+  const toReview = shown ? q.options.filter((_, k) => ["wrong", "missed"].includes(state(i, k))).length : 0;
+  const badge: Record<string, [string, string]> = { right: ["✓", "Correct"], wrong: ["×", "Incorrect, selected by mistake"], missed: ["!", "Missed, this was correct"], omit: ["–", "Correctly left out"] };
   return (
-    <div className="emd-run">
-      <div className="emd-run-bar"><Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft />  {translate("Back")}</Button><strong>{translate(title)}</strong>
-        <select aria-label={translate("Scoring system")} value={scoring} onChange={(e) => setScoring(e.target.value as Scoring)} className="rounded-md border border-border bg-background px-2 py-1 text-xs">{SCORING.map((o) => <option key={o.key} value={o.key}>{translate(o.label)}</option>)}</select>
-        <span>{done}/{qs.length}  {translate("checked ·")} {correct}  {translate("correct")} · <strong>{Math.round(pts * 100) / 100} {translate("pts")} · {on20} / 20</strong></span></div>
-      {done === qs.length && <div className="emd-card mx-auto my-3 max-w-3xl text-sm"><strong>{translate("Practice summary")}</strong> — {translate(SCORING.find((o) => o.key === scoring)!.label)}: <strong>{on20} / 20</strong> ({Math.round(pts * 100) / 100} / {qs.length} {translate("pts")}) · {correct}/{qs.length} {translate("correct")}</div>}
-      <div className="emd-panes">
-        <Grille qs={qs} answers={answers} i={i} onJump={setI} onToggle={toggle} reveal={(k) => checked[k]!} />
-        <section className="emd-main">
-          <QuestionPane q={q} n={i + 1} total={qs.length} picked={answers[i] ?? null} onToggle={(k) => toggle(i, k)} reveal={!!checked[i]} />
-          {checked[i] && <p className={`text-sm font-semibold ${credit(i) >= 1 ? "text-primary" : credit(i) > 0 ? "text-foreground" : "text-destructive"}`}>{translate("Points earned:")} {fmt(credit(i))} <span className="font-normal text-muted-foreground">({translate(SCORING.find((o) => o.key === scoring)!.label)})</span></p>}
-          {checked[i] && <Explanation q={q} picked={answers[i] ?? null} />}
-          <div className="emd-actions">
-            <Button variant="outline" disabled={!i} onClick={() => setI(i - 1)}><ArrowLeft />  {translate("Previous")}</Button>
-            {!checked[i] ? <Button disabled={answers[i] === null} onClick={check}>{translate("Submit answer")}</Button> : <Button disabled={i === qs.length - 1} onClick={() => setI(i + 1)}>{translate("Next")} <ArrowRight /></Button>}
+    <div className="pr">
+      <header className="pr-head">
+        <button type="button" className="pr-back" onClick={onExit}><ArrowLeft className="size-4" />{translate("Back")}</button>
+        <div className="pr-title"><strong>{translate(title)}</strong></div>
+        <label className="pr-pill"><span>{translate("Scoring:")}</span>
+          <select aria-label={translate("Scoring system")} value={scoring} onChange={(e) => setScoring(e.target.value as Scoring)}>{SCORING.map((o) => <option key={o.key} value={o.key}>{translate(o.label)}</option>)}</select></label>
+        <div className="pr-stats"><span><b>{done}</b> / {qs.length} {translate("checked")}</span><span><b>{correct}</b> {translate("correct")}</span><span className="pr-score">{Math.round(pts * 100) / 100} {translate("pts")} · {on20} / 20</span></div>
+      </header>
+      {done === qs.length && <div className="pr-summary"><strong>{translate("Practice summary")}</strong> — {scoringLabel}: <strong>{on20} / 20</strong> · {correct}/{qs.length} {translate("correct")}</div>}
+      <div className="pr-body">
+        <aside className="pr-grid" aria-label={translate("QCM answer grid")}>
+          <h2>{translate("Grille QCM")}</h2>
+          <div className="pr-grid-rows">
+            <div className="pr-grid-row pr-grid-headrow"><span>{translate("Q")}</span>{L.slice(0, 5).map((x) => <span key={x}>{x}</span>)}</div>
+            {qs.map((qq, qi) => (
+              <div key={qq.id} className={`pr-grid-row ${qi === i ? "is-current" : ""}`}>
+                <button type="button" className="pr-num" onClick={() => setI(qi)} aria-label={translate("Go to question ") + (qi + 1)}>{flags[qi] && <Bookmark className="size-3" />}{String(qi + 1).padStart(2, "0")}</button>
+                {L.slice(0, 5).map((_, k) => k >= qq.options.length ? <span key={k} /> : (
+                  <button key={k} type="button" disabled={!!checked[qi]} className={`pr-box is-${state(qi, k) || "empty"}`} aria-label={translate("Question ") + (qi + 1) + translate(" option ") + L[k]} onClick={() => toggle(qi, k)}>
+                    {["on", "right", "missed"].includes(state(qi, k)) ? "✓" : state(qi, k) === "wrong" ? "×" : ""}</button>))}
+              </div>))}
           </div>
+          <footer><span><i className="pr-box is-empty" />{translate("Unanswered")}</span><span><i className="pr-box is-right" />{translate("Answered / correct")}</span><span><i className="pr-box is-wrong" />{translate("Wrong")}</span><span><i className="pr-box is-missed" />{translate("Missed")}</span></footer>
+        </aside>
+        <section className="pr-card">
+          <div className="pr-card-top">
+            <span className="pr-chip">{q.subject}</span>
+            <button type="button" className={`pr-flag ${flags[i] ? "is-on" : ""}`} aria-pressed={!!flags[i]} onClick={() => setFlags((f) => f.map((x, j) => (j === i ? !x : x)))}>{flags[i] ? <BookmarkCheck className="size-4" /> : <Bookmark className="size-4" />}{translate("Mark for review")}</button>
+            <span className="pr-count">{translate("Q")} <b>{String(i + 1).padStart(2, "0")}</b> / {qs.length}</span>
+          </div>
+          <h2 className="pr-qtitle">{translate("Question")} {String(i + 1).padStart(2, "0")}</h2>
+          <p className="pr-stem"><Inline text={q.stem} /></p>
+          <p className="pr-hint">{multi ? translate("Select every correct proposition.") : translate("Select one answer.")}</p>
+          <ol className="pr-options">
+            {q.options.map((o, k) => { const s = state(i, k); return (
+              <li key={k}><button type="button" disabled={shown} className={`pr-opt is-${s || "empty"}`} aria-pressed={isPicked(picked, k, multi)} onClick={() => toggle(i, k)}>
+                <span className="pr-letter">{L[k]}</span>
+                <span className="pr-opt-body"><span><Inline text={o} /></span>
+                  {shown && badge[s] && <span className="pr-badge">{badge[s][0]} {translate(badge[s][1])}</span>}
+                  {shown && q.distractors[k] && <span className="pr-why"><b>{translate("Why")}:</b> <Inline text={q.distractors[k]!} /></span>}</span>
+              </button></li>); })}
+          </ol>
+          {shown && <div className={`pr-result ${ok ? "is-right" : "is-wrong"}`}>
+            <p className="pr-result-msg">{ok ? translate("Correct, well done") : picked === null ? translate("Not answered") : `${translate("Incorrect,")} ${toReview} ${translate("propositions to review")}`}</p>
+            <p className="pr-result-pts">{translate("Points earned:")} <b>{fmtPts(credit(i))}</b> · {scoringLabel}</p>
+            <div className="pr-keys"><span>{translate("Official answer")}: <b>{q.officialAnswer || correctText(q)}</b></span>{q.aiAnswer && <span>{translate("AI answer")}: <b>{q.aiAnswer}</b></span>}</div>
+            {q.why && <div className="pr-why-all"><RichText text={q.why} /></div>}
+          </div>}
+          {shown && q.trapPhrase && <div className="pr-trap"><p><TriangleAlert className="size-4" /><span dir="rtl">{q.trapPhrase}</span></p>{q.trapExplanation && <RichText text={q.trapExplanation} />}</div>}
+          {shown && <div className="pr-foot">{q.source && <span>{translate("Source:")} {q.source}</span>}<Button size="sm" variant="outline" onClick={() => { saveKapsule(q); toast.success(translate("Saved as Kapsule")); }}><Layers />{translate("Save as Kapsule")}</Button></div>}
         </section>
       </div>
+      <nav className="pr-nav">
+        <Button variant="outline" disabled={!i} onClick={() => setI(i - 1)}><ArrowLeft />{translate("Previous")}</Button>
+        <span className="pr-nav-hint">{!shown && picked === null ? translate("Select at least one proposition") : ""}</span>
+        {!shown ? <Button disabled={picked === null} onClick={check}>{translate("Check answer")}</Button> : <Button disabled={i === qs.length - 1} onClick={() => setI(i + 1)}>{translate("Next")} <ArrowRight /></Button>}
+      </nav>
     </div>
   );
 }

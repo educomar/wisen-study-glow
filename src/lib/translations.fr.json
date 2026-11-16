@@ -951,5 +951,17 @@
   "Clear": "Effacer",
   "No exams match these filters.": "Aucun examen ne correspond à ces filtres.",
   "No lessons match these filters.": "Aucune leçon ne correspond à ces filtres.",
-  "Other": "Autre"
+  "Other": "Autre",
+  "Scoring:": "Barème :",
+  "checked": "vérifiées",
+  "Answered / correct": "Répondu / correct",
+  "Wrong": "Faux",
+  "Missed": "Oublié",
+  "Correct, well done": "Correct, bravo",
+  "Incorrect,": "Incorrect,",
+  "propositions to review": "propositions à revoir",
+  "Incorrect, selected by mistake": "Incorrect, sélectionné par erreur",
+  "Missed, this was correct": "Oublié, c'était correct",
+  "Correctly left out": "Correctement écarté",
+  "Select at least one proposition": "Sélectionnez au moins une proposition"
 }
