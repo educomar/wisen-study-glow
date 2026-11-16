@@ -5,14 +5,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/lib/i18n";
 import { extractExamFile, EXAM_FILE_ACCEPT } from "@/lib/exam-files";
-import { parseExamJson, uniqueQuestions, validateSemester, type ExamDraftQuestion, type ExtractedPage, type PaperDraft } from "@/lib/exam-ingestion";
+import { parseExamJson, uniqueQuestions, validateSemester, type ExamDraftQuestion, type ExtractedPage, type PaperDraft, type SourceJson } from "@/lib/exam-ingestion";
 import { discoverExamPapers, enrichExamQuestions, extractExamQuestions, generateSourceExam } from "@/lib/exam-ingestion.functions";
 import { saveExamQuestions, saveExamSet } from "@/lib/exams.functions";
 import { area, inp, sel, useHierarchy } from "./team-context";
 import { ExamScopePicker } from "./ExamScopePicker";
 import { ExamQuestionCards } from "./ExamQuestionCards";
+import { linkJsonLessons, scopeJsonPapers } from "@/lib/exam-json-scope";
 
-type ReviewPaper = PaperDraft & { questions: ExamDraftQuestion[]; savedId?: string | undefined };
+type ReviewPaper = PaperDraft & { questions: ExamDraftQuestion[]; savedId?: string | undefined; source_metadata?: Record<string, SourceJson> | undefined };
 export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions, onSaved }: { kind: "past_emd" | "ai_generated"; subjectId: string; unitId: string | null; setId?: string; onQuestions: (qs: ExamDraftQuestion[]) => void; onSaved: () => void }) {
   const { t, lang } = useLang();
   const { data: h } = useHierarchy();
@@ -21,6 +22,10 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
   const [pages, setPages] = useState<ExtractedPage[]>([]), [papers, setPapers] = useState<ReviewPaper[]>([]);
   const [active, setActive] = useState(0), [raw, setRaw] = useState(""), [count, setCount] = useState(20);
   const [format, setFormat] = useState<"mixed" | "QCS" | "QCM_MULTI">("mixed"), [prompt, setPrompt] = useState("");
+  const [uploadScope, setUploadScope] = useState({ subject_id: subjectId, unit_id: unitId });
+  const [semester, setSemester] = useState<"" | "S1" | "S2">("");
+  const selectedSubject = h?.subjects.find((s) => s.id === uploadScope.subject_id);
+  const scopeReady = !!selectedSubject && (selectedSubject.academic_year !== 1 || !!semester);
   const discover = useServerFn(discoverExamPapers), extract = useServerFn(extractExamQuestions), enrich = useServerFn(enrichExamQuestions), generate = useServerFn(generateSourceExam);
   const save = useServerFn(saveExamSet), saveQs = useServerFn(saveExamQuestions);
   const check = () => { if (stop.current?.signal.aborted) throw new Error(t("Processing stopped")); };
@@ -38,20 +43,20 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     return result;
   };
   const loadFile = async (file: File) => perform(async () => {
+    if (kind === "past_emd" && !scopeReady) throw new Error(t("Choose study year, semester and subject before uploading."));
     const result = await extractExamFile(file, setProgress, stop.current?.signal); check();
     setPages(result.pages); setRaw(""); setActive(0);
     if (result.pages.some((p) => p.ocr)) toast.warning(t("OCR was used. Review wording and corrections carefully."));
     if (result.json && kind === "past_emd") {
-      const imported = parseExamJson(result.json).papers;
-      setPapers(imported.map((p) => ({ ...blankPaper(p.title ?? file.name), ...p, questions: p.questions })));
-      if (setId && imported.length === 1 && subjectId) {
-        const qs = await enrichAll(imported[0]?.questions ?? [], subjectId, unitId);
-        onQuestions(qs); setPapers([]);
-      }
+      if (!selectedSubject) throw new Error(t("Choose a subject first."));
+      const imported = scopeJsonPapers(parseExamJson(result.json).papers, selectedSubject, semester, uploadScope.unit_id);
+      const allowedUnits = new Set((h?.units ?? []).filter((u) => u.subject_id === selectedSubject.id && (!uploadScope.unit_id || u.id === uploadScope.unit_id)).map((u) => u.id));
+      const lessons = (h?.lessons ?? []).filter((l) => allowedUnits.has(l.unit_id));
+      setPapers(imported.map((p) => ({ ...blankPaper(p.title ?? file.name), ...p, questions: linkJsonLessons(p.questions, lessons, selectedSubject.name) })));
     } else if (kind === "past_emd") {
       setProgress(t("Detecting subjects and exam years"));
-      const detected = await discover({ data: { pages: result.pages.map(({ number, text }) => ({ number, text })), subjectId: subjectId || undefined } }); check();
-      setPapers(detected.map((p) => ({ ...p, questions: [] })));
+      const detected = await discover({ data: { pages: result.pages.map(({ number, text }) => ({ number, text })), subjectId: uploadScope.subject_id || undefined } }); check();
+      setPapers(detected.map((p) => ({ ...p, subject_id: uploadScope.subject_id, unit_id: uploadScope.unit_id, semester, questions: [] })));
     } else { setProgress(t("Course text extracted")); }
   });
   const processPaper = async (index: number) => {
@@ -71,8 +76,9 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
         qs.push(...batch.questions); offset += batch.questions.length; total = batch.total;
       }
     }
-    setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: uniqueQuestions(qs) } : x));
-    const ready = await enrichAll(uniqueQuestions(qs), p.subject_id, p.unit_id);
+    const preserved = qs.some((q) => q.source_data) ? qs : uniqueQuestions(qs);
+    setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: preserved } : x));
+    const ready = await enrichAll(preserved, p.subject_id, p.unit_id);
     setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: ready } : x));
   };
   const runGeneration = async () => perform(async () => {
@@ -91,8 +97,9 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
   const current = papers[active];
   const patchPaper = (p: Partial<ReviewPaper>) => setPapers((ps) => ps.map((x, i) => i === active ? { ...x, ...p } : x));
   return <section className="space-y-4 border-y border-border py-5">
+    {kind === "past_emd" && <div className="space-y-3"><ExamScopePicker value={uploadScope} onChange={(scope) => { setUploadScope(scope); setSemester(""); }} />{selectedSubject?.academic_year === 1 && <label className="block text-xs text-muted-foreground">{t("Semester")}<select aria-label={t("Upload semester")} className={`${sel} ml-2`} disabled={busy} value={semester} onChange={(e) => setSemester(e.target.value as typeof semester)}><option value="">{t("Choose…")}</option><option>S1</option><option>S2</option></select></label>}</div>}
     <div className="flex flex-wrap items-center gap-2"><FileText className="size-5 text-primary" /><h3 className="mr-auto font-semibold">{t(kind === "past_emd" ? "Upload & extract exam archive" : "Upload lessons & generate exam")}</h3>
-      <Button size="sm" variant="outline" disabled={busy} onClick={() => input.current?.click()}><Upload />{t(kind === "past_emd" ? "Upload exam files" : "Upload course files")}</Button>
+      <Button size="sm" variant="outline" disabled={busy || (kind === "past_emd" && !scopeReady)} onClick={() => input.current?.click()}><Upload />{t(kind === "past_emd" ? "Upload exam files" : "Upload course files")}</Button>
       <input ref={input} type="file" accept={EXAM_FILE_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void loadFile(f); }} />
     </div>
     <p className="text-xs text-muted-foreground">PDF · DOCX · PPTX/POTX · JSON · TXT — {t("50 MB per file · 300 PDF pages")}</p>
@@ -103,14 +110,14 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     {!!papers.length && <><div className="flex flex-wrap gap-2">{papers.map((p, i) => <Button key={i} size="sm" variant={active === i ? "default" : "outline"} onClick={() => setActive(i)}>{i + 1}. {p.title || t("Exam")} · {p.questions.length}</Button>)}</div>
       {current && <div className="space-y-3"><input aria-label={t("Exam title")} className={inp} value={current.title} onChange={(e) => patchPaper({ title: e.target.value })} /><ExamScopePicker value={{ subject_id: current.subject_id ?? "", unit_id: current.unit_id }} onChange={(p) => patchPaper({ ...p, semester: "", questions: current.questions.map((q) => ({ ...q, lesson_ids: [], verified: false })) })} />
         <div className="grid gap-3 sm:grid-cols-3"><label className="text-xs text-muted-foreground">{t("Exam calendar year")}<input className={inp} value={current.exam_year} onChange={(e) => patchPaper({ exam_year: e.target.value })} /></label><label className="text-xs text-muted-foreground">{t("Session")}<select className={`${sel} w-full`} value={current.session} onChange={(e) => patchPaper({ session: e.target.value as PaperDraft["session"] })}><option value="normal">Normal</option><option value="rattrapage">Rattrapage</option></select></label>{h?.subjects.find((s) => s.id === current.subject_id)?.academic_year === 1 && <label className="text-xs text-muted-foreground">{t("Semester")}<select className={`${sel} w-full`} value={current.semester} onChange={(e) => patchPaper({ semester: e.target.value as PaperDraft["semester"] })}><option value="">{t("Not specified")}</option><option>S1</option><option>S2</option></select></label>}
-          <label className="text-xs text-muted-foreground">{t("First page")}<input className={inp} type="number" min={1} max={pages.length} value={current.start_page} onChange={(e) => patchPaper({ start_page: Number(e.target.value), questions: [] })} /></label><label className="text-xs text-muted-foreground">{t("Last page (include correction)")}<input className={inp} type="number" min={current.start_page} max={pages.length} value={current.end_page} onChange={(e) => patchPaper({ end_page: Number(e.target.value), questions: [] })} /></label><label className="text-xs text-muted-foreground">EMD<input className={inp} value={current.emd_number} onChange={(e) => patchPaper({ emd_number: e.target.value })} /></label></div>
+          {!current.source_metadata && <><label className="text-xs text-muted-foreground">{t("First page")}<input className={inp} type="number" min={1} max={pages.length} value={current.start_page} onChange={(e) => patchPaper({ start_page: Number(e.target.value), questions: [] })} /></label><label className="text-xs text-muted-foreground">{t("Last page (include correction)")}<input className={inp} type="number" min={current.start_page} max={pages.length} value={current.end_page} onChange={(e) => patchPaper({ end_page: Number(e.target.value), questions: [] })} /></label></>}<label className="text-xs text-muted-foreground">EMD<input className={inp} value={current.emd_number} onChange={(e) => patchPaper({ emd_number: e.target.value })} /></label></div>
         <label className="block text-xs text-muted-foreground">{t("Archive review warning")}<textarea className={area} rows={2} value={current.review_note} onChange={(e) => patchPaper({ review_note: e.target.value })} /></label>
-        <div className="flex flex-wrap gap-2"><Button size="sm" disabled={busy || !current.subject_id} onClick={() => perform(() => processPaper(active))}><Sparkles />{t(current.questions.length ? "Add comments & lesson suggestions" : "Confirm scope & extract")}</Button>{setId && papers.length === 1 && current.subject_id === subjectId && <Button size="sm" variant="outline" disabled={busy || !current.questions.length || !!current.review_note} onClick={() => { onQuestions(current.questions); setPapers([]); }}>{t("Use in this exam")}</Button>}
+        <div className="flex flex-wrap gap-2"><Button size="sm" disabled={busy || !current.subject_id} onClick={() => perform(() => processPaper(active))}><Sparkles />{t(current.source_metadata ? "Link lessons" : current.questions.length ? "Add comments & lesson suggestions" : "Confirm scope & extract")}</Button>{setId && papers.length === 1 && current.subject_id === subjectId && <Button size="sm" variant="outline" disabled={busy || !current.questions.length || !!current.review_note} onClick={() => { onQuestions(current.questions); setPapers([]); }}>{t("Use in this exam")}</Button>}
         <Button size="sm" variant="outline" disabled={busy || !papers.every((p) => p.subject_id && p.questions.length && !p.review_note)} onClick={() => perform(async () => {
           for (let i = 0; i < papers.length; i++) {
             check(); const p = papers[i]; if (!p?.subject_id) throw new Error(t("Choose a subject first."));
             setProgress(`${t("Saving exam drafts")} ${i + 1}/${papers.length}`);
-            const saved = await save({ data: { id: p.savedId, kind, title: p.title, subject_id: p.subject_id, unit_id: p.unit_id, semester: p.semester, exam_year: p.exam_year, session: p.session, emd_number: p.emd_number, has_corrige: p.questions.every((q) => q.answers.length > 0) } });
+            const saved = await save({ data: { id: p.savedId, kind, title: p.title, subject_id: p.subject_id, unit_id: p.unit_id, semester: p.semester, exam_year: p.exam_year, session: p.session, emd_number: p.emd_number, has_corrige: p.questions.every((q) => q.answer_source === "official"), source_metadata: p.source_metadata } });
             setPapers((ps) => ps.map((x, j) => i === j ? { ...x, savedId: saved.id } : x));
             await saveQs({ data: { setId: saved.id, questions: p.questions } });
           }

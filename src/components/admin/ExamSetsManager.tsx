@@ -112,7 +112,7 @@ function Editor({ kind, set, onClose, onCreated }: { kind: Kind; set: SetRow | u
   useEffect(() => {
     if (!set) return;
     void Promise.resolve(supabase.from("exam_set_questions").select("*").eq("set_id", set.id).order("position")).then(({ data }) =>
-      setQs((data ?? []).map((q) => questionDraftSchema.parse({ ...q, verified: q.verified && q.answer_source !== "missing" && !q.review_note, format: ["QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].includes(q.format) ? q.format : "" })))).catch(() => toast.error("Could not load exam questions."));
+      setQs((data ?? []).map((q) => questionDraftSchema.parse({ ...q, source_data: q.source_data && typeof q.source_data === "object" && Object.keys(q.source_data).length ? q.source_data : undefined, verified: q.verified && q.answer_source !== "missing" && !q.review_note, format: ["QCS", "QCM_MULTI", "QCM_REGRP", "CAS_CLIN"].includes(q.format) ? q.format : "" })))).catch(() => toast.error("Could not load exam questions."));
   }, [set]);
 
   const subjects = h?.subjects ?? [];

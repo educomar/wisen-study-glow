@@ -143,6 +143,7 @@ export type Database = {
       exam_set_questions: {
         Row: {
           answer_source: string
+          answer_variants: Json
           answers: Json
           created_at: string
           explanation: string
@@ -154,6 +155,7 @@ export type Database = {
           position: number
           review_note: string
           set_id: string
+          source_data: Json
           source_pages: number[]
           stem: string
           trap_explanation: string
@@ -162,6 +164,7 @@ export type Database = {
         }
         Insert: {
           answer_source?: string
+          answer_variants?: Json
           answers?: Json
           created_at?: string
           explanation?: string
@@ -173,6 +176,7 @@ export type Database = {
           position?: number
           review_note?: string
           set_id: string
+          source_data?: Json
           source_pages?: number[]
           stem: string
           trap_explanation?: string
@@ -181,6 +185,7 @@ export type Database = {
         }
         Update: {
           answer_source?: string
+          answer_variants?: Json
           answers?: Json
           created_at?: string
           explanation?: string
@@ -192,6 +197,7 @@ export type Database = {
           position?: number
           review_note?: string
           set_id?: string
+          source_data?: Json
           source_pages?: number[]
           stem?: string
           trap_explanation?: string
@@ -220,6 +226,7 @@ export type Database = {
           resource_id: string | null
           semester: string
           session: string
+          source_metadata: Json
           status: string
           subject_id: string
           title: string
@@ -237,6 +244,7 @@ export type Database = {
           resource_id?: string | null
           semester?: string
           session?: string
+          source_metadata?: Json
           status?: string
           subject_id: string
           title: string
@@ -254,6 +262,7 @@ export type Database = {
           resource_id?: string | null
           semester?: string
           session?: string
+          source_metadata?: Json
           status?: string
           subject_id?: string
           title?: string

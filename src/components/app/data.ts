@@ -85,6 +85,9 @@ export type Question = {
   stem: string;
   options: string[];
   answer: number;
+  acceptedAnswers?: number[];
+  officialAnswer?: string;
+  aiAnswer?: string;
   why: string;
   distractors: string[];
   trapPhrase?: string;

@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { EXAM_SPEC } from "./ai/exam-spec";
 import { audit, requireTeam } from "./team.server";
 import { validateExamScope } from "./exam-scope";
-import { questionDraftSchema, uniqueQuestions, validateSemester } from "./exam-ingestion";
+import { questionDraftSchema, sourceRecordSchema, uniqueQuestions, validateSemester } from "./exam-ingestion";
 
 const qZ = questionDraftSchema;
 
@@ -18,6 +18,7 @@ const metaZ = z.object({
   emd_number: z.string().max(20).default(""),
   has_corrige: z.boolean().default(false),
   semester: z.enum(["", "S1", "S2"]).default(""),
+  source_metadata: sourceRecordSchema.optional(),
 });
 
 /** Create or update an exam set's metadata (Past EMD or AI-generated). */
@@ -26,7 +27,8 @@ export const saveExamSet = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => metaZ.extend({ id: z.string().uuid().optional(), kind: z.enum(["past_emd", "ai_generated"]) }).parse(d))
   .handler(async ({ data, context }) => {
     const t = await requireTeam(context.supabase, context.userId);
-    const { id, ...vals } = data;
+    const { id, source_metadata, ...fields } = data;
+    const vals = { ...fields, ...(source_metadata ? { source_metadata } : {}) };
     const [{ data: subject, error: subjectError }, { data: unit, error: unitError }] = await Promise.all([
       context.supabase.from("subjects").select("id,name,department,academic_year").eq("id", vals.subject_id).single(),
       vals.unit_id ? context.supabase.from("units").select("id,name,subject_id").eq("id", vals.unit_id).single() : Promise.resolve({ data: null, error: null }),
@@ -63,14 +65,14 @@ export const saveExamQuestions = createServerFn({ method: "POST" })
       const ok = new Set((les ?? []).filter((l) => (l.units as unknown as { subject_id: string }).subject_id === set.subject_id).map((l) => l.id));
       if (wanted.some((id) => !ok.has(id))) throw new Error("A linked lesson does not belong to this exam's subject.");
     }
-    if (set.kind === "past_emd" && data.questions.some((q) => q.answer_source === "generated")) throw new Error("Past EMDs require an official correction, not an AI-generated key.");
-    const rows = uniqueQuestions(data.questions).map((q, i) => ({
+    const rows = (data.questions.some((q) => q.source_data) ? data.questions : uniqueQuestions(data.questions)).map((q, i) => ({
       set_id: data.setId, position: i, stem: q.stem, options: q.options,
       answers: [...new Set(q.answers.filter((a) => a < q.options.length))].sort(),
       explanation: q.explanation, format: q.format, verified: q.verified,
       lesson_ids: [...new Set(q.lesson_ids)],
       option_comments: q.option_comments, trap_phrase: q.trap_phrase, trap_explanation: q.trap_explanation,
       answer_source: q.answer_source, review_note: q.review_note, source_pages: q.source_pages,
+      source_data: q.source_data ?? {}, answer_variants: q.answer_variants ?? [],
     }));
     const { error: replaceError } = await sb.rpc("replace_exam_questions", { p_set_id: data.setId, p_questions: rows });
     if (replaceError) throw new Error(replaceError.message);

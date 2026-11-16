@@ -43,3 +43,11 @@ test("negative marking: 0.2 per hit, -0.25 per wrong, floor 0", () => {
   assert.equal(Math.round(questionCredit({ answer: ABC, picked: 0b1011, multi: true }, "negative") * 100), 15);
   assert.equal(questionCredit({ answer: ABC, picked: 0b11001, multi: true }, "negative"), 0);
 });
+test("BD/B and E/AE accept each professor alternative separately", () => {
+  for (const mode of ["degressive", "aon", "partial", "positive", "negative"] as const) {
+    const g = { answer: 0b01010, acceptedAnswers: [0b01010, 0b00010], multi: true };
+    assert.equal(questionCredit({ ...g, picked: 0b00010 }, mode), mode === "negative" ? 0.2 : 1);
+  }
+  assert.equal(scoreOn20([{ answer: 16, acceptedAnswers: [16, 17], picked: 17 }]).on20, 20);
+  assert.equal(questionCredit({ answer: 16, acceptedAnswers: [16, 17], picked: 1, multi: true }, "aon"), 0);
+});

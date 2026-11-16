@@ -14,11 +14,21 @@ import { generateQuestions } from "@/lib/ai/study.functions";
 import { extractMaterial, isCorrectOption, reloadAi, useAi, type AiQuestion } from "./ai-store";
 import { useCurriculum, type CurFile } from "./Curriculum";
 import type { Question } from "./data";
-import { emdYear, isPicked, questionCredit, scoreOn20, scoreWith, SCORING, toggleOption, type Scoring } from "./emd-exam";
+import { emdYear, isAcceptedAnswer, isPicked, questionCredit, scoreOn20, scoreWith, SCORING, toggleOption, type Scoring } from "./emd-exam";
 import { Inline, RichText } from "./RichText";
 import { emptyScope, resolveScope, ScopePicker, type Scope } from "./ScopePicker";
 import { addCard, getState, log, recordQuestion, update, useAppState, type ExamSession } from "./store";
 import { useSession } from "@/lib/profile";
+
+function centralAnswerEvidence(row: { source_data: unknown; answer_variants: unknown; answers: unknown; format: string }) {
+  const source = row.source_data && typeof row.source_data === "object" ? row.source_data as Record<string, unknown> : {};
+  const variants = Array.isArray(row.answer_variants) ? row.answer_variants as number[][] : [];
+  const answers = Array.isArray(row.answers) ? row.answers as number[] : [];
+  const multi = answers.length > 1 || row.format === "QCM_MULTI";
+  return { acceptedAnswers: variants.map((v) => multi ? v.reduce((m, i) => m | (1 << i), 0) : v[0] ?? 0),
+    ...(typeof source["OfficialAnswer"] === "string" ? { officialAnswer: source["OfficialAnswer"] } : {}),
+    ...(typeof source["AIAnswer"] === "string" ? { aiAnswer: source["AIAnswer"] } : {}) };
+}
 
 const L = ["A", "B", "C", "D", "E", "F"];
 const fmt = (sec: number) => `${String(Math.floor(sec / 3600)).padStart(2, "0")}:${String(Math.floor((sec % 3600) / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
@@ -82,10 +92,11 @@ function QuestionPane({ q, n, total, picked, onToggle, reveal }: { q: Question; 
 
 function Explanation({ q, picked }: { q: Question; picked: number | null }) {
   const { t: translate } = useLang();
-  const ok = picked !== null && picked === q.answer;
+  const ok = isAcceptedAnswer(q, picked);
   return (
     <div className={`emd-explain ${ok ? "is-right" : "is-wrong"}`}>
       <p className="font-semibold">{ok ? translate("Correct") : picked === null ? translate("Not answered") : translate("Incorrect")}  {translate("— answer:")} {correctText(q)}</p>
+      <>{q.officialAnswer && <p className="mt-2 text-sm"><strong>{translate("Official answer")}:</strong> {q.officialAnswer}</p>}{q.aiAnswer && <p className="text-sm"><strong>{translate("AI answer")}:</strong> {q.aiAnswer}</p>}</>
       <div className="mt-2 text-sm"><RichText text={q.why || translate("No explanation available.")} /></div>
       {q.distractors.some(Boolean) && <ul className="mt-3 space-y-2 text-sm">{q.distractors.map((comment, i) => comment ? <li key={i}><strong>{L[i]}.</strong> <Inline text={comment} /></li> : null)}</ul>}
       {q.trapPhrase && <div className="mt-3 border-l-2 border-destructive pl-3 text-sm"><p className="flex items-center gap-2 font-semibold"><TriangleAlert className="size-4 text-destructive" /><span dir="rtl">{q.trapPhrase}</span></p>{q.trapExplanation && <RichText text={q.trapExplanation} />}</div>}
@@ -107,10 +118,10 @@ function PracticeRunner({ qs, title, onExit, initialScoring = "degressive" }: { 
   const toggle = (qi: number, k: number) => !checked[qi] && setAnswers((a) => a.map((x, j) => (j === qi ? toggleOption(x, k, multiOf(qs[qi]!)) : x)));
   const check = () => { recordQuestion(q, answers[i] ?? null); setChecked((c) => c.map((x, j) => (j === i ? true : x))); };
   const done = checked.filter(Boolean).length;
-  const credit = (k: number) => questionCredit({ answer: qs[k]!.answer, picked: answers[k] ?? null, multi: multiOf(qs[k]!) }, scoring);
+  const credit = (k: number) => questionCredit({ ...qs[k], answer: qs[k]!.answer, picked: answers[k] ?? null, multi: multiOf(qs[k]!) }, scoring);
   const pts = qs.reduce((a, _, k) => a + (checked[k] ? credit(k) : 0), 0);
   const on20 = done ? Math.round((pts / done) * 2000) / 100 : 0;
-  const correct = qs.filter((x, k) => checked[k] && answers[k] === x.answer).length;
+  const correct = qs.filter((x, k) => checked[k] && isAcceptedAnswer(x, answers[k] ?? null)).length;
   const fmt = (n: number) => (n > 0 ? `+${n.toFixed(2).replace(/0$/, "")}` : "0");
   return (
     <div className="emd-run">
@@ -156,7 +167,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
     const subject = subjOf(x.subject_id) ?? "";
     const lessonName = new Map((tree ?? []).flatMap((t) => t.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const))));
     const rowsIn = (data ?? []).filter((r) => !lesson || (r.lesson_ids ?? []).includes(lesson));
-    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0, why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation, slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
+    const qs: Question[] = rowsIn.map((r) => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const topics = (r.lesson_ids ?? []).map((id) => lessonName.get(id)).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0, ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation, slide: 0, source: x.title, multi, origin: "past", unit: x.exam_year }; });
     if (!qs.length) { toast.error(translate(lesson ? "No questions in this exam are linked to the selected lesson." : "This exam has no questions yet.")); return; }
     setRun({ title: `${moduleOf(x)} · ${x.title}${lesson ? ` · ${lessonName.get(lesson) ?? ""}` : ""}`, qs });
     log(`Past EMD opened · ${subject} ${x.title}`);
@@ -209,8 +220,8 @@ function submitExam() {
   const pool = getPool();
   const qs = e.qids.map((id) => pool.find((q) => q.id === id)).filter((q): q is Question => !!q);
   qs.forEach((q, k) => recordQuestion(q, e.answers[k] ?? null));
-  const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
-  const off = scoreWith(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) })), e.scoring ?? "aon");
+  const r = scoreOn20(qs.map((q, k) => ({ ...q, answer: q.answer, picked: e.answers[k] ?? null })));
+  const off = scoreWith(qs.map((q, k) => ({ ...q, answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) })), e.scoring ?? "aon");
   const used = Math.min(e.minutes * 60, Math.round((Date.now() - (e.endsAt - e.minutes * 60e3)) / 1000));
   log(`EMD Simulator · ${e.subject} — ${off}/20`);
   update((s) => ({ ...s, exam: { ...s.exam, phase: "done", usedSec: used }, examHistory: [{ t: Date.now(), subject: e.subject, score: r.correct, total: qs.length }, ...s.examHistory].slice(0, 20) }));
@@ -242,7 +253,7 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
         const a = r.answers as number[], multi = a.length > 1 || r.format === "QCM_MULTI";
         return { id: `set-${r.id}`, subject: subject.name, topic: r.lesson_ids.map((id) => lessons.get(id)).filter(Boolean).join(" + ") || subject.name,
           difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0,
-          why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
+          ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
           slide: 0, source: x.title, multi };
       });
       if (!qs.length) throw new Error(translate("No questions in this exam are linked to the selected lesson."));
@@ -363,14 +374,14 @@ function RealExam({ qs }: { qs: Question[] }) {
 function Debrief({ qs }: { qs: Question[] }) {
   const { t: translate } = useLang();
   const e = useAppState().exam;
-  const r = scoreOn20(qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null })));
-  const graded = qs.map((q, k) => ({ answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) }));
+  const r = scoreOn20(qs.map((q, k) => ({ ...q, answer: q.answer, picked: e.answers[k] ?? null })));
+  const graded = qs.map((q, k) => ({ ...q, answer: q.answer, picked: e.answers[k] ?? null, multi: multiOf(q) }));
   const sel = e.scoring ?? "aon";
   const all = SCORING.map((o) => ({ ...o, v: scoreWith(graded, o.key) }));
   const official = all.find((o) => o.key === sel)!;
   const mods: Record<string, { c: number; n: number }> = {};
-  qs.forEach((q, k) => { const key = q.topic && q.topic !== q.subject ? `${q.subject} · ${q.topic}` : q.subject; const m = (mods[key] ??= { c: 0, n: 0 }); m.n++; if (e.answers[k] === q.answer) m.c++; });
-  const wrong = qs.filter((q, k) => e.answers[k] !== q.answer);
+  qs.forEach((q, k) => { const key = q.topic && q.topic !== q.subject ? `${q.subject} · ${q.topic}` : q.subject; const m = (mods[key] ??= { c: 0, n: 0 }); m.n++; if (isAcceptedAnswer(q, e.answers[k] ?? null)) m.c++; });
+  const wrong = qs.filter((q, k) => !isAcceptedAnswer(q, e.answers[k] ?? null));
   return (
     <section className="emd-section">
       <div className="emd-score-grid">
@@ -386,7 +397,7 @@ function Debrief({ qs }: { qs: Question[] }) {
       <div className="emd-card">
         <div className="flex flex-wrap items-center justify-between gap-2"><h3>{translate("Correction key")}</h3><Button variant="outline" disabled={!wrong.length} onClick={() => { wrong.forEach(saveKapsule); toast.success((wrong.length) + translate(" mistakes saved to Kapsules")); }}><Layers />  {translate("Save mistakes to Kapsules")}</Button></div>
         {qs.map((q, k) => (
-          <details key={q.id} className="emd-key" open={e.answers[k] !== q.answer}>
+          <details key={q.id} className="emd-key" open={!isAcceptedAnswer(q, e.answers[k] ?? null)}>
             <summary><span className={e.answers[k] === q.answer ? "text-primary" : "text-destructive"}>{e.answers[k] === q.answer ? <Check className="size-4" /> : <X className="size-4" />}</span><b>{translate("Q")}{String(k + 1).padStart(2, "0")}</b><Inline text={q.stem} /></summary>
             <QuestionPane q={q} n={k + 1} total={qs.length} picked={e.answers[k] ?? null} reveal />
             <Explanation q={q} picked={e.answers[k] ?? null} />
@@ -422,7 +433,7 @@ export function EmdQBank() {
         const lessons = new Map(subject.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const)));
         return [{ id: `set-${r.id}`, subject: subject.name, topic: r.lesson_ids.map((id) => lessons.get(id)).filter(Boolean).join(" + ") || subject.name,
           difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0,
-          why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
+          ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation,
           slide: 0, source: exam.title, multi }];
       });
       setApprovedPool(restored);

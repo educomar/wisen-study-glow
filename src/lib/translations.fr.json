@@ -1,4 +1,10 @@
 {
+  "Official answer": "Réponse officielle",
+  "AI answer": "Réponse IA",
+  "Source lesson": "Leçon du fichier",
+  "Upload semester": "Semestre de l’import",
+  "Choose study year, semester and subject before uploading.": "Choisissez l’année d’études, le semestre et la matière avant l’import.",
+  "Link lessons": "Associer les leçons",
   "Dashboard": "Tableau de bord",
   "Roadmap": "Programme",
   "Workspace": "Espace de travail",

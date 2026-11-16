@@ -1,5 +1,11 @@
 # Roadmap
 
+## Structured Past EMD JSON upload — November 16
+- [x] Require selected enrolled level, semester where applicable and subject before upload.
+- [x] Parse all six supplied archives: 35 exams / 830 questions; preserve every original field, comments, empty source stems and official alternative keys; all 830 link to existing lessons.
+- [x] Implement separate review-draft saves, persisted raw evidence, immutable imported fields, AI answer labeling and alternative-aware student scoring; targeted tests pass and preview build OK.
+- [ ] Verify authenticated admin upload/save/readback/publish — blocked because the current preview account has no Team access; permissions were not changed.
+
 ## Central exam ingestion — October 28
 - [x] Extract PDF, DOCX, PPTX/POTX, JSON and text uploads, with scanned PDF OCR and visible progress; browser checks passed for digital PDF, scanned PDF, DOCX, POTX and JSON.
 - [x] Separate mixed-subject/year archives into editable exam drafts; preserve official keys and link real lessons.

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { Card, Question } from "./data";
 import { supabase } from "@/integrations/supabase/client";
 import { academicName } from "./academic-names";
+import { isAcceptedAnswer } from "./emd-exam";
 
 export type CardState = { due: number; status: "new" | "learning" | "review"; box?: number };
 export type QuestionResult = { question: Question; picked: number | null; correct: boolean; t: number };
@@ -208,7 +209,7 @@ export function recordAttempt(lesson: string, correct: boolean) {
 }
 
 export function recordQuestion(q: Question, picked: number | null) {
-  const correct = picked === q.answer;
+  const correct = isAcceptedAnswer(q, picked);
   update((s) => {
     const a = s.attempts[q.topic] ?? { correct: 0, total: 0 };
     return { ...s, attempts: { ...s.attempts, [q.topic]: { correct: a.correct + Number(correct), total: a.total + 1 } }, questionResults: { ...s.questionResults, [q.id]: { question: q, picked, correct, t: Date.now() } } };

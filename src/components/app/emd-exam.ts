@@ -1,5 +1,6 @@
 /** Pure helpers for EMD practice and the real-exam simulator. */
-export type Graded = { answer: number; picked: number | null; multi?: boolean };
+export type Graded = { answer: number; picked: number | null; multi?: boolean; acceptedAnswers?: number[] };
+export const isAcceptedAnswer = (q: Pick<Graded, "answer" | "acceptedAnswers">, picked: number | null) => picked !== null && (q.acceptedAnswers?.length ? q.acceptedAnswers : [q.answer]).includes(picked);
 export type Scoring = "degressive" | "aon" | "partial" | "positive" | "negative";
 export const SCORING: { key: Scoring; label: string; hint: string }[] = [
   { key: "degressive", label: "Barème Dégressif (Standard EMD)", hint: "Per QCM: 0 errors = 1, 1 error = 0.5, 2 errors = 0.2, 3+ errors = 0 (missed + wrong choices)." },
@@ -12,8 +13,9 @@ export const SCORING: { key: Scoring; label: string; hint: string }[] = [
 const bits = (n: number) => { let c = 0; for (let x = n; x; x &= x - 1) c++; return c; };
 
 /** Credit (0..1) for one question. Multi answers are bitmasks; single answers are option indexes. */
-export function questionCredit(g: Graded, mode: Scoring) {
+export function questionCredit(g: Graded, mode: Scoring): number {
   if (g.picked === null || g.picked < 0) return 0;
+  if (g.acceptedAnswers?.length) { const { acceptedAnswers, ...base } = g; return Math.max(...acceptedAnswers.map((answer) => questionCredit({ ...base, answer }, mode))); }
   if (!g.multi) return g.picked === g.answer ? 1 : 0;
   const n = bits(g.answer); if (!n) return 0;
   const hits = bits(g.picked & g.answer), wrong = bits(g.picked & ~g.answer);
@@ -32,7 +34,7 @@ export function scoreWith(items: Graded[], mode: Scoring) {
 
 /** All-or-nothing per question (an MCQ answer is a bitmask), scaled to the faculty's /20 mark. */
 export function scoreOn20(items: Graded[]) {
-  const correct = items.filter((x) => x.picked !== null && x.picked === x.answer).length;
+  const correct = items.filter((x) => isAcceptedAnswer(x, x.picked)).length;
   const total = items.length;
   return { correct, total, on20: total ? Math.round((correct / total) * 2000) / 100 : 0, accuracy: total ? Math.round((correct / total) * 100) : 0 };
 }
