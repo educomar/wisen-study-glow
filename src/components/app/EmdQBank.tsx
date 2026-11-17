@@ -370,7 +370,7 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
     return m;
   }, [tree]);
   const all = rows ?? [];
-  const subjects = useMemo(() => (tree ?? []).filter((s) => all.some((r) => r.lesson_ids.some((id) => lessonInfo.get(id)?.subject === s.id))), [tree, all, lessonInfo]);
+  const subjects = useMemo(() => (tree ?? []).filter((s) => !/deprecated/i.test(s.name) && s.units.some((u) => u.lessons.length)), [tree]);
   useEffect(() => { if (!subj && subjects[0]) setSubj(subjects[0].id); }, [subjects, subj]);
   const scoped = all.filter((r) => (!sem || r.semester === sem) && r.lesson_ids.some((id) => lessonInfo.get(id)?.subject === subj));
   const hasSem = all.some((r) => r.semester === "S1" || r.semester === "S2");
@@ -378,7 +378,8 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
   scoped.forEach((r) => r.lesson_ids.forEach((id) => { if (lessonInfo.get(id)?.subject === subj) counts.set(id, (counts.get(id) ?? 0) + 1); }));
   const subject = tree?.find((s) => s.id === subj);
   const needle = q.trim().toLowerCase();
-  const groups = (subject?.units ?? []).map((u) => ({ name: u.name, lessons: u.lessons.filter((l) => counts.has(l.id) && (!needle || l.name.toLowerCase().includes(needle))) })).filter((g) => g.lessons.length);
+  const seenLesson = new Set<string>();
+  const groups = [{ name: "", lessons: (subject?.units ?? []).flatMap((u) => u.lessons).filter((l) => !seenLesson.has(l.id) && seenLesson.add(l.id) && (!needle || l.name.toLowerCase().includes(needle))) }].filter((g) => g.lessons.length);
   const visibleIds = groups.flatMap((g) => g.lessons.map((l) => l.id));
   const pool = scoped.filter((r) => r.lesson_ids.some((id) => picked.has(id)));
   const max = Math.min(120, pool.length);
@@ -428,8 +429,8 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
             </div>
           </section>
           <section className="sim-step"><h3><b>2</b>{translate("Pick your lessons")}<small>{translate("Select one or several lessons")}</small></h3>
-            {rows === null ? <p className="emd-sub"><Loader2 className="inline size-4 animate-spin" /> {translate("Loading…")}</p> : !subjects.length ? <p className="emd-sub">{translate("No verified AI questions are published for your level yet.")}</p> : <>
-              <div className="pe-chips">{subjects.map((s) => <button key={s.id} type="button" className={s.id === subj ? "is-on" : ""} onClick={() => changeSubject(s.id)}><span className="pe-dot" style={{ background: peColor(s.name) }} />{s.name}</button>)}</div>
+            {rows === null ? <p className="emd-sub"><Loader2 className="inline size-4 animate-spin" /> {translate("Loading…")}</p> : !subjects.length ? <p className="emd-sub">{translate("No lessons are available for your level yet.")}</p> : <>
+              <label className="sim-range"><span>{translate("Subject")}</span><select className="sim-search" aria-label={translate("Subject")} value={subj} onChange={(e) => changeSubject(e.target.value)}>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
               <div className="sim-tools">
                 {hasSem && <div className="pe-seg pe-seg-sm">{([["", "All semesters"], ["S1", "Semester 1"], ["S2", "Semester 2"]] as const).map(([v, l]) => <button key={v} type="button" className={sem === v ? "is-on" : ""} onClick={() => changeSem(v)}>{translate(l)}</button>)}</div>}
                 <input className="sim-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={translate("Search a lesson…")} aria-label={translate("Search a lesson…")} />
@@ -437,8 +438,8 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
               </div>
               {!groups.length ? <p className="emd-sub">{translate("No lessons match.")}</p> : groups.map((g) => {
                 const ids = g.lessons.map((l) => l.id), on = ids.every((id) => picked.has(id));
-                return <div key={g.name} className="sim-group"><div className="sim-group-h"><span>{g.name}</span><button type="button" onClick={() => toggleIds(ids)}>{translate(on ? "Deselect all" : "Select all")}</button></div>
-                  <div className="sim-lessons">{g.lessons.map((l) => <button key={l.id} type="button" className={`sim-lesson ${picked.has(l.id) ? "is-on" : ""}`} aria-pressed={picked.has(l.id)} onClick={() => toggleIds([l.id])}><span className="sim-box">{picked.has(l.id) && <Check />}</span>{l.name}<small>{counts.get(l.id)}</small></button>)}</div></div>;
+                return <div key={g.name} className="sim-group"><div className="sim-group-h"><span>{translate("Lessons")}</span><button type="button" onClick={() => toggleIds(ids)}>{translate(on ? "Deselect all" : "Select all")}</button></div>
+                  <div className="sim-lessons">{g.lessons.map((l) => <button key={l.id} type="button" className={`sim-lesson ${picked.has(l.id) ? "is-on" : ""}`} aria-pressed={picked.has(l.id)} onClick={() => toggleIds([l.id])}><span className="sim-box">{picked.has(l.id) && <Check />}</span>{l.name}<small>{counts.get(l.id) ?? 0}</small></button>)}</div></div>;
               })}
             </>}
           </section>
