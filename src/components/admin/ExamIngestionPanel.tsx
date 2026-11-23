@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, Loader2, Save, Sparkles, Upload, X } from "lucide-react";
+import { Download, FileText, Languages, Loader2, Save, Sparkles, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/lib/i18n";
 import { extractExamFile, EXAM_FILE_ACCEPT } from "@/lib/exam-files";
-import { parseExamJson, uniqueQuestions, validateSemester, type ExamDraftQuestion, type ExtractedPage, type PaperDraft, type SourceJson } from "@/lib/exam-ingestion";
-import { discoverExamPapers, enrichExamQuestions, extractExamQuestions, generateSourceExam } from "@/lib/exam-ingestion.functions";
+import { exportExamJson, isStructured, parseExamJson, uniqueQuestions, validateSemester, type ExamDraftQuestion, type ExtractedPage, type PaperDraft, type SourceJson } from "@/lib/exam-ingestion";
+import { discoverExamPapers, enrichExamQuestions, extractExamQuestions, generateSourceExam, translateExamQuestions } from "@/lib/exam-ingestion.functions";
 import { saveExamQuestions, saveExamSet } from "@/lib/exams.functions";
 import { area, inp, sel, useHierarchy } from "./team-context";
 import { ExamScopePicker } from "./ExamScopePicker";
@@ -26,7 +26,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
   const [semester, setSemester] = useState<"" | "S1" | "S2">("");
   const selectedSubject = h?.subjects.find((s) => s.id === uploadScope.subject_id);
   const scopeReady = !!selectedSubject && (selectedSubject.academic_year !== 1 || !!semester);
-  const discover = useServerFn(discoverExamPapers), extract = useServerFn(extractExamQuestions), enrich = useServerFn(enrichExamQuestions), generate = useServerFn(generateSourceExam);
+  const discover = useServerFn(discoverExamPapers), extract = useServerFn(extractExamQuestions), enrich = useServerFn(enrichExamQuestions), generate = useServerFn(generateSourceExam), translate = useServerFn(translateExamQuestions);
   const save = useServerFn(saveExamSet), saveQs = useServerFn(saveExamQuestions);
   const check = () => { if (stop.current?.signal.aborted) throw new Error(t("Processing stopped")); };
   const perform = async (fn: () => Promise<void>) => {
@@ -58,17 +58,21 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     } else if (kind === "past_emd") {
       setProgress(t("Detecting subjects and exam years"));
       const detected = await discover({ data: { pages: result.pages.map(({ number, text }) => ({ number, text })), subjectId: uploadScope.subject_id || undefined } }); check();
-      setPapers(detected.map((p) => ({ ...p, subject_id: uploadScope.subject_id, unit_id: uploadScope.unit_id, semester, questions: [] })));
+      const found: ReviewPaper[] = detected.map((p) => ({ ...p, subject_id: uploadScope.subject_id, unit_id: uploadScope.unit_id, semester, questions: [] }));
+      setPapers(found);
+      // Full automatic pipeline: extract → AI answer + option explanations + lessons, paper by paper.
+      for (let i = 0; i < found.length; i++) { const paper = found[i]; if (paper) await processPaper(i, paper, result.pages); }
+      toast.success(t("All exams processed. Review the drafts before saving."));
     } else { setProgress(t("Course text extracted")); }
   });
-  const processPaper = async (index: number) => {
-    const p = papers[index]; if (!p?.subject_id) throw new Error(t("Choose a subject first."));
+  const processPaper = async (index: number, given?: ReviewPaper, sourcePages: ExtractedPage[] = pages) => {
+    const p = given ?? papers[index]; if (!p?.subject_id) throw new Error(t("Choose a subject first."));
     const subject = h?.subjects.find((s) => s.id === p.subject_id); if (!subject) throw new Error(t("Choose a subject first."));
     validateSemester(subject.academic_year, p.semester);
-    if (p.start_page < 1 || p.end_page < p.start_page || p.end_page > Math.max(1, pages.length)) throw new Error(t("Check the exam page range."));
+    if (p.start_page < 1 || p.end_page < p.start_page || p.end_page > Math.max(1, sourcePages.length)) throw new Error(t("Check the exam page range."));
     let qs = p.questions;
     if (!qs.length) {
-      const text = pages.filter((page) => page.number >= p.start_page && page.number <= p.end_page).map((page) => `[Page ${page.number}]\n${page.text}`).join("\n");
+      const text = sourcePages.filter((page) => page.number >= p.start_page && page.number <= p.end_page).map((page) => `[Page ${page.number}]\n${page.text}`).join("\n");
       if (text.length > 160000) throw new Error(t("Split this paper into smaller page ranges (maximum 160,000 characters)."));
       let offset = 0, total = 1; qs = [];
       while (offset < total) {
@@ -78,7 +82,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
         qs.push(...batch.questions); offset += batch.questions.length; total = batch.total;
       }
     }
-    const preserved = qs.some((q) => q.source_data) ? qs : uniqueQuestions(qs);
+    const preserved = qs.some(isStructured) ? qs : uniqueQuestions(qs);
     setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: preserved } : x));
     const ready = await enrichAll(preserved, p.subject_id, p.unit_id);
     setPapers((ps) => ps.map((x, i) => i === index ? { ...x, questions: ready } : x));
@@ -96,6 +100,19 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
     if (setId) onQuestions(ready);
     else setPapers([{ ...blankPaper("EMD Simulation"), end_page: Math.max(1, pages.length), questions: ready }]);
   });
+  const translateCurrent = () => perform(async () => {
+    const p = papers[active]; if (!p) return;
+    if (p.questions.some(isStructured)) throw new Error(t("Structured professor files are never rewritten."));
+    const out: ExamDraftQuestion[] = [];
+    for (let i = 0; i < p.questions.length; i += 8) { check(); setProgress(`${t("Translating to English")} ${i + 1}/${p.questions.length}`); out.push(...await translate({ data: { questions: p.questions.slice(i, i + 8) } })); }
+    setPapers((ps) => ps.map((x, i) => i === active ? { ...x, questions: out } : x));
+  });
+  const exportJson = () => {
+    const subject = h?.subjects.find((s) => s.id === (papers[0]?.subject_id ?? uploadScope.subject_id));
+    const doc = exportExamJson(papers, { faculty: "Faculty of Medicine Sétif 1", level: subject ? `${subject.department} Year ${subject.academic_year}` : "", subject: subject?.name ?? "", lessonName: (id) => h?.lessons.find((l) => l.id === id)?.name ?? "" });
+    const url = URL.createObjectURL(new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = `${(subject?.name ?? "exams").replace(/\W+/g, "_")}_FINAL.json`; a.click(); URL.revokeObjectURL(url);
+  };
   const current = papers[active];
   const patchPaper = (p: Partial<ReviewPaper>) => setPapers((ps) => ps.map((x, i) => i === active ? { ...x, ...p } : x));
   return <section className="space-y-4 border-y border-border py-5">
@@ -104,7 +121,7 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
       <Button size="sm" variant="outline" disabled={busy || (kind === "past_emd" && !scopeReady)} onClick={() => input.current?.click()}><Upload />{t(kind === "past_emd" ? "Upload exam files" : "Upload course files")}</Button>
       <input ref={input} type="file" accept={EXAM_FILE_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void loadFile(f); }} />
     </div>
-    <p className="text-xs text-muted-foreground">PDF · DOCX · PPTX/POTX · JSON · TXT — {t("50 MB per file · 300 PDF pages")}</p>
+    <p className="text-xs text-muted-foreground">PDF · DOCX · PPTX/POTX · PNG/JPG · JSON · TXT — {t("50 MB per file · 300 PDF pages")}</p>
     {busy && <div role="status" className="flex items-center gap-2 rounded-md border border-border p-3 text-sm"><Loader2 className="size-4 animate-spin" /><span className="min-w-0 flex-1">{progress}</span><Button size="sm" variant="ghost" onClick={() => stop.current?.abort()}><X />{t("Stop")}</Button></div>}
     {!!pages.length && <p className="text-xs text-muted-foreground">{pages.length} {t("pages extracted")} · {pages.reduce((n, p) => n + p.text.length, 0).toLocaleString()} {t("characters")}</p>}
     {!papers.length && kind === "past_emd" && <details><summary className="cursor-pointer text-sm">{t("Paste exam text instead")}</summary><textarea className={`${area} mt-2`} rows={5} value={raw} onChange={(e) => setRaw(e.target.value)} /><Button size="sm" className="mt-2" disabled={busy || raw.trim().length < 10} onClick={() => perform(async () => { const source = [{ number: 1, text: raw }]; setPages(source); setProgress(t("Detecting subjects and exam years")); const detected = await discover({ data: { pages: source, subjectId: subjectId || undefined } }); check(); setPapers(detected.map((p) => ({ ...p, questions: [] }))); })}><Sparkles />{t("Detect exams")}</Button></details>}
@@ -124,7 +141,10 @@ export function ExamIngestionPanel({ kind, subjectId, unitId, setId, onQuestions
             await saveQs({ data: { setId: saved.id, questions: p.questions } });
           }
           toast.success(t("Exam drafts saved. Verify each exam before publishing.")); onSaved();
-        })}><Save />{t("Save all as review drafts")}</Button></div>
+        })}><Save />{t("Save all as review drafts")}</Button>
+        <Button size="sm" variant="outline" disabled={busy || !papers.some((p) => p.questions.length)} onClick={exportJson}><Download />{t("Export JSON")}</Button>
+        {!current.source_metadata && <Button size="sm" variant="outline" disabled={busy || !current.questions.length} onClick={translateCurrent}><Languages />{t("Translate to English")}</Button>}</div>
+        {!!current.questions.length && <p className="text-xs text-muted-foreground">{current.questions.filter((q) => !q.answers.length).length} {t("without correction")} · {current.questions.filter((q) => q.answer_source !== "official").length} {t("without official key")} · {current.questions.filter((q) => q.review_note).length} {t("with warnings")}</p>}
         <ExamQuestionCards questions={current.questions} subjectId={current.subject_id ?? ""} unitId={current.unit_id} kind={kind} onChange={(questions) => patchPaper({ questions })} />
       </div>}
     </>}

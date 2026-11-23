@@ -990,5 +990,13 @@
   "0 errors = 1": "0 erreur = 1",
   "1 error = 0.5": "1 erreur = 0,5",
   "2 errors = 0.2": "2 erreurs = 0,2",
-  "3+ errors = 0": "3+ erreurs = 0"
+  "3+ errors = 0": "3+ erreurs = 0",
+  "All exams processed. Review the drafts before saving.": "Tous les examens ont été traités. Vérifiez les brouillons avant d'enregistrer.",
+  "Structured professor files are never rewritten.": "Les fichiers structurés du professeur ne sont jamais réécrits.",
+  "Translating to English": "Traduction en anglais",
+  "Export JSON": "Exporter en JSON",
+  "Translate to English": "Traduire en anglais",
+  "without correction": "sans correction",
+  "without official key": "sans corrigé officiel",
+  "with warnings": "avec avertissements"
 }

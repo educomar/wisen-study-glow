@@ -1,9 +1,9 @@
 import { MAX_EXAM_FILE, type ExtractedPage } from "./exam-ingestion";
 
-export const EXAM_FILE_ACCEPT = ".pdf,.docx,.pptx,.potx,.json,.txt,.md";
+export const EXAM_FILE_ACCEPT = ".pdf,.docx,.pptx,.potx,.json,.txt,.md,.png,.jpg,.jpeg,.webp";
 export function validateExamFile(file: Pick<File, "name" | "size">) {
   if (file.size > MAX_EXAM_FILE) throw new Error("The maximum file size is 50 MB.");
-  if (!/\.(pdf|docx|pptx|potx|json|txt|md)$/i.test(file.name)) throw new Error("Use PDF, DOCX, PPTX/POTX, JSON or text. Convert older DOC/PPT files first.");
+  if (!/\.(pdf|docx|pptx|potx|json|txt|md|png|jpe?g|webp)$/i.test(file.name)) throw new Error("Use PDF, DOCX, PPTX/POTX, images, JSON or text. Convert older DOC/PPT files first.");
 }
 export async function extractExamFile(file: File, onProgress: (message: string) => void, signal?: AbortSignal): Promise<{ pages: ExtractedPage[]; json?: string }> {
   validateExamFile(file);
@@ -14,6 +14,15 @@ export async function extractExamFile(file: File, onProgress: (message: string) 
     const text = new TextDecoder().decode(bytes);
     if (text.length > 1500000) throw new Error("The document exceeds 1.5 million extracted characters. Split it into smaller files.");
     return { pages: [{ number: 1, text }], ...(/\.json$/i.test(file.name) ? { json: text } : {}) };
+  }
+  if (/\.(png|jpe?g|webp)$/i.test(file.name)) {
+    onProgress("OCR image 1/1");
+    const worker = await (await import("tesseract.js")).createWorker("fra+eng+ara");
+    try {
+      const result = await worker.recognize(file); check();
+      if (!result.data.text.trim()) throw new Error("No readable text found. Check the scan quality.");
+      return { pages: [{ number: 1, text: result.data.text, ocr: true, confidence: result.data.confidence }] };
+    } finally { await worker.terminate(); }
   }
   if (/\.(docx|pptx|potx)$/i.test(file.name)) {
     // Read only text: embedded question images are intentionally not imported.

@@ -65,7 +65,7 @@ export const saveExamQuestions = createServerFn({ method: "POST" })
       const ok = new Set((les ?? []).filter((l) => (l.units as unknown as { subject_id: string }).subject_id === set.subject_id).map((l) => l.id));
       if (wanted.some((id) => !ok.has(id))) throw new Error("A linked lesson does not belong to this exam's subject.");
     }
-    const rows = (data.questions.some((q) => q.source_data) ? data.questions : uniqueQuestions(data.questions)).map((q, i) => ({
+    const rows = (data.questions.some((q) => q.source_data?.["QuestionText"] !== undefined) ? data.questions : uniqueQuestions(data.questions)).map((q, i) => ({
       set_id: data.setId, position: i, stem: q.stem, options: q.options,
       answers: [...new Set(q.answers.filter((a) => a < q.options.length))].sort(),
       explanation: q.explanation, format: q.format, verified: q.verified,

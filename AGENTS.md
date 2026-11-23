@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
-- Admin central exam ingestion uses browser PDF/Office parsing and local OCR, then dedicated authenticated text-model functions; model suggestions never overwrite official keys, and atomic question replacement keeps each exam unified under existing scope/RLS.
+- Admin central exam ingestion uses browser PDF/Office/image parsing and local OCR, runs extract→enrich automatically per detected paper, stores the model's own solution as source_data.AIAnswer (active key only when no official key) and exports the structured Faculty/Level/Subjects JSON;, then dedicated authenticated text-model functions; model suggestions never overwrite official keys, and atomic question replacement keeps each exam unified under existing scope/RLS.
 - Central exam questions carry option comments, multiple lesson IDs and review warnings; publishing requires resolved corrections and explicit human verification, so mixed archive processing never publishes automatically.
 - Bulk exam verification acknowledges every draft in one action without changing corrections or warnings; publication validation remains separate so acknowledgement never invents missing keys.
 - Structured exam JSON retains raw archive/question metadata and separate accepted correction variants; deterministic scoped lesson matching precedes optional lesson-only AI enrichment, so source prose and professor alternatives are never rewritten or merged.

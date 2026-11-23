@@ -39,6 +39,9 @@ export const questionDraftSchema = z.object({
   if (q.format === "QCS" && q.answers.length > 1) ctx.addIssue({ code: "custom", message: "QCS requires one answer" });
 });
 export type ExamDraftQuestion = z.infer<typeof questionDraftSchema>;
+/** Structured uploads carry the original professor JSON and stay read-only; scan imports may only carry AI metadata. */
+export function isStructured(q: Pick<ExamDraftQuestion, "source_data">) { return q.source_data?.["QuestionText"] !== undefined; }
+export const letters = (answers: number[]) => answers.map((a) => "ABCDE"[a]).join("");
 /** Bulk acknowledgement changes only verification, never source content or warnings. */
 export function markAllQuestionsVerified(questions: ExamDraftQuestion[]): ExamDraftQuestion[] {
   return questions.map((q) => ({ ...q, verified: true }));
@@ -65,10 +68,15 @@ export function uniqueQuestions(qs: ExamDraftQuestion[]) {
 /** Enrichment cannot change the imported question, its official key, or the source evidence. */
 export function applyEnrichment(original: ExamDraftQuestion, suggestion: Partial<ExamDraftQuestion>, allowedLessons: Set<string>) {
   // Structured imports already contain reviewed source prose. Only lesson IDs may be enriched.
-  if (original.source_data) return questionDraftSchema.parse({ ...original,
+  if (isStructured(original)) return questionDraftSchema.parse({ ...original,
     lesson_ids: [...new Set([...original.lesson_ids, ...(suggestion.lesson_ids ?? [])])].filter((id) => allowedLessons.has(id)), verified: false,
   });
+  // The AI answer is stored separately; it becomes the active key only when no official key exists.
+  const ai = (suggestion.answers ?? []).filter((a, i, all) => a >= 0 && a < original.options.length && all.indexOf(a) === i).sort();
+  const useAi = !original.answers.length && ai.length > 0 && original.answer_source !== "official";
   return questionDraftSchema.parse({ ...original,
+    ...(ai.length ? { source_data: { ...(original.source_data ?? {}), AIAnswer: letters(ai) } } : {}),
+    ...(useAi ? { answers: original.format === "QCS" ? ai.slice(0, 1) : ai, answer_source: "generated" } : {}),
     explanation: suggestion.explanation ?? original.explanation,
     option_comments: original.options.map((_, i) => suggestion.option_comments?.[i] ?? ""),
     lesson_ids: (suggestion.lesson_ids ?? []).filter((id) => allowedLessons.has(id)),
@@ -121,4 +129,16 @@ export function parseExamJson(text: string): { papers: JsonPaper[] } {
       answer_source: Array.isArray(q["answers"]) && q["answers"].length ? "official" : "missing" }));
     return { ...p, questions };
   }) };
+}
+/** Export drafts in the same Faculty/Level/Subjects JSON structure accepted by structured upload. */
+export function exportExamJson(papers: { title: string; exam_year: string; questions: ExamDraftQuestion[]; source_metadata?: Record<string, SourceJson> | undefined }[], meta: { faculty: string; level: string; subject: string; lessonName: (id: string) => string }) {
+  return { Faculty: meta.faculty, Level: meta.level, Subjects: papers.map((p) => ({ ...(p.source_metadata ?? {}), Subject: String(p.source_metadata?.["Subject"] ?? meta.subject), Year: p.exam_year || String(p.source_metadata?.["Year"] ?? ""),
+    Questions: p.questions.map((q, i) => isStructured(q) ? q.source_data : ({
+      QuestionNumber: i + 1, QuestionText: q.stem,
+      Options: Object.fromEntries(q.options.map((o, k) => ["ABCDE"[k], o])),
+      OfficialAnswer: q.answer_source === "official" && q.answers.length ? letters(q.answers) : "Not available",
+      AIAnswer: String(q.source_data?.["AIAnswer"] ?? (q.answer_source === "generated" ? letters(q.answers) : "")),
+      Lesson: q.lesson_ids.map(meta.lessonName).filter(Boolean).join(" / "),
+      OptionExplanations: Object.fromEntries(q.options.map((_, k) => ["ABCDE"[k], { Explanation: q.option_comments[k] ?? "" }])),
+    })) })) };
 }

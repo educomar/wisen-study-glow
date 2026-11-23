@@ -10,9 +10,9 @@ describe("central exam ingestion", () => {
     const q = applyEnrichment(make(), { answers: [1], stem: "changed", option_comments: ["Correct", "Incorrect", "Correct"] }, new Set());
     assert.deepEqual(q.answers, [0, 2]); assert.equal(q.stem, "Choose the correct propositions"); assert.equal(q.answer_source, "official");
   });
-  it("keeps a missing correction missing instead of solving it", () => {
+  it("labels an AI-filled missing correction as AI answer, never official", () => {
     const q = applyEnrichment({ ...make(), answers: [], answer_source: "missing" }, { answers: [0] }, new Set());
-    assert.deepEqual(q.answers, []); assert.equal(q.answer_source, "missing");
+    assert.deepEqual(q.answers, [0]); assert.equal(q.answer_source, "generated"); assert.equal(q.source_data?.["AIAnswer"], "A");
   });
   it("permits multiple real lessons but removes invented IDs", () => {
     const a = "11111111-1111-4111-8111-111111111111", b = "22222222-2222-4222-8222-222222222222", c = "33333333-3333-4333-8333-333333333333";
@@ -83,4 +83,14 @@ describe("central exam ingestion", () => {
     assert.deepEqual(linkJsonLessons([{ ...q, source_data: { ...q.source_data, Lesson: "10. Oogenesis" } }], [{ id, name: "Oogenesis (Parts 1 & 2)" }], "Embryology")[0]?.lesson_ids, [id]);
     assert.deepEqual(linkJsonLessons([{ ...q, source_data: { ...q.source_data, Lesson: "8. Microscopy & Cell Measurement TD 1" } }], [{ id, name: "Cytology Practical TD 1 — Microscopy & Cell Measurement" }], "Cytology")[0]?.lesson_ids, [id]);
   });
+});
+import { applyEnrichment as __apply, questionDraftSchema as __q } from "./exam-ingestion";
+import { test as __test } from "node:test";
+import __assert from "node:assert/strict";
+__test("AI answer never replaces an official key, but fills a missing one", () => {
+  const base = __q.parse({ stem: "S", options: ["a", "b", "c"], answers: [0], answer_source: "official" });
+  const kept = __apply(base, { answers: [1, 2] }, new Set());
+  __assert.deepEqual(kept.answers, [0]); __assert.equal(kept.answer_source, "official"); __assert.equal(kept.source_data?.["AIAnswer"], "BC");
+  const filled = __apply(__q.parse({ ...base, answers: [], answer_source: "missing" }), { answers: [2] }, new Set());
+  __assert.deepEqual(filled.answers, [2]); __assert.equal(filled.answer_source, "generated");
 });
