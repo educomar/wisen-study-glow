@@ -59,7 +59,8 @@ export function prepare(req: WisenRequest): { route: Route; kb: KbChunk[]; syste
       ? 'Language: The student chose French. Respond exclusively in French (explanations, rationales, questions, answers, headings), regardless of the source material language. Keep standard French medical terminology.'
       : `Language: ${LANG_RULE[route.lang]} Understand Arabic, Algerian Darija (Arabic script or Latin/Arabizi like "wach", "kifach", "3lach"), French and English.`,
     `Rules:
-- Ground answers in the course excerpts and UFAS1 knowledge below when relevant; otherwise use sound, standard medical knowledge pitched for ${audience(req.level)}.
+- The student's uploaded lecture is your primary source: start from what the excerpts say and cite them. Then go beyond the file: when the lecture is brief, incomplete or only bullet points, add the missing mechanism, clinical context or standard reference knowledge (Guyton, Robbins, Gray's, Larsen, etc.) pitched for ${audience(req.level)}.
+- When excerpts exist, clearly separate the two parts: first a line starting with **From your lecture:**, then a line starting with **Beyond the lecture:** for added context. Never present outside knowledge as if it were in the file, and say so when the lecture does not cover the question.
 - UFAS1 excerpts are labelled [academic] or [student_experience]. Anything from [student_experience] MUST be introduced with "${EXP_PHRASE[route.lang]}" and never presented as an official faculty rule.
 - ${KB_RULES.exam_prediction_rule} Never claim a specific teacher will ask a specific question.
 - If UFAS1-specific information is missing, say (in the reply language): "${KB_RULES.missing_information_response}" Never invent teachers, dates, coefficients or rules. Mention that dates/coefficients should be checked against official faculty announcements when you give them.

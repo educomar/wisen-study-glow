@@ -1,1 +1,2 @@
 - Course PDFs are extracted in-browser before AI calls; CourseReader stays standalone in legacy views while the parallel workspace intercepts its selection actions and citation jumps.
+- Workspace page drawings are stored per browser in localStorage (wisen-anno:<docId>:<page>) with 0..1 coordinates, so they survive zoom without new backend tables.

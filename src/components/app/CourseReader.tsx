@@ -28,6 +28,8 @@ import { useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { ask, pushMsgs } from "./chat";
+import { Annotated, ANNO_COLORS, clearAnno, undoAnno, type AnnoTool } from "./Annotations";
+import { Eraser, Highlighter, PenLine, Type, Undo2, Trash2, MousePointer2 } from "lucide-react";
 import { lecture, type Slide } from "./data";
 import {
   clearJump,
@@ -177,6 +179,8 @@ export function CourseReader({
   const [showCourses, setShowCourses] = useState(!parallel);
   const [reading, setReading] = useState(parallel);
   const [zoom, setZoom] = useState(100);
+  const [tool, setTool] = useState<AnnoTool>("none");
+  const [penColor, setPenColor] = useState(ANNO_COLORS[0]!);
   const { tree, signedIn } = useCurriculum();
   const wantFile = (useSearch({ strict: false }) as { file?: string }).file;
   const openedRef = useRef<string | null>(null);
@@ -558,6 +562,18 @@ export function CourseReader({
                   <ChevronRight />
                 </Button>
               </div>
+              <div className="flex flex-wrap items-center gap-0.5" role="toolbar" aria-label={translate("Drawing tools")}>
+                {([["none", MousePointer2, "Select text"], ["pen", PenLine, "Pen"], ["highlight", Highlighter, "Highlighter"], ["text", Type, "Text note"], ["eraser", Eraser, "Eraser"]] as const).map(([t, Icon, l]) => (
+                  <Button key={t} variant={tool === t ? "secondary" : "ghost"} size="icon" aria-label={translate(l)} title={translate(l)} aria-pressed={tool === t} onClick={() => { setTool(t); setSel(null); }}>
+                    <Icon />
+                  </Button>
+                ))}
+                {tool !== "none" && tool !== "eraser" && ANNO_COLORS.map((c) => (
+                  <button key={c} type="button" aria-label={c} onClick={() => setPenColor(c)} className={`mx-0.5 size-4 rounded-full border ${penColor === c ? "ring-2 ring-ring ring-offset-1" : "border-border"}`} style={{ background: c }} />
+                ))}
+                <Button variant="ghost" size="icon" aria-label={translate("Undo")} title={translate("Undo")} onClick={() => undoAnno(doc.id, page)}><Undo2 /></Button>
+                <Button variant="ghost" size="icon" aria-label={translate("Clear page drawings")} title={translate("Clear page drawings")} onClick={() => clearAnno(doc.id, page)}><Trash2 /></Button>
+              </div>
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
@@ -635,8 +651,8 @@ export function CourseReader({
             {!isSample && doc.office ? (
               <div className="space-y-5">
                 {(parallel ? doc.pages.filter((p) => p.pageNumber === page) : doc.pages).map((p) => (
+                  <Annotated key={`${doc.id}-${p.pageNumber}`} doc={doc.id} page={p.pageNumber} tool={tool} color={penColor}>
                   <article
-                    key={`${doc.id}-${p.pageNumber}`}
                     data-page={p.pageNumber}
                     className="office-page mx-auto rounded-lg border border-border bg-card p-5 sm:p-7"
                     style={{ maxWidth: width ? Math.round((width * zoom) / 100) : undefined, fontSize: `${zoom}%` }}
@@ -646,6 +662,7 @@ export function CourseReader({
                     </p>
                     <div dangerouslySetInnerHTML={{ __html: doc.office!.html[p.pageNumber] ?? "" }} />
                   </article>
+                  </Annotated>
                 ))}
               </div>
             ) : !isSample && pdf ? (
@@ -653,12 +670,13 @@ export function CourseReader({
                 {width > 0 &&
                   (parallel ? doc.pages.filter((p) => p.pageNumber === page) : doc.pages).map(
                     (p) => (
+                      <Annotated key={`${doc.title}-${p.pageNumber}`} doc={doc.id} page={p.pageNumber} tool={tool} color={penColor}>
                       <PdfPage
-                        key={`${doc.title}-${p.pageNumber}`}
                         pdf={pdf}
                         n={p.pageNumber}
                         width={Math.round((width * zoom) / 100)}
                       />
+                      </Annotated>
                     ),
                   )}
               </div>
