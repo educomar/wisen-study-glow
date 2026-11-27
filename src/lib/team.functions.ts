@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { audit, loadTeam, newToken, requireTeam, safeEqual, sha256 } from "./team.server";
 import { validateExamScope } from "./exam-scope";
+import { validateSemester } from "./academic-structure";
 
 const INVITE_DAYS = 7;
 const emailOf = (claims: { email?: unknown }) => String(claims.email ?? "").trim().toLowerCase();
@@ -206,7 +207,7 @@ type Table = (typeof TABLES)[number];
 const LABEL: Record<Table, string> = { subjects: "subject", units: "unit", lessons: "lesson", qbank_questions: "question", team_flashcards: "flashcard", kb_entries: "kb_entry" };
 const FIELDS: Record<Table, string[]> = {
   subjects: ["name", "faculty", "department", "academic_year", "position"],
-  units: ["subject_id", "name", "position"],
+  units: ["subject_id", "name", "position", "semester"],
   lessons: ["unit_id", "name", "position"],
   qbank_questions: ["lesson_id", "stem", "options", "answer", "answers", "explanation", "difficulty"],
   team_flashcards: ["lesson_id", "front", "back"],
@@ -221,6 +222,13 @@ export const saveContent = createServerFn({ method: "POST" })
     const t = await requireTeam(context.supabase, context.userId, data.table === "kb_entries");
     const values: Record<string, unknown> = {};
     for (const k of FIELDS[data.table]) if (k in data.values) values[k] = data.values[k];
+    if (data.table === "units" && ("semester" in values || "subject_id" in values)) {
+      const { data: existing } = data.id ? await context.supabase.from("units").select("subject_id,semester").eq("id", data.id).maybeSingle() : { data: null };
+      const parent = String(values["subject_id"] ?? existing?.subject_id ?? "");
+      const { data: subject } = await context.supabase.from("subjects").select("academic_year").eq("id", parent).maybeSingle();
+      if (!subject) throw new Error("Choose a valid curriculum subject.");
+      validateSemester(subject.academic_year, String(values["semester"] ?? existing?.semester ?? ""));
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tbl = () => context.supabase.from(data.table) as any;
     if (data.id) {

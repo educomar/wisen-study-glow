@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyLevel, inLevel } from "@/lib/profile";
+import { Button } from "@/components/ui/button";
+import { ScopePicker, emptyScope, type Scope } from "./ScopePicker";
 
 export type CurFile = { id: string; file_name: string; subject: string; unit: string; lesson: string; date?: string | null };
-export type Tree = { id: string; name: string; emds: CurFile[]; units: { id: string; name: string; lessons: { id: string; name: string; files: CurFile[] }[] }[] }[];
+export type Tree = { id: string; name: string; academic_year?: number; emds: CurFile[]; units: { id: string; name: string; semester?: string; lessons: { id: string; name: string; files: CurFile[] }[] }[] }[];
 
 /** Subject → Unit → Lesson → File browser, scoped to the student's profile by RLS. */
 export function useCurriculum() {
@@ -19,15 +21,15 @@ export function useCurriculum() {
       const [lv, s, un, l, r] = await Promise.all([
         fetchMyLevel(u.user.id),
         supabase.from("subjects").select("id,name,position,faculty,department,academic_year").order("position"),
-        supabase.from("units").select("id,subject_id,name,position").order("position"),
+        supabase.from("units").select("id,subject_id,name,position,semester").order("position"),
         supabase.from("lessons").select("id,unit_id,name,position").order("position"),
         supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type,kind,subject_id,drive_created_at").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at"),
       ]);
       setTree((s.data ?? []).filter((sub) => inLevel(lv, sub) && !/deprecated/i.test(sub.name)).map((sub) => ({
-        id: sub.id, name: sub.name,
+        id: sub.id, name: sub.name, academic_year: sub.academic_year,
         emds: (r.data ?? []).filter((f) => f.subject_id === sub.id && f.kind === "past_emd").map((f) => ({ id: f.id, file_name: f.file_name, subject: sub.name, unit: "", lesson: "", date: f.drive_created_at })),
         units: (un.data ?? []).filter((x) => x.subject_id === sub.id).map((unit) => ({
-          id: unit.id, name: unit.name,
+          id: unit.id, name: unit.name, semester: unit.semester,
           lessons: (l.data ?? []).filter((x) => x.unit_id === unit.id).map((les) => ({
             id: les.id, name: les.name,
             files: (r.data ?? []).filter((f) => f.lesson_id === les.id && f.kind !== "past_emd").map((f) => ({ id: f.id, file_name: f.file_name, subject: sub.name, unit: unit.name, lesson: les.name })),
@@ -67,38 +69,13 @@ export async function downloadCurriculumFile(f: CurFile) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen }: { tree: Tree | null; signedIn: boolean; activeTitle: string; onOpen: (f: CurFile) => void }) {
-  const { t: translate } = useLang();
-  const [sub, setSub] = useState<string | null>(null);
-  const [unit, setUnit] = useState<string | null>(null);
-  if (!tree) return <p className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />  {translate("Loading your courses…")}</p>;
-  if (!signedIn) return <p className="p-4 text-sm text-muted-foreground">{translate("Sign in to browse your faculty courses.")}</p>;
-  if (!tree.length) return <p className="p-4 text-sm text-muted-foreground">{translate("No courses yet for your year.")}</p>;
-  const s = tree.find((x) => x.id === sub);
-  const u = s?.units.find((x) => x.id === unit);
-  const crumb = "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground";
-  const row = "flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent";
-  return (
-    <div className="space-y-2 p-3">
-      <div className="flex flex-wrap items-center gap-1 px-1">
-        <button className={crumb} onClick={() => { setSub(null); setUnit(null); }}><Library className="size-3.5" />  {translate("Courses")}</button>
-        {s && <><ChevronRight className="size-3 text-muted-foreground" /><button className={crumb} onClick={() => setUnit(null)}>{translate(s.name)}</button></>}
-        {u && <><ChevronRight className="size-3 text-muted-foreground" /><span className="text-xs">{u.name}</span></>}
-      </div>
-      {!s && tree.map((x) => <button key={x.id} className={row} onClick={() => setSub(x.id)}><span>{translate(x.name)}</span><span className="font-mono text-[10px] text-muted-foreground">{x.units.length}  {translate("units")} <ChevronRight className="inline size-3" /></span></button>)}
-      {s && !u && s.units.map((x) => <button key={x.id} className={row} onClick={() => setUnit(x.id)}><span>{x.name}</span><span className="font-mono text-[10px] text-muted-foreground">{x.lessons.length}  {translate("lessons")} <ChevronRight className="inline size-3" /></span></button>)}
-      {u && u.lessons.map((les) => (
-        <div key={les.id} className="rounded-md border border-border p-2">
-          <p className="px-1 text-sm font-medium">{les.name}</p>
-          {les.files.length ? les.files.map((f) => (
-            <div key={f.id} className="mt-1 flex items-center gap-1">
-              <button onClick={() => onOpen(f)} className={`flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${activeTitle === f.file_name.replace(/\.(pdf|docx|pptx)$/i, "") ? "bg-primary/10 text-primary" : ""}`}>
-                <FileText className="size-3.5 shrink-0 text-primary" /><span className="truncate">{f.file_name}</span>
-              </button>
-            </div>
-          )) : <p className="px-1 text-xs text-muted-foreground">{translate("No file yet")}</p>}
-        </div>
-      ))}
-    </div>
-  );
+export function CurriculumBrowser({ tree, signedIn, activeTitle, onOpen, onSelectLesson }: { tree: Tree | null; signedIn: boolean; activeTitle: string; onOpen: (f: CurFile) => void; onSelectLesson?: (scope: Scope) => void }) {
+  const { t } = useLang();
+  const [scope, setScope] = useState(emptyScope);
+  if (!tree) return <p className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin"/>{t("Loading your courses…")}</p>;
+  if (!signedIn) return <p className="p-4 text-sm text-muted-foreground">{t("Sign in to browse your faculty courses.")}</p>;
+  if (!tree.length) return <p className="p-4 text-sm text-muted-foreground">{t("No courses yet for your year.")}</p>;
+  const subject = tree.find(s => s.id === scope.s);
+  const lesson = subject?.units.find(u => u.id === scope.u)?.lessons.find(l => l.id === scope.l);
+  return <div className="space-y-4 p-3"><ScopePicker tree={tree} value={scope} onChange={setScope} fileLevel={false}/>{lesson && <><h3 className="font-medium">{lesson.name}</h3>{lesson.files.map(f => <Button key={f.id} variant={activeTitle === f.file_name ? "default" : "outline"} className="w-full justify-start whitespace-normal" onClick={() => onOpen(f)}><FileText/>{f.file_name}</Button>)}{onSelectLesson && <Button className="w-full" onClick={() => onSelectLesson(scope)}>{t("Study this lesson")}</Button>}</>}</div>;
 }

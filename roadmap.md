@@ -1,5 +1,10 @@
 # Roadmap
 
+## Year-specific academic structure — November 27
+- [ ] Adapt administration to Year 1 semesters and Years 2–6 integrated units, including scoped creation, editing and ordering.
+- [ ] Apply the same organization to student curriculum and exam selection without replacing existing identifiers.
+- [ ] Verify academic rules, authenticated student browsing and administration where access is available.
+
 ## Structured Past EMD JSON upload — November 16
 - [x] Require selected enrolled level, semester where applicable and subject before upload.
 - [x] Parse all six supplied archives: 35 exams / 830 questions; preserve every original field, comments, empty source stems and official alternative keys; all 830 link to existing lessons.

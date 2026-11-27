@@ -3,11 +3,14 @@ import { ParallelWorkspace } from '@/components/app/ParallelWorkspace';
 import { studyMeta } from '@/lib/study-meta';
 
 export const Route = createFileRoute('/workspace')({
-  validateSearch: (search: Record<string, unknown>): { sheet: string; file?: string | undefined } => ({
+  validateSearch: (search: Record<string, unknown>): { sheet: string; file?: string | undefined; s?: string | undefined; u?: string | undefined; l?: string | undefined } => ({
     sheet: typeof search['sheet'] === 'string' ? search['sheet'] : '',
     file: typeof search['file'] === 'string' ? search['file'] : undefined,
+    s: typeof search['s'] === 'string' ? search['s'] : undefined,
+    u: typeof search['u'] === 'string' ? search['u'] : undefined,
+    l: typeof search['l'] === 'string' ? search['l'] : undefined,
   }),
-  head: () => studyMeta('Parallel Study Workspace', 'Study official UFAS1 lectures beside contextual Wisen AI, with selected-passage explanations, EMD questions, Kapsules and saved notes.'),
+  head: () => studyMeta('Parallel Study Workspace', 'Select your curriculum lesson and study your own document beside contextual Wisen AI, with selected-passage explanations, EMD questions, Kapsules and saved notes.'),
   component: WorkspacePage,
 });
 

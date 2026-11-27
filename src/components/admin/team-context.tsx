@@ -30,18 +30,18 @@ export function useAction() {
 }
 export { useServerFn };
 
-export type Subject = { id: string; name: string; faculty: string; department: string; academic_year: number };
-export type Unit = { id: string; subject_id: string; name: string };
-export type Lesson = { id: string; unit_id: string; name: string };
+export type Subject = { id: string; name: string; faculty: string; department: string; academic_year: number; position: number };
+export type Unit = { id: string; subject_id: string; name: string; semester: string; position: number };
+export type Lesson = { id: string; unit_id: string; name: string; position: number };
 
 export function useHierarchy() {
   return useQuery({
     queryKey: ["hierarchy"],
     queryFn: async () => {
       const [s, u, l] = await Promise.all([
-        supabase.from("subjects").select("id,name,faculty,department,academic_year").order("department").order("academic_year").order("position").order("name"),
-        supabase.from("units").select("id,subject_id,name").order("position").order("created_at"),
-        supabase.from("lessons").select("id,unit_id,name").order("position").order("created_at"),
+        supabase.from("subjects").select("id,name,faculty,department,academic_year,position").order("department").order("academic_year").order("position").order("name"),
+        supabase.from("units").select("id,subject_id,name,semester,position").order("position").order("created_at"),
+        supabase.from("lessons").select("id,unit_id,name,position").order("position").order("created_at"),
       ]);
       if (s.error || u.error || l.error) throw new Error(s.error?.message ?? u.error?.message ?? l.error?.message ?? "Could not load curriculum.");
       return { subjects: (s.data ?? []) as Subject[], units: (u.data ?? []) as Unit[], lessons: (l.data ?? []) as Lesson[] };

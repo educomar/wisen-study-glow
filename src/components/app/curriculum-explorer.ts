@@ -21,7 +21,7 @@ function subjectSemesters(name: string): ('1' | '2')[] {
 }
 /** True only when the curriculum actually has semester-specific modules (e.g. Year 1 Medicine); Year 2 modules are annual. */
 export function hasSemesters(tree: Tree) {
-  return tree.some(subject => knownSemester(subject.name) || subject.units.some(unit => unitSemester(unit.name)));
+  return tree.some(subject => subject.academic_year !== undefined ? subject.academic_year === 1 : knownSemester(subject.name) || subject.units.some(unit => unitSemester(unit.name)));
 }
 export function exploreCurriculum(tree: Tree, query: string, semester: Semester) {
   const terms = normalizeCurriculumText(query).trim().split(/\s+/).filter(Boolean);
@@ -31,7 +31,7 @@ export function exploreCurriculum(tree: Tree, query: string, semester: Semester)
     semester: s,
     subjects: tree.flatMap(subject => {
       const units = subject.units.flatMap(unit => {
-        const assigned = unitSemester(unit.name);
+        const assigned = unit.semester === "S1" ? "1" : unit.semester === "S2" ? "2" : unitSemester(unit.name);
         if (s !== 'all' && (assigned ? assigned !== s : !subjectSemesters(subject.name).includes(s))) return [];
         const alias = Object.entries(knowledge.modules).find(([name, module]) => normalizeCurriculumText(name) === normalizeCurriculumText(subject.name) || ('english' in module && normalizeCurriculumText(module.english) === normalizeCurriculumText(subject.name)))?.[0] ?? '';
         const lessons = unit.lessons.filter(lesson => matches(subject.name, alias, unit.name, lesson.name, ...lesson.files.map(f => f.file_name)));
