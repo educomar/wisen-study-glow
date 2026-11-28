@@ -806,6 +806,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          legacy_container: boolean
           name: string
           position: number
           semester: string
@@ -816,6 +817,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          legacy_container?: boolean
           name: string
           position?: number
           semester?: string
@@ -826,6 +828,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          legacy_container?: boolean
           name?: string
           position?: number
           semester?: string

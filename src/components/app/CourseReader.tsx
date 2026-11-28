@@ -22,6 +22,7 @@ import {
   ScanLine,
   ChevronDown,
 } from "lucide-react";
+import { emptyScope, type Scope } from "./ScopePicker";
 import { CurriculumBrowser, downloadCurriculumFile, fetchCurriculumFile, useCurriculum, type CurFile } from "./Curriculum";
 import { useEffect, useRef, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
@@ -182,7 +183,20 @@ export function CourseReader({
   const [tool, setTool] = useState<AnnoTool>("none");
   const [penColor, setPenColor] = useState(ANNO_COLORS[0]!);
   const { tree, signedIn } = useCurriculum();
-  const wantFile = (useSearch({ strict: false }) as { file?: string }).file;
+  const search = useSearch({ strict: false }) as { file?: string; s?: string; u?: string; l?: string };
+  const wantFile = search.file;
+  const [courseScope, setCourseScope] = useState<Scope>(emptyScope);
+  const chosenSubject = tree?.find(s => s.id === courseScope.s);
+  const chosenUnit = chosenSubject?.units.find(u => u.id === courseScope.u);
+  const chosenLesson = chosenUnit?.lessons.find(l => l.id === courseScope.l);
+  const scopedSubject = chosenSubject ? [chosenSubject.name, chosenSubject.academic_year === 1 ? '' : chosenUnit?.name].filter(Boolean).join(' · ') : subject;
+  useEffect(() => {
+    if (!search.s || !tree) return;
+    const parent = tree.find(s => s.id === search.s);
+    const branch = parent?.units.find(u => u.id === search.u);
+    const lesson = branch?.lessons.find(l => l.id === search.l);
+    if (parent && branch && lesson) setCourseScope({ s: parent.id, u: branch.id, l: lesson.id, f: '' });
+  }, [tree, search.s, search.u, search.l]);
   const openedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!wantFile || !tree || openedRef.current === wantFile) return;
@@ -336,7 +350,7 @@ export function CourseReader({
     window.getSelection()?.removeAllRanges();
   };
 
-  async function onFile(f?: File, subj = subject) {
+  async function onFile(f?: File, subj = scopedSubject) {
     if (!f) return;
     setErr(null);
     const r = await uploadPdf(f, subj, setStage);
@@ -411,12 +425,12 @@ export function CourseReader({
           onClick={() => setShowCourses(!showCourses)}
         >
           <Library />
-          {parallel ? translate(doc.subject) : translate("My courses")}
+          {parallel ? translate(chosenSubject?.name ?? doc.subject) : translate("Academic curriculum")}
           {parallel && <ChevronDown />}
         </Button>
         <div className="studio-title flex min-w-0 flex-1 items-center gap-2 px-1">
           <FileText className="size-4 shrink-0 text-primary" />
-          <p className="truncate text-sm font-semibold">{translate(doc.title)}</p>
+          <p className="truncate text-sm font-semibold">{chosenLesson?.name ?? translate(doc.title)}</p>
           <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
             · {doc.pages.length}  {translate("pages")} </span>
         </div>
@@ -459,14 +473,15 @@ export function CourseReader({
         <Sheet open={showCourses} onOpenChange={setShowCourses}>
           <SheetContent side="left" className="study-theme reference-theme studio-course-drawer">
             <SheetHeader>
-              <SheetTitle>{translate("Faculty lectures")}</SheetTitle>
-              <SheetDescription>{translate("UFAS1 Sétif · Courses & materials")}</SheetDescription>
+              <SheetTitle>{translate("Select a study lesson")}</SheetTitle>
+              <SheetDescription>{translate("Academic curriculum")}</SheetDescription>
             </SheetHeader>
             <CurriculumBrowser
               tree={tree}
               signedIn={signedIn}
               activeTitle={doc.title}
               onOpen={openCurriculum}
+              onSelectLesson={scope => { setCourseScope(scope); setShowCourses(false); fileRef.current?.click(); }}
             />
           </SheetContent>
         </Sheet>
@@ -480,6 +495,7 @@ export function CourseReader({
             signedIn={signedIn}
             activeTitle={doc.title}
             onOpen={openCurriculum}
+            onSelectLesson={scope => { setCourseScope(scope); setShowCourses(false); fileRef.current?.click(); }}
           />
         </div>
       )}

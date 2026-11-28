@@ -16,6 +16,7 @@ import type { Question } from "./data";
 import { emdYear, isAcceptedAnswer, isPicked, questionCredit, scoreOn20, scoreWith, SCORING, toggleOption, type Scoring } from "./emd-exam";
 import { Inline, RichText } from "./RichText";
 import { emptyScope, type Scope } from "./ScopePicker";
+import { exploreCurriculum, hasSemesters } from "./curriculum-explorer";
 import { addCard, getState, log, recordQuestion, update, useAppState, type ExamSession } from "./store";
 import { useSession } from "@/lib/profile";
 
@@ -206,6 +207,7 @@ const peColor = (name: string) => PE_COLORS[name.toLowerCase()] ?? PE_FALLBACK[[
 function PastEmds({ onBack }: { onBack: () => void }) {
   const { t: translate } = useLang();
   const { tree } = useCurriculum();
+  const firstYear = hasSemesters(tree ?? []);
   const history = useAppState().questionResults as Record<string, unknown> | undefined;
   const [mode, setMode] = useState<"full" | "lesson">("full");
   const [mod, setMod] = useState("");
@@ -242,7 +244,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
     return [...m.values()];
   }, [links, lessonInfo, sets]); // eslint-disable-line react-hooks/exhaustive-deps
   const lessons = lessonRows.filter((l) => (!mod || l.subject === mod) && (!sem || l.sem === sem) && (!needle || `${l.name} ${l.subject}`.toLowerCase().includes(needle)));
-  const lessonSems = [...new Set(lessons.map((l) => l.sem))].sort();
+  const lessonSems = firstYear ? [...new Set(lessons.map((l) => l.sem))].sort() : [""];
   const pickedCount = lessonRows.filter((l) => picked.has(l.id)).reduce((a, l) => a + l.count, 0);
   const toQuestion = (r: Tables<"exam_set_questions">, x: PubSet | undefined): Question => { const a = r.answers as number[]; const multi = a.length > 1 || r.format === "QCM_MULTI"; const subject = x ? moduleOf(x) : ""; const topics = (r.lesson_ids ?? []).map((id: string) => lessonInfo.get(id)?.name).filter(Boolean).join(" + "); return { id: `set-${r.id}`, subject, topic: topics || subject, difficulty: "Medium", stem: r.stem, options: r.options as string[], answer: multi ? a.reduce((m, b) => m | (1 << b), 0) : a[0] ?? 0, ...centralAnswerEvidence(r), why: r.explanation, distractors: r.option_comments as string[], trapPhrase: r.trap_phrase, trapExplanation: r.trap_explanation, slide: 0, source: x?.title ?? "", multi, origin: "past", unit: x?.exam_year ?? "" } as Question; };
   const openSet = async (x: PubSet) => {
@@ -283,7 +285,7 @@ function PastEmds({ onBack }: { onBack: () => void }) {
           <button type="button" className={!mod ? "is-on" : ""} onClick={() => setMod("")}>{translate("All modules")}</button>
           {moduleNames.map((n) => <button key={n} type="button" className={mod === n ? "is-on" : ""} onClick={() => { setMod(n); setYear("All"); }}><i style={{ background: peColor(n) }} />{n}</button>)}
         </div></div>
-        <div className="pe-row"><span className="pe-label">{translate("Semester")}</span><div className="pe-seg pe-seg-sm">{["", "S1", "S2"].map((v) => <button key={v} type="button" className={sem === v ? "is-on" : ""} onClick={() => setSem(v)}>{v ? semLabel(v) : translate("All")}</button>)}</div></div>
+        {firstYear && <div className="pe-row"><span className="pe-label">{translate("Semester")}</span><div className="pe-seg pe-seg-sm">{["", "S1", "S2"].map((v) => <button key={v} type="button" className={sem === v ? "is-on" : ""} onClick={() => setSem(v)}>{v ? semLabel(v) : translate("All")}</button>)}</div></div>}
         {mode === "full" && years.length > 0 && <div className="pe-row"><span className="pe-label">{translate("Year")}</span><div className="pe-chips pe-scroll">{["All", ...years].map((y) => <button key={y} type="button" className={year === y ? "is-on" : ""} onClick={() => setYear(y)}>{y === "All" ? translate("All years") : y}</button>)}</div></div>}
         <div className="pe-results"><span>{mode === "full" ? `${exams.length} ${translate("exams")}` : `${lessons.length} ${translate("lessons")}`}</span><button type="button" onClick={reset}>{translate("Reset filters")}</button></div>
       </div>
@@ -296,16 +298,16 @@ function PastEmds({ onBack }: { onBack: () => void }) {
               <button key={x.id} type="button" className="pe-card" disabled={!!busy} onClick={() => void openSet(x)}>
                 <span className="pe-tag"><i style={{ background: peColor(m) }} />{m}<em className="pe-go">{busy === x.id ? <Loader2 className="animate-spin" /> : <ArrowRight />}</em></span>
                 <strong className="pe-year">{x.exam_year || x.title}</strong>
-                <small>{[x.semester && semLabel(x.semester), translate(x.session === "rattrapage" ? "Rattrapage" : "Normale"), x.emd_number].filter(Boolean).join(" · ")}</small>
+                <small>{[firstYear && x.semester && semLabel(x.semester), translate(x.session === "rattrapage" ? "Rattrapage" : "Normale"), x.emd_number].filter(Boolean).join(" · ")}</small>
                 <span className="pe-track"><span style={{ width: `${total ? Math.round((d / total) * 100) : 0}%` }} /></span>
                 <span className="pe-foot"><span>{d ? `${d}/${total} ${translate("done")}` : translate("Not started")}</span><b>{total} {translate("questions")}</b></span>
               </button>); })}</div>
           </div>); })
       ) : (
         !lessons.length ? <p className="emd-empty">{translate("No lessons match these filters.")}</p> :
-        lessonSems.map((s) => { const group = lessons.filter((l) => l.sem === s); const all = group.every((l) => picked.has(l.id)); return (
+        lessonSems.map((s) => { const group = lessons.filter((l) => !firstYear || l.sem === s); const all = group.every((l) => picked.has(l.id)); return (
           <div key={s} className="pe-group">
-            <h3 className="pe-gh">{semLabel(s)}<small>{group.length} {translate("lessons")}</small><span /><button type="button" className="pe-link" onClick={() => setPicked((p) => { const n = new Set(p); group.forEach((l) => all ? n.delete(l.id) : n.add(l.id)); return n; })}>{translate(all ? "Deselect all" : "Select all")}</button></h3>
+            <h3 className="pe-gh">{firstYear ? semLabel(s) : translate("Lessons")}<small>{group.length} {translate("lessons")}</small><span /><button type="button" className="pe-link" onClick={() => setPicked((p) => { const n = new Set(p); group.forEach((l) => all ? n.delete(l.id) : n.add(l.id)); return n; })}>{translate(all ? "Deselect all" : "Select all")}</button></h3>
             <div className="pe-grid pe-lgrid">{group.map((l) => (
               <button key={l.id} type="button" className={`pe-lcard${picked.has(l.id) ? " is-on" : ""}`} aria-pressed={picked.has(l.id)} onClick={() => toggle(l.id)}>
                 <span className="pe-box">{picked.has(l.id) && <Check />}</span>
@@ -346,6 +348,7 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
   const { tree } = useCurriculum();
   const [mode, setMode] = useState<"practice" | "real">("practice");
   const [subj, setSubj] = useState<string>(initial?.s ?? "");
+  const [discipline, setDiscipline] = useState(initial?.u ?? "");
   const [sem, setSem] = useState<"" | "S1" | "S2">("");
   const [picked, setPicked] = useState<Set<string>>(() => new Set(initial?.l ? [initial.l] : []));
   const [q, setQ] = useState("");
@@ -370,23 +373,24 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
     return m;
   }, [tree]);
   const all = rows ?? [];
-  const subjects = useMemo(() => (tree ?? []).filter((s) => !/deprecated/i.test(s.name) && s.units.some((u) => u.lessons.length)), [tree]);
+  const firstYear = hasSemesters(tree ?? []);
+  const subjects = useMemo(() => (firstYear && sem ? exploreCurriculum(tree ?? [], '', sem === 'S1' ? '1' : '2').groups.flatMap(g => g.subjects) : tree ?? []).filter(s => !/deprecated/i.test(s.name) && s.units.some(u => u.lessons.length)), [tree, sem, firstYear]);
   useEffect(() => { if (!subj && subjects[0]) setSubj(subjects[0].id); }, [subjects, subj]);
   const scoped = all.filter((r) => (!sem || r.semester === sem) && r.lesson_ids.some((id) => lessonInfo.get(id)?.subject === subj));
-  const hasSem = all.some((r) => r.semester === "S1" || r.semester === "S2");
+  const hasSem = firstYear;
   const counts = new Map<string, number>();
   scoped.forEach((r) => r.lesson_ids.forEach((id) => { if (lessonInfo.get(id)?.subject === subj) counts.set(id, (counts.get(id) ?? 0) + 1); }));
-  const subject = tree?.find((s) => s.id === subj);
+  const subject = subjects.find((s) => s.id === subj);
   const needle = q.trim().toLowerCase();
   const seenLesson = new Set<string>();
-  const groups = [{ name: "", lessons: (subject?.units ?? []).flatMap((u) => u.lessons).filter((l) => !seenLesson.has(l.id) && seenLesson.add(l.id) && (!needle || l.name.toLowerCase().includes(needle))) }].filter((g) => g.lessons.length);
+  const groups = [{ name: "", lessons: (subject?.units ?? []).filter(u => firstYear || !discipline || u.id === discipline).flatMap((u) => u.lessons).filter((l) => !seenLesson.has(l.id) && seenLesson.add(l.id) && (!needle || l.name.toLowerCase().includes(needle))) }].filter((g) => g.lessons.length);
   const visibleIds = groups.flatMap((g) => g.lessons.map((l) => l.id));
-  const pool = scoped.filter((r) => r.lesson_ids.some((id) => picked.has(id)));
+  const pool = scoped.filter((r) => r.lesson_ids.some((id) => picked.has(id) && visibleIds.includes(id)));
   const max = Math.min(120, pool.length);
   const n = Math.max(1, Math.min(count, max || 1));
   const toggleIds = (ids: string[]) => setPicked((p) => { const nx = new Set(p); const on = ids.every((id) => nx.has(id)); ids.forEach((id) => on ? nx.delete(id) : nx.add(id)); return nx; });
-  const changeSubject = (id: string) => { setSubj(id); setPicked(new Set()); setQ(""); };
-  const changeSem = (v: "" | "S1" | "S2") => { setSem(v); setPicked(new Set()); };
+  const changeSubject = (id: string) => { setSubj(id); setDiscipline(""); setPicked(new Set()); setQ(""); };
+  const changeSem = (v: "" | "S1" | "S2") => { setSem(v); setSubj(""); setDiscipline(""); setPicked(new Set()); };
   const start = () => {
     if (!subject || !pool.length) return;
     const lessons = new Map(subject.units.flatMap((u) => u.lessons.map((l) => [l.id, l.name] as const)));
@@ -430,9 +434,10 @@ function Simulator({ onBack, initial, setApprovedPool }: { onBack: () => void; i
           </section>
           <section className="sim-step"><h3><b>2</b>{translate("Pick your lessons")}<small>{translate("Select one or several lessons")}</small></h3>
             {rows === null ? <p className="emd-sub"><Loader2 className="inline size-4 animate-spin" /> {translate("Loading…")}</p> : !subjects.length ? <p className="emd-sub">{translate("No lessons are available for your level yet.")}</p> : <>
-              <label className="sim-range"><span>{translate("Subject")}</span><select className="sim-search" aria-label={translate("Subject")} value={subj} onChange={(e) => changeSubject(e.target.value)}>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+              {hasSem && <div className="pe-seg pe-seg-sm">{([["", "All"], ["S1", "S1"], ["S2", "S2"]] as const).map(([v, label]) => <Button key={v} variant={sem === v ? "default" : "outline"} aria-pressed={sem === v} onClick={() => changeSem(v)}>{translate(label)}</Button>)}</div>}
+              <label className="sim-range"><span>{translate(firstYear ? "Subject" : "Integrated unit")}</span><select className="sim-search" aria-label={translate(firstYear ? "Subject" : "Integrated unit")} value={subj} onChange={e => changeSubject(e.target.value)}>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+              {!firstYear && subject && <label className="sim-range"><span>{translate("Subject")}</span><select className="sim-search" aria-label={translate("Subject")} value={discipline} onChange={e => { setDiscipline(e.target.value); setPicked(new Set()); }}><option value="">{translate("All subjects")}</option>{subject.units.map(u => <option key={u.id} value={u.id}>{u.name === subject.name ? translate("Existing lessons") : u.name}</option>)}</select></label>}
               <div className="sim-tools">
-                {hasSem && <div className="pe-seg pe-seg-sm">{([["", "All semesters"], ["S1", "Semester 1"], ["S2", "Semester 2"]] as const).map(([v, l]) => <button key={v} type="button" className={sem === v ? "is-on" : ""} onClick={() => changeSem(v)}>{translate(l)}</button>)}</div>}
                 <input className="sim-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={translate("Search a lesson…")} aria-label={translate("Search a lesson…")} />
                 <Button variant="outline" size="sm" disabled={!visibleIds.length} onClick={() => toggleIds(visibleIds)}>{visibleIds.length && visibleIds.every((id) => picked.has(id)) ? translate("Deselect all") : translate("Whole subject")}</Button>
               </div>

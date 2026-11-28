@@ -21,3 +21,22 @@ test('annual curricula (Year 2) list modules once without semesters', () => {
   deepStrictEqual(r.groups.map(g => g.semester), ["all"]);
   strictEqual(r.counts.modules, 1);
 });
+
+test('Year 2 Anatomy labels never enable semesters', () => {
+  const annual: Tree = [{ id: 'module', name: 'Anatomy', academic_year: 2, emds: [], units: [{ id: 'discipline', name: 'Semester 1', lessons: [{ id: 'existing-id', name: 'Heart', files: [] }] }] }];
+  const r = exploreCurriculum(annual, '', '1');
+  strictEqual(r.semestered, false);
+  deepStrictEqual(r.groups.map(g => g.semester), ['all']);
+  strictEqual(r.groups[0]?.subjects[0]?.units[0]?.lessons[0]?.id, 'existing-id');
+});
+test('Year 1 explicit semester overrides old folder names', () => {
+  const first: Tree = [{ id: 's', name: 'Chemistry', academic_year: 1, emds: [], units: [{ id: 'u1', name: 'Lectures', semester: 'S1', lessons: [{ id: 'atom', name: 'Classical Models of the Atom', files: [] }] }, { id: 'u2', name: 'Lectures', semester: 'S2', lessons: [{ id: 'organic', name: 'Organic Chemistry', files: [] }] }] }];
+  deepStrictEqual(exploreCurriculum(first, '', '1').groups[0]?.subjects[0]?.units.flatMap(u => u.lessons.map(l => l.id)), ['atom']);
+  deepStrictEqual(exploreCurriculum(first, '', '2').groups[0]?.subjects[0]?.units.flatMap(u => u.lessons.map(l => l.id)), ['organic']);
+});
+test('the same subject can occur in distinct integrated units without collapsing identifiers', () => {
+  const annual: Tree = ['cardio','digestive'].map(id => ({ id, name: id, academic_year: 2, emds: [], units: [{ id: `${id}-anatomy`, name: 'Anatomy', lessons: [{ id: `${id}-lesson`, name: 'Anatomy', files: [] }] }] }));
+  const r = exploreCurriculum(annual, 'Anatomy', 'all');
+  deepStrictEqual(r.counts, { modules: 2, units: 2, lessons: 2 });
+  deepStrictEqual(r.groups[0]?.subjects.flatMap(s => s.units.flatMap(u => u.lessons.map(l => l.id))), ['cardio-lesson','digestive-lesson']);
+});

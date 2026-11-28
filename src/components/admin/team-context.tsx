@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { ScopePicker } from "@/components/app/ScopePicker";
 
 export type Team = { userId: string; email: string; role: "admin" | "editor"; status: string };
 export const TeamCtx = createContext<Team | null>(null);
@@ -40,7 +41,7 @@ export function useHierarchy() {
     queryFn: async () => {
       const [s, u, l] = await Promise.all([
         supabase.from("subjects").select("id,name,faculty,department,academic_year,position").order("department").order("academic_year").order("position").order("name"),
-        supabase.from("units").select("id,subject_id,name,semester,position").order("position").order("created_at"),
+        supabase.from("units").select("id,subject_id,name,semester,position").eq("legacy_container", false).order("position").order("created_at"),
         supabase.from("lessons").select("id,unit_id,name,position").order("position").order("created_at"),
       ]);
       if (s.error || u.error || l.error) throw new Error(s.error?.message ?? u.error?.message ?? l.error?.message ?? "Could not load curriculum.");
@@ -52,25 +53,8 @@ export function useHierarchy() {
 export function LessonPicker({ value, onChange, allowUnitOnly, department, year }: { value: { s: string; u: string; l: string }; onChange: (v: { s: string; u: string; l: string }) => void; allowUnitOnly?: boolean; department?: string | undefined; year?: number | undefined }) {
   const { data } = useHierarchy();
   if (!data) return null;
-  const units = data.units.filter((u) => u.subject_id === value.s);
-  const lessons = data.lessons.filter((l) => l.unit_id === value.u);
-  return (
-    <div className="flex flex-wrap gap-2">
-      <select className={sel} value={value.s} onChange={(e) => onChange({ s: e.target.value, u: "", l: "" })}>
-        <option value="">Subject…</option>
-        {data.subjects.filter((s) => (!department || s.department === department) && (!year || s.academic_year === year)).map((s) => <option key={s.id} value={s.id}>{s.name} · {s.department} Y{s.academic_year}</option>)}
-      </select>
-      <select className={sel} value={value.u} disabled={!value.s} onChange={(e) => onChange({ ...value, u: e.target.value, l: "" })}>
-        <option value="">Unit…</option>
-        {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-      </select>
-      <select className={sel} value={value.l} disabled={!value.u} onChange={(e) => onChange({ ...value, l: e.target.value })}>
-        <option value="">{allowUnitOnly ? "Whole unit" : "Lesson…"}</option>
-        {lessons.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-      </select>
-      {data.subjects.length === 0 && <span className="self-center text-xs text-muted-foreground">Create a subject first in Subjects.</span>}
-    </div>
-  );
+  const tree = data.subjects.filter(s => (!department || s.department === department) && (!year || s.academic_year === year)).map(s => ({ ...s, emds: [], units: data.units.filter(u => u.subject_id === s.id).map(u => ({ ...u, lessons: data.lessons.filter(l => l.unit_id === u.id).map(l => ({ ...l, files: [] })) })) }));
+  return <ScopePicker tree={tree} value={{ ...value, f: '' }} onChange={v => onChange({ s: v.s, u: v.u, l: v.l })} fileLevel={false}/>;
 }
 
 export function PageHead({ title, sub }: { title: string; sub?: string }) {

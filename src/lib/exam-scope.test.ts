@@ -36,3 +36,9 @@ describe("Past EMD academic scopes", () => {
     assert.equal(examScopeName("Immunologie", "Immunologie"), "Immunologie");
   });
 });
+it('selects repeated discipline subjects within their own integrated unit', () => {
+  const scopes = examScopeOptions(subjects, [{ id: 'cardio-anatomy', name: 'Anatomy', subject_id: 'y2-0' }, { id: 'digestive-anatomy', name: 'Anatomy', subject_id: 'y2-1' }, { id: 'old-folder', name: 'Old folder', subject_id: 'y2-0', legacy_container: true }]);
+  assert.equal(scopes.find(s => s.unit_id === 'cardio-anatomy')?.subject_id, 'y2-0');
+  assert.equal(scopes.find(s => s.unit_id === 'digestive-anatomy')?.subject_id, 'y2-1');
+  assert.equal(scopes.some(s => s.unit_id === 'old-folder'), false);
+});

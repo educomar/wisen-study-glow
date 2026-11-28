@@ -1,5 +1,5 @@
 export type ExamSubject = { id: string; name: string; department: string; academic_year: number };
-export type ExamUnit = { id: string; name: string; subject_id: string };
+export type ExamUnit = { id: string; name: string; subject_id: string; legacy_container?: boolean };
 export type ExamScope = { subject_id: string; unit_id: string | null };
 export type ExamScopeOption = ExamScope & { value: string; name: string; department: string; academic_year: number };
 
@@ -10,8 +10,8 @@ export const examScopeValue = (scope: ExamScope) => scope.unit_id ? `${scope.sub
 export function examScopeOptions(subjects: ExamSubject[], units: ExamUnit[] = []): ExamScopeOption[] {
   return subjects.filter((s) => !/deprecated/i.test(s.name)).flatMap((s) => {
     const parent = { subject_id: s.id, unit_id: null, value: s.id, name: s.name, department: s.department, academic_year: s.academic_year };
-    if (!/\bmodules?\b/i.test(s.name)) return [parent];
-    const modules = units.filter((u) => u.subject_id === s.id).map((u) => ({ ...parent, unit_id: u.id, value: `${s.id}:${u.id}`, name: `${u.name} · ${s.name}` }));
+    if (s.academic_year === 1) return [parent];
+    const modules = units.filter((u) => u.subject_id === s.id && !u.legacy_container && u.name !== s.name).map((u) => ({ ...parent, unit_id: u.id, value: `${s.id}:${u.id}`, name: `${u.name} · ${s.name}` }));
     return [parent, ...modules];
   });
 }

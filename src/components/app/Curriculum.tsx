@@ -21,7 +21,7 @@ export function useCurriculum() {
       const [lv, s, un, l, r] = await Promise.all([
         fetchMyLevel(u.user.id),
         supabase.from("subjects").select("id,name,position,faculty,department,academic_year").order("position"),
-        supabase.from("units").select("id,subject_id,name,position,semester").order("position"),
+        supabase.from("units").select("id,subject_id,name,position,semester").eq("legacy_container", false).order("position"),
         supabase.from("lessons").select("id,unit_id,name,position").order("position"),
         supabase.from("lesson_resources").select("id,unit_id,lesson_id,file_name,mime_type,kind,subject_id,drive_created_at").order("drive_created_at", { ascending: true, nullsFirst: false }).order("created_at"),
       ]);
